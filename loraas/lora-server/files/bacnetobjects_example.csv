@@ -1,0 +1,2 @@
+devicename,loraobject,objectname,objecttype,unit,polarity,inactivetext,activetext,relinquishdefault,description,cov,covincrement
+AM107,temperature,AM107.temperature,Analog-Input,no-units,,,,,,1,0.1

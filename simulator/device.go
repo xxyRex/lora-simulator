@@ -510,9 +510,8 @@ func (d *Device) sendUplink(phy lorawan.PHYPayload) error {
 		return errors.Wrap(err, "marshal phypayload error")
 	}
 
-	pl := gw.UplinkFrame{
-		PhyPayload: b,
-		TxInfo:     &d.uplinkTXInfo,
+	pl := RXPacketBytes{
+		PHYPayload: b,
 	}
 
 	for i := range d.gateways {

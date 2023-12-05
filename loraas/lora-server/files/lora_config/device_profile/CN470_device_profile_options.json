@@ -1,0 +1,172 @@
+{
+    "rx2DROptions": [
+        {
+            "name": "DR0(SF12,125kHz)",
+            "index": 0,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 12,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR1(SF11,125kHz)",
+            "index": 1,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 11,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR2(SF10,125kHz)",
+            "index": 2,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 10,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR3(SF9,125kHz)",
+            "index": 3,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 9,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR4(SF8,125kHz)",
+            "index": 4,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 8,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR5(SF7,125kHz)",
+            "index": 5,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 7,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR6(SF7,500kHz)",
+            "index": 6,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 500,
+                "spreadFactor": 7,
+                "bitrate": 0
+            }
+        }
+    ],
+    "rx2DefaultDR": {
+        "name": "DR0(SF12,125kHz)",
+        "index": 0,
+        "DR": {
+            "modulation": "LORA",
+            "bandwidth": 125,
+            "spreadFactor": 12,
+            "bitrate": 0
+        }
+    },
+    "rx2DefaultFr": 505300000,
+    "rx2MinFr": 470300000,
+    "rx2MaxFr": 509700000,
+    "psDROptions": [
+        {
+            "name": "DR0(SF12,125kHz)",
+            "index": 0,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 12,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR1(SF11,125kHz)",
+            "index": 1,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 11,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR2(SF10,125kHz)",
+            "index": 2,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 10,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR3(SF9,125kHz)",
+            "index": 3,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 9,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR4(SF8,125kHz)",
+            "index": 4,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 8,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR5(SF7,125kHz)",
+            "index": 5,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 7,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR6(SF7,500kHz)",
+            "index": 6,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 500,
+                "spreadFactor": 7,
+                "bitrate": 0
+            }
+        }
+    ],
+    "psDefaultDR": {
+        "name": "DR2(SF10,125kHz)",
+        "index": 2,
+        "DR": {
+            "modulation": "LORA",
+            "bandwidth": 125,
+            "spreadFactor": 10,
+            "bitrate": 0
+        }
+    },
+    "psDefaultFr": 508300000,
+    "psMinFr": 470300000,
+    "psMaxFr": 509700000
+}

@@ -72,7 +72,7 @@ func printStartMessage(ctx context.Context, wg *sync.WaitGroup) error {
 }
 
 func setupASAPIClient(ctx context.Context, wg *sync.WaitGroup) error {
-	return as.Setup(config.C)
+	return as.LNSSetup(config.C)
 }
 
 func setupASIntegration(ctx context.Context, wg *sync.WaitGroup) error {
@@ -105,7 +105,7 @@ func setupPrometheus(ctx context.Context, wg *sync.WaitGroup) error {
 }
 
 func startSimulator(ctx context.Context, wg *sync.WaitGroup) error {
-	if err := simulator.Start(ctx, wg, config.C); err != nil {
+	if err := simulator.LNSStart(ctx, wg, config.C); err != nil {
 		return errors.Wrap(err, "start simulator error")
 	}
 

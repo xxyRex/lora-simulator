@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"io/ioutil"
-	"math/rand"
 	"sync"
 	"text/template"
 	"time"
@@ -16,6 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/brocaar/lorawan"
+	"github.com/brocaar/lorawan/band"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
@@ -36,6 +37,32 @@ type Gateway struct {
 
 	eventTopicTemplate   *template.Template
 	commandTopicTemplate *template.Template
+}
+
+type Duration time.Duration
+
+// RXInfo contains the RX information.
+type LNSRXInfo struct {
+	MAC               lorawan.EUI64 `json:"mac"`                         // MAC address of the gateway
+	Time              *time.Time    `json:"time,omitempty"`              // Receive timestamp (only set when the gateway has a GPS time-source)
+	TimeSinceGPSEpoch *Duration     `json:"timeSinceGPSEpoch,omitempty"` // Time since GPS epoch (1980-01-06, only set when the gateway has a GPS time source)
+	Timestamp         uint32        `json:"timestamp"`                   // gateway internal receive timestamp with microsecond precision, will rollover every ~ 72 minutes
+	Frequency         int           `json:"frequency"`                   // frequency in Hz
+	Channel           int           `json:"channel"`                     // concentrator IF channel used for RX
+	RFChain           int           `json:"rfChain"`                     // RF chain used for RX
+	CRCStatus         int           `json:"crcStatus"`                   // 1 = OK, -1 = fail, 0 = no CRC
+	CodeRate          string        `json:"codeRate"`                    // ECC code rate
+	RSSI              int           `json:"rssi"`                        // RSSI in dBm
+	LoRaSNR           float64       `json:"loRaSNR"`                     // LoRa signal-to-noise ratio in dB
+	Size              int           `json:"size"`                        // packet payload size
+	DataRate          band.DataRate `json:"dataRate"`                    // RX datarate (either LoRa or FSK)
+	Board             int           `json:"board"`                       // Concentrator board used for RX
+	Antenna           int           `json:"antenna"`                     // Antenna number on which signal has been received
+}
+
+type RXPacketBytes struct {
+	RXInfo     LNSRXInfo `json:"rxInfo"`
+	PHYPayload []byte    `json:"phyPayload"`
 }
 
 // WithMQTTClient sets the MQTT client for the gateway.
@@ -130,11 +157,12 @@ func WithGatewayID(gatewayID lorawan.EUI64) GatewayOption {
 
 // WithDownlinkTxNackRate sets the rate in which Tx NAck messages are sent.
 // Setting this to:
-//   0: always ACK
-//   1: NAck every message
-//   2: NAck every other message
-//   3: NAck every third message
-//   ...
+//
+//	0: always ACK
+//	1: NAck every message
+//	2: NAck every other message
+//	3: NAck every third message
+//	...
 func WithDownlinkTxNackRate(rate int) GatewayOption {
 	return func(g *Gateway) error {
 		g.downlinkTxNAckRate = rate
@@ -213,28 +241,42 @@ func NewGateway(opts ...GatewayOption) (*Gateway, error) {
 }
 
 // SendUplinkFrame sends the given uplink frame.
-func (g *Gateway) SendUplinkFrame(pl gw.UplinkFrame) error {
-	pl.RxInfo = &gw.UplinkRxInfo{
-		GatewayId: g.gatewayID.String(),
-		Rssi:      50,
-		Snr:       5.5,
-		Context:   []byte{0x01, 0x02, 0x03, 0x04},
-		UplinkId:  rand.Uint32(),
+func (g *Gateway) SendUplinkFrame(pl RXPacketBytes) error {
+	currentTime := time.Now()
+	pl.RXInfo = LNSRXInfo{
+		MAC:       g.gatewayID,
+		Time:      &currentTime,
+		Frequency: 868500000,
+		Channel:   2,
+		CodeRate:  "4/5",
+		RSSI:      -63,
+		LoRaSNR:   8.5,
+		DataRate: band.DataRate{
+			Modulation:   "LORA",
+			SpreadFactor: 10,
+			Bandwidth:    125,
+		},
+		Board:   0,
+		Antenna: 0,
 	}
 
-	b, err := proto.Marshal(&pl)
+	jsonBytes, err := json.Marshal(&pl)
+
 	if err != nil {
 		return errors.Wrap(err, "send uplink frame error")
 	}
 
 	uplinkTopic := g.getEventTopic("up")
 
+	jsonStr := string(jsonBytes)
+
 	log.WithFields(log.Fields{
 		"gateway_id": g.gatewayID,
 		"topic":      uplinkTopic,
+		"json:":      jsonStr,
 	}).Debug("simulator: publish uplink frame")
 
-	if token := g.mqtt.Publish(uplinkTopic, 0, false, b); token.Wait() && token.Error() != nil {
+	if token := g.mqtt.Publish(uplinkTopic, 0, false, jsonBytes); token.Wait() && token.Error() != nil {
 		return errors.Wrap(err, "simulator: publish uplink frame error")
 	}
 

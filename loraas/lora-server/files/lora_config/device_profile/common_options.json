@@ -1,0 +1,56 @@
+{
+    "minOutputPower": 0,
+    "maxOutputPower": 16,
+    "defaultOutputPower": 0,
+    "netAccess": [
+        "OTAA",
+        "ABP"
+    ],
+    "defaultNetAccess": "OTAA",
+    "workMode": [
+        "ClassA",
+        "ClassB",
+        "ClassC"
+    ],
+    "defaultWorkMode": [
+        "ClassA"
+    ],
+    "macVersion": [
+        "1.0.0",
+        "1.0.1",
+        "1.0.2",
+        "1.1.0"
+    ],
+    "defaultMacVersion": "1.0.2",
+    "regParamsRevision": [
+        "A",
+        "B"
+    ],
+    "defaultRegParamsRevision": "B",
+    "rxDROffset1": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+    ],
+    "defaultRxDROffset1": 0,
+    "pingSlotPeriod": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096
+    ],
+    "defaultPingSlotPeriod": 128,
+    "minClassBTimeout": 1,
+    "maxClassBTimeout": 10,
+    "defaultClassBTimeout": 10,
+    "minClassCTimeout": 0,
+    "maxClassCTimeout": 4294967295,
+    "defaultClassCTimeout": 10
+}

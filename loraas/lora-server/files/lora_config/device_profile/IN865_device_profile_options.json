@@ -1,0 +1,152 @@
+{
+    "rx2DROptions": [
+        {
+            "name": "DR0(SF12,125kHz)",
+            "index": 0,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 12,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR1(SF11,125kHz)",
+            "index": 1,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 11,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR2(SF10,125kHz)",
+            "index": 2,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 10,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR3(SF9,125kHz)",
+            "index": 3,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 9,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR4(SF8,125kHz)",
+            "index": 4,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 8,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR5(SF7,125kHz)",
+            "index": 5,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 7,
+                "bitrate": 0
+            }
+        }
+    ],
+    "rx2DefaultDR": {
+        "name": "DR2(SF10,125kHz)",
+        "index": 2,
+        "DR": {
+            "modulation": "LORA",
+            "bandwidth": 125,
+            "spreadFactor": 10,
+            "bitrate": 0
+        }
+    },
+    "rx2DefaultFr": 866550000,
+    "rx2MinFr": 863000000,
+    "rx2MaxFr": 870000000,
+    "psDROptions": [
+        {
+            "name": "DR0(SF12,125kHz)",
+            "index": 0,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 12,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR1(SF11,125kHz)",
+            "index": 1,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 11,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR2(SF10,125kHz)",
+            "index": 2,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 10,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR3(SF9,125kHz)",
+            "index": 3,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 9,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR4(SF8,125kHz)",
+            "index": 4,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 8,
+                "bitrate": 0
+            }
+        },
+        {
+            "name": "DR5(SF7,125kHz)",
+            "index": 5,
+            "DR": {
+                "modulation": "LORA",
+                "bandwidth": 125,
+                "spreadFactor": 7,
+                "bitrate": 0
+            }
+        }
+    ],
+    "psDefaultDR": {
+        "name": "DR4(SF8,125kHz)",
+        "index": 4,
+        "DR": {
+            "modulation": "LORA",
+            "bandwidth": 125,
+            "spreadFactor": 8,
+            "bitrate": 0
+        }
+    },
+    "psDefaultFr": 866550000,
+    "psMinFr": 863000000,
+    "psMaxFr": 870000000
+}
