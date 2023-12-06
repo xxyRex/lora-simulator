@@ -60,8 +60,29 @@ type LNSRXInfo struct {
 	Antenna           int           `json:"antenna"`                     // Antenna number on which signal has been received
 }
 
-type RXPacketBytes struct {
+type LNSRXPacketBytes struct {
 	RXInfo     LNSRXInfo `json:"rxInfo"`
+	PHYPayload []byte    `json:"phyPayload"`
+}
+
+// TXInfo contains the information used for TX.
+type LNSTXInfo struct {
+	MAC               lorawan.EUI64 `json:"mac"`                         // MAC address of the gateway
+	Immediately       bool          `json:"immediately"`                 // send the packet immediately (ignore Time)
+	TimeSinceGPSEpoch *Duration     `json:"timeSinceGPSEpoch,omitempty"` // Transmit at time since GPS epoch (since 1980-01-06, only possible when the gateway has a GPS time source)
+	Timestamp         *uint32       `json:"timestamp,omitempty"`         // transmit at gateway internal timestamp (microsecond precision, will rollover every ~ 72 minutes)
+	Frequency         int           `json:"frequency"`                   // frequency in Hz
+	Power             int           `json:"power"`                       // TX power to use in dBm
+	DataRate          band.DataRate `json:"dataRate"`                    // TX datarate (either LoRa or FSK)
+	CodeRate          string        `json:"codeRate"`                    // ECC code rate
+	IPol              *bool         `json:"iPol"`                        // when left nil, the gateway-bridge will use the default (true for LoRa modulation)
+	Board             int           `json:"board"`                       // Concentrator board used for RX
+	Antenna           int           `json:"antenna"`                     // Antenna number on which signal has been received
+}
+
+type LNSTXPacketBytes struct {
+	Token      uint16    `json:"token"`
+	TXInfo     LNSTXInfo `json:"txInfo"`
 	PHYPayload []byte    `json:"phyPayload"`
 }
 
@@ -241,7 +262,7 @@ func NewGateway(opts ...GatewayOption) (*Gateway, error) {
 }
 
 // SendUplinkFrame sends the given uplink frame.
-func (g *Gateway) SendUplinkFrame(pl RXPacketBytes) error {
+func (g *Gateway) SendUplinkFrame(pl LNSRXPacketBytes) error {
 	currentTime := time.Now()
 	pl.RXInfo = LNSRXInfo{
 		MAC:       g.gatewayID,
@@ -313,10 +334,10 @@ func (g *Gateway) addDevice(devEUI lorawan.EUI64, c chan gw.DownlinkFrame) {
 	g.deviceMux.Lock()
 	defer g.deviceMux.Unlock()
 
-	log.WithFields(log.Fields{
-		"dev_eui":    devEUI,
-		"gateway_id": g.gatewayID,
-	}).Info("simulator: add device to gateway")
+	// log.WithFields(log.Fields{
+	// 	"dev_eui":    devEUI,
+	// 	"gateway_id": g.gatewayID,
+	// }).Info("simulator: add device to gateway")
 
 	g.devices[devEUI] = c
 }
@@ -360,9 +381,27 @@ func (g *Gateway) downlinkEventHandler(c mqtt.Client, msg mqtt.Message) {
 
 	gatewayDownlinkCounter().Inc()
 
-	var pl gw.DownlinkFrame
-	if err := proto.Unmarshal(msg.Payload(), &pl); err != nil {
-		log.WithError(err).Error("simulator: unmarshal downlink command error")
+	var lnsPl LNSTXPacketBytes
+	if err := json.Unmarshal(msg.Payload(), &lnsPl); err != nil {
+		log.WithError(err).Error("prase LNSTXPacketBytes error")
+	}
+
+	downLinkFrameItems := []*gw.DownlinkFrameItem{}
+	downLinkFrameItems = append(downLinkFrameItems, &gw.DownlinkFrameItem{
+		PhyPayload: lnsPl.PHYPayload,
+		TxInfo: &gw.DownlinkTxInfo{
+			Frequency: uint32(lnsPl.TXInfo.Frequency),
+			Power:     int32(lnsPl.TXInfo.Power),
+			// Modulation: lnsPl.TXInfo.DataRate.Modulation,
+			Board:   uint32(lnsPl.TXInfo.Board),
+			Antenna: uint32(lnsPl.TXInfo.Antenna),
+			// Timing: lnsPl.TXInfo.Timestamp,
+		},
+	})
+
+	pl := gw.DownlinkFrame{
+		GatewayId: lnsPl.TXInfo.MAC.String(),
+		Items:     downLinkFrameItems,
 	}
 
 	for devEUI, downChan := range g.devices {

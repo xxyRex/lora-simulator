@@ -3,6 +3,7 @@ package simulator
 import (
 	"context"
 	crand "crypto/rand"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -259,6 +260,7 @@ func (d *Device) uplinkLoop() {
 					// d.cancel() also cancels the downlink loop. Wait one
 					// second in order to process any potential downlink
 					// response (e.g. and ack).
+					log.Info("d.devEUI: ", d.devEUI, " uplinkLoop canceled")
 					time.Sleep(time.Second)
 					d.cancel()
 					return
@@ -313,10 +315,6 @@ func (d *Device) downlinkLoop() {
 
 // joinRequest sends the join-request.
 func (d *Device) joinRequest() {
-	log.WithFields(log.Fields{
-		"dev_eui": d.devEUI,
-	}).Debug("simulator: send OTAA request")
-
 	phy := lorawan.PHYPayload{
 		MHDR: lorawan.MHDR{
 			MType: lorawan.JoinRequest,
@@ -333,6 +331,12 @@ func (d *Device) joinRequest() {
 		log.WithError(err).Error("simulator: set uplink join mic error")
 		return
 	}
+
+	b, _ := phy.MarshalBinary()
+	log.WithFields(log.Fields{
+		"dev_eui":  d.devEUI,
+		"payload:": base64.StdEncoding.EncodeToString(b),
+	}).Info("simulator: send OTAA request")
 
 	d.sendUplink(phy)
 
@@ -429,11 +433,6 @@ func (d *Device) joinAccept(phy lorawan.PHYPayload) error {
 
 	d.devAddr = jaPL.DevAddr
 
-	log.WithFields(log.Fields{
-		"dev_eui":  d.devEUI,
-		"dev_addr": d.devAddr,
-	}).Info("simulator: device OTAA activated")
-
 	d.setState(deviceStateActivated)
 	deviceJoinAcceptCounter().Inc()
 
@@ -510,7 +509,7 @@ func (d *Device) sendUplink(phy lorawan.PHYPayload) error {
 		return errors.Wrap(err, "marshal phypayload error")
 	}
 
-	pl := RXPacketBytes{
+	pl := LNSRXPacketBytes{
 		PHYPayload: b,
 	}
 
@@ -550,7 +549,7 @@ func (d *Device) getState() deviceState {
 // setState sets the device to the given state.
 func (d *Device) setState(s deviceState) {
 	d.Lock()
-	d.Unlock()
+	defer d.Unlock()
 
 	d.state = s
 }

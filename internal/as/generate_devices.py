@@ -10,7 +10,7 @@ def generate_devices():
         baseEUI = int(items[0], 16)
         print(baseEUI)
         print(hex(baseEUI)[2:])
-        for i in range(1, 100):
+        for i in range(1, 2000):
             newEUI = baseEUI + i
             newEUIStr = hex(newEUI)[2:]
             items[0] = newEUIStr
