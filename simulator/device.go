@@ -3,7 +3,6 @@ package simulator
 import (
 	"context"
 	crand "crypto/rand"
-	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -12,6 +11,8 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"sync/atomic"
 
 	"github.com/brocaar/lorawan"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
@@ -104,6 +105,17 @@ type Device struct {
 
 	// OTAA delay.
 	otaaDelay time.Duration
+
+	// join windows flag
+	joinWindowFlag int32
+
+	// dataUp count
+	dataUpCount uint64
+
+	// datadown count
+	datadownCount uint64
+
+	joinReqSent bool
 }
 
 // WithAppKey sets the AppKey.
@@ -221,12 +233,10 @@ func NewDevice(ctx context.Context, wg *sync.WaitGroup, opts ...DeviceOption) (*
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"dev_eui": d.devEUI,
-	}).Info("simulator: new otaa device")
-
 	wg.Add(2)
 
+	d.joinReqSent = false
+	atomic.StoreInt32(&d.joinWindowFlag, 0)
 	go d.uplinkLoop()
 	go d.downlinkLoop()
 
@@ -260,7 +270,6 @@ func (d *Device) uplinkLoop() {
 					// d.cancel() also cancels the downlink loop. Wait one
 					// second in order to process any potential downlink
 					// response (e.g. and ack).
-					log.Info("d.devEUI: ", d.devEUI, " uplinkLoop canceled")
 					time.Sleep(time.Second)
 					d.cancel()
 					return
@@ -286,7 +295,7 @@ func (d *Device) downlinkLoop() {
 
 		case pl := <-d.downlinkFrames:
 			for _, item := range pl.Items {
-				err := func() error {
+				func() error {
 					var phy lorawan.PHYPayload
 
 					if err := phy.UnmarshalBinary(item.PhyPayload); err != nil {
@@ -303,10 +312,6 @@ func (d *Device) downlinkLoop() {
 					return nil
 				}()
 
-				if err != nil {
-					log.WithError(err).Error("simulator: handle downlink frame error")
-				}
-
 				break
 			}
 		}
@@ -315,6 +320,10 @@ func (d *Device) downlinkLoop() {
 
 // joinRequest sends the join-request.
 func (d *Device) joinRequest() {
+	if d.joinReqSent {
+		return
+	}
+
 	phy := lorawan.PHYPayload{
 		MHDR: lorawan.MHDR{
 			MType: lorawan.JoinRequest,
@@ -328,28 +337,27 @@ func (d *Device) joinRequest() {
 	}
 
 	if err := phy.SetUplinkJoinMIC(d.appKey); err != nil {
-		log.WithError(err).Error("simulator: set uplink join mic error")
 		return
 	}
 
-	b, _ := phy.MarshalBinary()
-	log.WithFields(log.Fields{
-		"dev_eui":  d.devEUI,
-		"payload:": base64.StdEncoding.EncodeToString(b),
-	}).Info("simulator: send OTAA request")
-
 	d.sendUplink(phy)
 
+	log.Info("deveui: ", d.devEUI.String(), " send join req")
+	d.joinReqSent = true
+	atomic.StoreInt32(&d.joinWindowFlag, 1)
 	deviceJoinRequestCounter().Inc()
 }
 
 // dataUp sends an data uplink.
 func (d *Device) dataUp() {
+	d.dataUpCount++
+
 	log.WithFields(log.Fields{
-		"dev_eui":   d.devEUI,
-		"dev_addr":  d.devAddr,
-		"confirmed": d.confirmed,
-	}).Debug("simulator: send uplink data")
+		"dev_eui":      d.devEUI,
+		"dev_addr":     d.devAddr,
+		"confirmed":    d.confirmed,
+		"dataUpCount:": d.dataUpCount,
+	}).Info("simulator: send uplink data")
 
 	mType := lorawan.UnconfirmedDataUp
 	if d.confirmed {
@@ -379,12 +387,10 @@ func (d *Device) dataUp() {
 	}
 
 	if err := phy.EncryptFRMPayload(d.appSKey); err != nil {
-		log.WithError(err).Error("simulator: encrypt FRMPayload error")
 		return
 	}
 
 	if err := phy.SetUplinkDataMIC(lorawan.LoRaWAN1_0, 0, 0, 0, d.nwkSKey, d.nwkSKey); err != nil {
-		log.WithError(err).Error("simulator: set uplink data mic error")
 		return
 	}
 
@@ -397,6 +403,10 @@ func (d *Device) dataUp() {
 
 // joinAccept validates and handles the join-accept downlink.
 func (d *Device) joinAccept(phy lorawan.PHYPayload) error {
+	if atomic.LoadInt32(&d.joinWindowFlag) == 0 {
+		return errors.Errorf("not my join window " + d.devEUI.String())
+	}
+
 	err := phy.DecryptJoinAcceptPayload(d.appKey)
 	if err != nil {
 		return errors.Wrap(err, "decrypt join-accept payload error")
@@ -404,15 +414,9 @@ func (d *Device) joinAccept(phy lorawan.PHYPayload) error {
 
 	ok, err := phy.ValidateDownlinkJoinMIC(lorawan.JoinRequestType, d.joinEUI, d.devNonce, d.appKey)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"dev_eui": d.devEUI,
-		}).Debug("simulator: invalid join-accept MIC")
 		return nil
 	}
 	if !ok {
-		log.WithFields(log.Fields{
-			"dev_eui": d.devEUI,
-		}).Debug("simulator: invalid join-accept MIC")
 		return nil
 	}
 
@@ -433,6 +437,7 @@ func (d *Device) joinAccept(phy lorawan.PHYPayload) error {
 
 	d.devAddr = jaPL.DevAddr
 
+	log.Info("deveui: ", d.devEUI.String(), " received join accept")
 	d.setState(deviceStateActivated)
 	deviceJoinAcceptCounter().Inc()
 
@@ -485,14 +490,16 @@ func (d *Device) downlinkData(phy lorawan.PHYPayload) error {
 			data = pl.Bytes
 		}
 	}
+	d.datadownCount++
 
 	log.WithFields(log.Fields{
-		"confirmed": phy.MHDR.MType == lorawan.ConfirmedDataDown,
-		"ack":       macPL.FHDR.FCtrl.ACK,
-		"f_cnt":     d.fCntDown,
-		"dev_eui":   d.devEUI,
-		"f_port":    fPort,
-		"data":      hex.EncodeToString(data),
+		"confirmed":     phy.MHDR.MType == lorawan.ConfirmedDataDown,
+		"ack":           macPL.FHDR.FCtrl.ACK,
+		"f_cnt":         d.fCntDown,
+		"dev_eui":       d.devEUI,
+		"f_port":        fPort,
+		"data":          hex.EncodeToString(data),
+		"datadownCount": d.datadownCount,
 	}).Info("simulator: device received downlink data")
 
 	if d.downlinkHandlerFunc == nil {

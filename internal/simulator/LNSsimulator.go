@@ -191,12 +191,18 @@ func (s *LNSSimulation) runSimulation() error {
 			gws = append(gws, devGateways[k])
 		}
 
+		zeroDuration := time.Duration(0)
+		otaaDuration := time.Duration(0)
+		if s.activationTime != zeroDuration {
+			otaaDuration = time.Duration(mrand.Int63n(int64(s.activationTime)))
+		}
+
 		d, err := simulator.NewDevice(ctx, &wg,
 			simulator.WithDevEUI(devEUI),
 			simulator.WithAppKey(appKey),
 			simulator.WithUplinkInterval(s.uplinkInterval),
-			simulator.WithOTAADelay(0),
-			simulator.WithUplinkPayload(false, s.fPort, s.payload),
+			simulator.WithOTAADelay(otaaDuration),
+			simulator.WithUplinkPayload(true, s.fPort, s.payload),
 			simulator.WithGateways(gws),
 			simulator.WithUplinkTXInfo(gw.UplinkTxInfo{
 				Frequency: uint32(s.frequency),
@@ -327,10 +333,14 @@ func (s *LNSSimulation) tearDownApplication() error {
 func (s *LNSSimulation) setupDevices() error {
 	log.Info("simulator: init devices")
 
-	// TODO: 需要确认路径
-	ret, records := as.LoadLoRaWANDevCfg("/mnt/7d7e518d-10ac-4a8d-841a-e9b83cecdf15/work_code/chirpstack/chirpstack-simulator/internal/as/devices_import.csv", 1)
+	ret, records := as.LoadLoRaWANDevCfg("devices_import.csv", 1)
 	if !ret {
 		return errors.Errorf("failed to setupDevices")
+	}
+
+	payloadID, err := as.LNSGetPayloadCoedc("EM300-TH")
+	if err != nil {
+		return err
 	}
 
 	for _, ldcfg := range records {
@@ -338,7 +348,7 @@ func (s *LNSSimulation) setupDevices() error {
 		eui := ldcfg.DevEUI
 		profileID := s.deviceProfileID
 		appKey := ldcfg.AppKey
-		payloadCodecID := "24"
+		payloadCodecID := payloadID
 		applicationID := s.applicationID
 
 		err := as.LNSCreateDevices(eui, profileID.String(), appKey, payloadCodecID, applicationID)

@@ -42,7 +42,6 @@ func parseJSON(data []byte) (map[string]interface{}, error) {
 }
 
 func post(url, data, jwt string) ([]byte, error) {
-	log.Info("config.C.ChirpStack.API.Server: ", config.C.ChirpStack.API.Server)
 	url = config.C.ChirpStack.API.Server + url
 
 	var response []byte
@@ -70,8 +69,35 @@ func post(url, data, jwt string) ([]byte, error) {
 	return bodyBytes, nil
 }
 
+func get(url, data, jwt string) ([]byte, error) {
+	url = config.C.ChirpStack.API.Server + url
+
+	var response []byte
+
+	req, err := http.NewRequest("GET", url, strings.NewReader(data))
+	if err != nil {
+		return response, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+jwt)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return response, err
+	}
+
+	defer resp.Body.Close()
+
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return bodyBytes, nil
+}
+
 func delete(url, data, jwt string) ([]byte, error) {
-	log.Info("config.C.ChirpStack.API.Server: ", config.C.ChirpStack.API.Server)
 	url = config.C.ChirpStack.API.Server + url
 
 	var response []byte
@@ -330,7 +356,7 @@ func LNSCreateDevices(eui, profileId, appKey, payloadCodecID, applicationID stri
 		"profileID": "` + profileId + `",
 		"payloadCodecID": "` + payloadCodecID + `",
 		"fPort": 1,
-		"appKey": "` + appKey + `",
+		"appKey": "` + "12345678123456781234567812345678" + `",
 		"skipFCntCheck": true,
 		"devAddr": "",
 		"appSKey": "",
@@ -368,4 +394,41 @@ func LNSDeleteDevices(eui string) error {
 	}
 
 	return nil
+}
+
+type PayloadCodecItem struct {
+	ID            string `json:"id"`
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	TemplateID    string `json:"templateID"`
+	DevEUIPrefix  string `json:"devEUIPrefix"`
+	EncoderScript string `json:"encoderScript"`
+	DecoderScript string `json:"decoderScript"`
+	TestEnabled   bool   `json:"testEnabled"`
+	FPort         int    `json:"fPort"`
+}
+
+type ListPayloadCodecResponse struct {
+	TotalCount string             `json:"totalCount"`
+	Result     []PayloadCodecItem `json:"result"`
+}
+
+func LNSGetPayloadCoedc(name string) (string, error) {
+	url := "/lns/api/v1/payloadcodecs/lns?limit=10&offset=0&type=default&search=" + name
+
+	bytes, err := get(url, "", jwtConn)
+	if err != nil {
+		return "", err
+	}
+
+	str := string(bytes)
+	log.Info(str)
+
+	var resp ListPayloadCodecResponse
+	err = json.Unmarshal(bytes, &resp)
+	if err != nil {
+		return "", err
+	}
+
+	return resp.Result[0].ID, err
 }

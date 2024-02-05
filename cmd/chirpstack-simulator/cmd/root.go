@@ -33,8 +33,7 @@ var rootCmd = &cobra.Command{
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "")
-	cfgFile = "/mnt/7d7e518d-10ac-4a8d-841a-e9b83cecdf15/work_code/chirpstack/chirpstack-simulator/chirpstack-simulator.toml"
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "path to configuration file (optional)")
 	rootCmd.PersistentFlags().Int("log-level", 4, "debug=5, info=4, error=2, fatal=1, panic=0")
 
 	viper.BindPFlag("general.log_level", rootCmd.PersistentFlags().Lookup("log-level"))

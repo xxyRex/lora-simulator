@@ -46,7 +46,7 @@ func (c *CsvRecord) GetString(field string) string {
 	if ok {
 		return data
 	} else {
-		fmt.Println("Get fileld failed! fileld:", field)
+		//fmt.Println("Get fileld failed! fileld:", field)
 		return ""
 	}
 }
