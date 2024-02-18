@@ -473,32 +473,32 @@ type ListPayloadCodecResponse struct {
 	Result     []PayloadCodecItem `json:"result"`
 }
 
-func LNSGetPayloadCoedc(name string) (string, error) {
-	url := "/lns/api/v1/payloadcodecs/lns?limit=10&offset=0&type=default&search=" + name
+func LNSGetPayloadCoedc() ([]PayloadCodecItem, error) {
+	res := []PayloadCodecItem{}
+
+	url := "/lns/api/v1/payloadcodecs/lns?limit=9999&offset=0&type=default"
 	if !config.C.ChirpStack.API.IsLNS {
-		url = "/api/payloadcodecs?limit=10&offset=0&type=default&search=" + name
+		url = "/api/payloadcodecs?limit=9999&offset=0&type=default"
 	}
 
 	bytes, err := get(url, "", jwtConn)
 	if err != nil {
-		return "", err
+		return res, err
 	}
-
-	str := string(bytes)
-	log.Info(str)
 
 	var resp ListPayloadCodecResponse
 	err = json.Unmarshal(bytes, &resp)
 	if err != nil {
-		return "", err
+		return res, err
 	}
 
 	if len(resp.Result) == 0 {
 		log.Error("LNSGetPayloadCoedc failed")
-		return "", fmt.Errorf("no payload codec")
+		return res, fmt.Errorf("no payload codec")
 	}
+	res = resp.Result
 
-	return resp.Result[0].ID, err
+	return res, nil
 }
 
 type GatewayJson struct {

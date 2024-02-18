@@ -89,6 +89,7 @@ type LNSSimulation struct {
 
 	deviceProfiles []as.ProfileResultJson
 	applications   []as.ApplicationJson
+	payloadCodecs  []as.PayloadCodecItem
 }
 
 func (s *LNSSimulation) start() {
@@ -124,6 +125,10 @@ func (s *LNSSimulation) init() error {
 	}
 
 	if err := s.setupApplication(); err != nil {
+		return err
+	}
+
+	if err := s.setupPayloadCodec(); err != nil {
 		return err
 	}
 
@@ -385,11 +390,6 @@ func (s *LNSSimulation) setupDevices() error {
 		return errors.Errorf("failed to setupDevices")
 	}
 
-	payloadID, err := as.LNSGetPayloadCoedc("EM300-TH")
-	if err != nil {
-		return err
-	}
-
 	for _, ldcfg := range records {
 		// TODO: 需要使用get获取对应的profileId和payloadCodecId
 		profileID := ""
@@ -416,9 +416,20 @@ func (s *LNSSimulation) setupDevices() error {
 			return errors.Errorf("can not find application: %s", ldcfg.Application)
 		}
 
+		payloadCodecID := ""
+		for _, c := range s.payloadCodecs {
+			if c.Name == ldcfg.PayloadCodec {
+				payloadCodecID = c.ID
+				break
+			}
+		}
+
+		if payloadCodecID == "" {
+			return errors.Errorf("can not find payload codec: %s", ldcfg.PayloadCodec)
+		}
+
 		eui := ldcfg.DevEUI
 		appKey := ldcfg.AppKey
-		payloadCodecID := payloadID
 
 		err := as.LNSCreateDevices(eui, profileID, appKey, payloadCodecID, applicationID)
 
@@ -448,6 +459,19 @@ func (s *LNSSimulation) tearDownDevices() error {
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (s *LNSSimulation) setupPayloadCodec() error {
+	log.Info("simulator: creating gateways")
+
+	codecs, err := as.LNSGetPayloadCoedc()
+	if err != nil {
+		return nil
+	}
+
+	s.payloadCodecs = codecs
 
 	return nil
 }
