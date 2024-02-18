@@ -15,9 +15,16 @@ type Config struct {
 
 	ChirpStack struct {
 		API struct {
-			APIKey   string `mapstructure:"api_key"`
-			Server   string `mapstructure:"server"`
-			Insecure bool   `mapstructure:"insecure"`
+			APIKey          string `mapstructure:"api_key"`
+			Server          string `mapstructure:"server"`
+			LoginUrl        string `mapstructure:"login_url"`
+			Username        string `mapstructure:"username"`
+			Password        string `mapstructure:"password"`
+			IsLNS           bool   `mapstructure:"is_lns"`
+			UseNewGateway   bool   `mapstructure:"use_new_gateway"`
+			UseNewProfile   bool   `mapstructure:"use_new_profile"`
+			CleanBeforeTest bool   `mapstructure:"clean_before_test"`
+			Insecure        bool   `mapstructure:"insecure"`
 		} `mapstructure:"api"`
 
 		Integration struct {

@@ -89,19 +89,20 @@ type LNSSimulation struct {
 }
 
 func (s *LNSSimulation) start() {
+
 	if err := s.init(); err != nil {
 		log.WithError(err).Error("simulator: init LNSSimulation error")
 	}
 
-	if err := s.runSimulation(); err != nil {
-		log.WithError(err).Error("simulator: LNSSimulation error")
-	}
+	// if err := s.runSimulation(); err != nil {
+	// 	log.WithError(err).Error("simulator: LNSSimulation error")
+	// }
 
 	// log.Info("simulator: LNSSimulation completed")
 
-	if err := s.tearDown(); err != nil {
-		log.WithError(err).Error("simulator: tear-down LNSSimulation error")
-	}
+	// if err := s.tearDown(); err != nil {
+	// 	log.WithError(err).Error("simulator: tear-down LNSSimulation error")
+	// }
 
 	s.wg.Done()
 
@@ -119,13 +120,13 @@ func (s *LNSSimulation) init() error {
 		return err
 	}
 
-	if err := s.setupApplication(); err != nil {
-		return err
-	}
+	// if err := s.setupApplication(); err != nil {
+	// 	return err
+	// }
 
-	if err := s.setupDevices(); err != nil {
-		return err
-	}
+	// if err := s.setupDevices(); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
@@ -246,26 +247,40 @@ func (s *LNSSimulation) runSimulation() error {
 func (s *LNSSimulation) setupGateways() error {
 	log.Info("simulator: creating gateways")
 
-	for i := 0; i < s.gatewayMaxCount; i++ {
-		var gatewayID lorawan.EUI64
-		if _, err := rand.Read(gatewayID[:]); err != nil {
-			return errors.Wrap(err, "read random bytes error")
+	if config.C.ChirpStack.API.UseNewGateway {
+		for i := 0; i < s.gatewayMaxCount; i++ {
+			var gatewayID lorawan.EUI64
+			if _, err := rand.Read(gatewayID[:]); err != nil {
+				return errors.Wrap(err, "read random bytes error")
+			}
+
+			err := as.LNSCreateGateway(gatewayID.String(), gatewayID.String())
+
+			if err != nil {
+				return errors.Wrap(err, "create gateway error")
+			}
+
+			s.gatewayIDs = append(s.gatewayIDs, gatewayID)
 		}
 
-		err := as.LNSCreateGateway(gatewayID.String(), gatewayID.String())
-
-		if err != nil {
-			return errors.Wrap(err, "create gateway error")
-		}
-
-		s.gatewayIDs = append(s.gatewayIDs, gatewayID)
+		return nil
 	}
+
+	macs, err := as.LNSGetGateway()
+	if err != nil {
+		return errors.Wrap(err, "get gateway error")
+	}
+
+	s.gatewayIDs = macs
 
 	return nil
 }
 
 func (s *LNSSimulation) tearDownGateways() error {
 	log.Info("simulator: tear-down gateways")
+	if !config.C.ChirpStack.API.UseNewGateway {
+		return nil
+	}
 
 	for _, gatewayID := range s.gatewayIDs {
 		err := as.LNSDeleteGateway(gatewayID.String())
@@ -273,7 +288,6 @@ func (s *LNSSimulation) tearDownGateways() error {
 			return errors.Wrap(err, "delete gateway error")
 		}
 	}
-
 	return nil
 }
 

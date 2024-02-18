@@ -4,12 +4,15 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"github.com/brocaar/chirpstack-simulator/internal/config"
+	"github.com/brocaar/chirpstack-simulator/internal/utils"
+	"github.com/brocaar/lorawan"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -162,12 +165,24 @@ func LNSSetup(c config.Config) error {
 }
 
 func LoginDeviceHub() (string, error) {
-	url := "/devicehub/api/v1/user/login"
+	url := config.C.ChirpStack.API.LoginUrl
 
-	password := sha256Hash("password")
+	password := ""
+	if config.C.ChirpStack.API.IsLNS {
+		password = sha256Hash("password")
+	} else {
+		key := []byte("1111111111111111")
+		iv := []byte("2222222222222222")
+		ps, err := utils.AesCBCEncrypt([]byte(config.C.ChirpStack.API.Password), key, iv)
+		if err != nil {
+			log.Error("AesCBCEncrypt error: ", err)
+			return "", err
+		}
+		password = ps
+	}
 
 	data := `{
-		"username": "admin",
+		"username": "` + config.C.ChirpStack.API.Username + `",
 		"password": "` + password + `"
 	}`
 
@@ -181,13 +196,34 @@ func LoginDeviceHub() (string, error) {
 		return "", err
 	}
 
-	jwt := jsonObj["data"].(map[string]interface{})["token"].(string)
+	jwt := ""
+
+	if config.C.ChirpStack.API.IsLNS {
+		dataMap, ok := jsonObj["data"].(map[string]interface{})
+		if !ok {
+			return "", fmt.Errorf("data field type assertion failed")
+		}
+		j, ok := dataMap["token"].(string)
+		if !ok {
+			return "", fmt.Errorf("token field type assertion failed")
+		}
+		jwt = j
+	} else {
+		j, ok := jsonObj["jwt"].(string)
+		if !ok {
+			return "", fmt.Errorf("token field type assertion failed")
+		}
+		jwt = j
+	}
 
 	return jwt, nil
 }
 
 func LNSCreateApplication() (string, error) {
 	url := "/lns/api/v1/urapplications"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/urapplications"
+	}
 
 	data := `
 	{
@@ -214,6 +250,9 @@ func LNSCreateApplication() (string, error) {
 
 func LNSDeleteApplication(applicationID string) error {
 	url := "/lns/api/v1/urapplications/" + applicationID
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/urapplications/" + applicationID
+	}
 
 	data := `
 	{
@@ -238,6 +277,9 @@ func LNSDeleteApplication(applicationID string) error {
 
 func LNSCreateGateway(id string, name string) error {
 	url := "/lns/api/v1/gateways"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/gateways"
+	}
 
 	data := `
 	{
@@ -271,6 +313,9 @@ func LNSCreateGateway(id string, name string) error {
 
 func LNSDeleteGateway(id string) error {
 	url := "/lns/api/v1/gateways/" + id
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/gateways/" + id
+	}
 
 	bytes, err := delete(url, "", jwtConn)
 	if err != nil {
@@ -287,7 +332,9 @@ func LNSDeleteGateway(id string) error {
 
 func LNSCreateDeviceProfile() (string, error) {
 	url := "/lns/api/v1/urprofiles"
-
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/urprofiles"
+	}
 	data := `
 	{
 		"name": "simulator_test",
@@ -324,13 +371,20 @@ func LNSCreateDeviceProfile() (string, error) {
 		return "", err
 	}
 
-	profileID := jsonObj["profileID"].(string)
+	profileID, ok := jsonObj["profileID"].(string)
+	if !ok {
+		log.Error("LNSCreateDeviceProfile failed")
+		return "", nil
+	}
 
 	return profileID, nil
 }
 
 func LNSDeleteDeviceProfile(profileID string) error {
 	url := "/lns/api/v1/urprofiles/" + profileID
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/urprofiles/" + profileID
+	}
 
 	bytes, err := delete(url, "", jwtConn)
 	if err != nil {
@@ -347,6 +401,9 @@ func LNSDeleteDeviceProfile(profileID string) error {
 
 func LNSCreateDevices(eui, profileId, appKey, payloadCodecID, applicationID string) error {
 	url := "/lns/api/v1/urdevices"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/urdevices"
+	}
 
 	data := `
 	{
@@ -382,6 +439,9 @@ func LNSCreateDevices(eui, profileId, appKey, payloadCodecID, applicationID stri
 
 func LNSDeleteDevices(eui string) error {
 	url := "/lns/api/v1/urdevices/" + eui
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/urdevices/" + eui
+	}
 
 	bytes, err := delete(url, "", jwtConn)
 	if err != nil {
@@ -415,6 +475,9 @@ type ListPayloadCodecResponse struct {
 
 func LNSGetPayloadCoedc(name string) (string, error) {
 	url := "/lns/api/v1/payloadcodecs/lns?limit=10&offset=0&type=default&search=" + name
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/payloadcodecs?limit=10&offset=0&type=default&search=" + name
+	}
 
 	bytes, err := get(url, "", jwtConn)
 	if err != nil {
@@ -430,5 +493,66 @@ func LNSGetPayloadCoedc(name string) (string, error) {
 		return "", err
 	}
 
+	if len(resp.Result) == 0 {
+		log.Error("LNSGetPayloadCoedc failed")
+		return "", fmt.Errorf("no payload codec")
+	}
+
 	return resp.Result[0].ID, err
+}
+
+type GatewayJson struct {
+	MAC             string  `json:"mac"`
+	Name            string  `json:"name"`
+	Description     string  `json:"description"`
+	CreatedAt       string  `json:"createdAt"`
+	UpdatedAt       string  `json:"updatedAt"`
+	OrganizationID  string  `json:"organizationID"`
+	NetworkServerID string  `json:"networkServerID"`
+	FirstSeenAt     string  `json:"firstSeenAt"`
+	LastSeenAt      string  `json:"lastSeenAt"`
+	Latitude        float64 `json:"latitude"`
+	Longitude       float64 `json:"longitude"`
+	Altitude        float64 `json:"altitude"`
+	Connected       bool    `json:"connected"`
+}
+
+type GatewayJSONData struct {
+	TotalCount int           `json:"totalCount"`
+	LocalNS    bool          `json:"localNS"`
+	Result     []GatewayJson `json:"result"`
+}
+
+func LNSGetGateway() ([]lorawan.EUI64, error) {
+	res := []lorawan.EUI64{}
+
+	url := "/lns/api/v1/gateways?limit=9999&offset=0&organizationID=1"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/gateways?limit=9999&offset=0&organizationID=1"
+	}
+
+	bytes, err := get(url, "", jwtConn)
+	if err != nil {
+		return res, err
+	}
+
+	var gateways GatewayJSONData
+	err = json.Unmarshal(bytes, &gateways)
+	if err != nil {
+		log.Error("LNSGetGateway failed to Unmarshal Json")
+		return res, err
+	}
+
+	for _, g := range gateways.Result {
+		gatewayEUI := lorawan.EUI64{}
+		err := gatewayEUI.UnmarshalText([]byte(g.MAC))
+		if err != nil {
+			log.Error("LNSGetGateway gatewayEUI.UnmarshalText error ", err)
+
+		}
+
+		res = append(res, gatewayEUI)
+	}
+
+	return res, nil
 }
