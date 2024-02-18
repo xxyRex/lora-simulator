@@ -97,7 +97,9 @@ def filter_simulator_log(num: int):
                 break
 
         for key, value in mapUp.items():
-            resultFile.write(key + "," + value.devAddr + "," + value.count + "," + mapDown[key].count + ',' + str("") + "\n")
+            up_count = value.count
+            down_count = mapDown[key].count if key in mapDown else '0'  # Use '0' or an appropriate default value
+            resultFile.write(f"{key},{value.devAddr},{up_count},{down_count},\n")
 
         
 

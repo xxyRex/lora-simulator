@@ -25,13 +25,21 @@
     # Server.
     #
     # This must point to the ChirpStack API interface.
-    server="http://192.168.45.110"
+    server="http://192.168.40.147"
+    login_url="/api/internal/login"
+    username="admin"
+    password="password"
+    is_lns=false
+    use_new_gateway=false
+    use_new_profile=false
+    use_new_app=false
+    clean_before_test=true
+    teardown_after_test=true
 
     # Insecure.
     #
     # Set this to true when the endpoint is not using TLS.
     insecure=true
-
 
     # MQTT integration configuration.
     #
@@ -40,26 +48,26 @@
     [chirpstack.integration.mqtt]
 
     # MQTT server.
-    server="tcp://192.168.45.110:1883"
+    server="tcp://192.168.40.147:1883"
 
     # Username.
-    username="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoibG5zIn0.G9DInmih-aPqBm2pj8fGWao-dqToV7NZiRGFU2BWgHI"
+    username="lorawan"
 
     # Password.
-    password=""
+    password="Urs@L1nk#Ms2020"
 
 
   # MQTT gateway backend.
   [chirpstack.gateway.backend.mqtt]
 
     # MQTT server.
-    server="tcp://192.168.45.110:1883"
+    server="tcp://192.168.40.147:1883"
 
     # Username.
-    username="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoibG5zIn0.G9DInmih-aPqBm2pj8fGWao-dqToV7NZiRGFU2BWgHI"
+    username="lorawan"
 
     # Password.
-    password=""
+    password="Urs@L1nk#Ms2020"
 
 
 # Simulator configuration.
@@ -76,13 +84,13 @@ tenant_id="f6f7d81d-647f-4c7f-8409-3e5218c0c523"
 #
 # This defines the duration of the simulation. If set to '0s', the simulation
 # will run until terminated. This includes the activation time.
-duration="0"
+duration="5m"
 
 # Activation time.
 #
 # This is the time that the simulator takes to activate the devices. This
 # value must be less than the simulator duration.
-activation_time="30s"
+activation_time="1m"
 
   # Device configuration.
   [simulator.device]
@@ -91,7 +99,7 @@ activation_time="30s"
   count=100
 
   # Uplink interval.
-  uplink_interval="1000s"
+  uplink_interval="10s"
 
   # FPort.
   f_port=1

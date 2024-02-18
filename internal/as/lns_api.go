@@ -556,3 +556,107 @@ func LNSGetGateway() ([]lorawan.EUI64, error) {
 
 	return res, nil
 }
+
+type ProfileJson struct {
+	ProfileID            string `json:"profileID"`
+	SupportsClassB       bool   `json:"supportsClassB"`
+	ClassBTimeout        int    `json:"classBTimeout"`
+	PingSlotPeriod       int    `json:"pingSlotPeriod"`
+	PingSlotDR           int    `json:"pingSlotDR"`
+	PingSlotFreq         int    `json:"pingSlotFreq"`
+	SupportsClassC       bool   `json:"supportsClassC"`
+	ClassCTimeout        int    `json:"classCTimeout"`
+	MacVersion           string `json:"macVersion"`
+	RegParamsRevision    string `json:"regParamsRevision"`
+	RxDROffset1          int    `json:"rxDROffset1"`
+	RxDataRate2          int    `json:"rxDataRate2"`
+	RxFreq2              int    `json:"rxFreq2"`
+	FactoryPresetFreqs   []int  `json:"factoryPresetFreqs"`
+	MaxEIRP              int    `json:"maxEIRP"`
+	MaxDutyCycle         int    `json:"maxDutyCycle"`
+	SupportsJoin         bool   `json:"supportsJoin"`
+	RfRegion             string `json:"rfRegion"`
+	Supports32bitFCnt    bool   `json:"supports32bitFCnt"`
+	EnableUplinkChannels []int  `json:"enableUplinkChannels"`
+}
+
+type ProfileResultJson struct {
+	Profile         ProfileJson `json:"profile"`
+	Name            string      `json:"name"`
+	OrganizationID  string      `json:"organizationID"`
+	NetworkServerID string      `json:"networkServerID"`
+	Using           bool        `json:"using"`
+	IsDefault       bool        `json:"isDefault"`
+}
+
+type ProfileJSONData struct {
+	TotalCount  string              `json:"totalCount"`
+	Disable     bool                `json:"disable"`
+	Result      []ProfileResultJson `json:"result"`
+	ChannelPlan string              `json:"channelPlan"`
+}
+
+func LNSGetProfiles() ([]ProfileResultJson, error) {
+	res := []ProfileResultJson{}
+
+	url := "/lns/api/v1/urprofiles?limit=9999&offset=0&organizationID=1"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/urprofiles?limit=9999&offset=0&organizationID=1"
+	}
+
+	bytes, err := get(url, "", jwtConn)
+	if err != nil {
+		return res, err
+	}
+	var profilesJson ProfileJSONData
+	err = json.Unmarshal(bytes, &profilesJson)
+	if err != nil {
+		log.Error("LNSGetProfiles failed ", err)
+		return res, err
+	}
+
+	return profilesJson.Result, nil
+}
+
+// Device represents the information for a device.
+type ApplicationJson struct {
+	ID                   string   `json:"id"`
+	Name                 string   `json:"name"`
+	Description          string   `json:"description"`
+	OrganizationID       string   `json:"organizationID"`
+	ServiceProfileID     string   `json:"serviceProfileID"`
+	PayloadCodec         string   `json:"payloadCodec"`
+	PayloadEncoderScript string   `json:"payloadEncoderScript"`
+	PayloadDecoderScript string   `json:"payloadDecoderScript"`
+	Using                bool     `json:"using"`
+	Kinds                []string `json:"kinds"`
+}
+
+// JSONData represents the top-level structure of the JSON data.
+type ApplicationJSONData struct {
+	TotalCount string            `json:"totalCount"`
+	Disable    bool              `json:"disable"`
+	Result     []ApplicationJson `json:"result"`
+}
+
+func LNSGetApplications() ([]ApplicationJson, error) {
+	res := []ApplicationJson{}
+
+	url := "/lns/api/v1/urapplications?limit=9999&offset=0&organizationID=1"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/urapplications?limit=9999&offset=0&organizationID=1"
+	}
+
+	bytes, err := get(url, "", jwtConn)
+	if err != nil {
+		return res, err
+	}
+	var apps ApplicationJSONData
+	err = json.Unmarshal(bytes, &apps)
+	if err != nil {
+		log.Error("LNSGetApplications failed ", err)
+		return res, err
+	}
+
+	return apps.Result, nil
+}

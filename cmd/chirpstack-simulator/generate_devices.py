@@ -23,7 +23,7 @@ def generate_devices(num: int):
             items[0] = newEUIStr
             items[1] = newEUIStr
             items[2] = newEUIStr
-            items[6] = generate_random_string()
+            items[7] = generate_random_string()
             dst.write(",".join(items) + "\n")
 
 if __name__ == "__main__":

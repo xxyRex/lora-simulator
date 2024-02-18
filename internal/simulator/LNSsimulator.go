@@ -86,6 +86,9 @@ type LNSSimulation struct {
 	deviceAppKeys        map[lorawan.EUI64]lorawan.AES128Key
 	eventTopicTemplate   string
 	commandTopicTemplate string
+
+	deviceProfiles []as.ProfileResultJson
+	applications   []as.ApplicationJson
 }
 
 func (s *LNSSimulation) start() {
@@ -94,15 +97,15 @@ func (s *LNSSimulation) start() {
 		log.WithError(err).Error("simulator: init LNSSimulation error")
 	}
 
-	// if err := s.runSimulation(); err != nil {
-	// 	log.WithError(err).Error("simulator: LNSSimulation error")
-	// }
+	if err := s.runSimulation(); err != nil {
+		log.WithError(err).Error("simulator: LNSSimulation error")
+	}
 
-	// log.Info("simulator: LNSSimulation completed")
+	log.Info("simulator: LNSSimulation completed")
 
-	// if err := s.tearDown(); err != nil {
-	// 	log.WithError(err).Error("simulator: tear-down LNSSimulation error")
-	// }
+	if err := s.tearDown(); err != nil {
+		log.WithError(err).Error("simulator: tear-down LNSSimulation error")
+	}
 
 	s.wg.Done()
 
@@ -120,13 +123,13 @@ func (s *LNSSimulation) init() error {
 		return err
 	}
 
-	// if err := s.setupApplication(); err != nil {
-	// 	return err
-	// }
+	if err := s.setupApplication(); err != nil {
+		return err
+	}
 
-	// if err := s.setupDevices(); err != nil {
-	// 	return err
-	// }
+	if err := s.setupDevices(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -294,22 +297,37 @@ func (s *LNSSimulation) tearDownGateways() error {
 func (s *LNSSimulation) setupDeviceProfile() error {
 	log.Info("simulator: creating device-profile")
 
-	profileId, err := as.LNSCreateDeviceProfile()
-	if err != nil {
-		return errors.Wrap(err, "create device-profile error")
+	if config.C.ChirpStack.API.UseNewProfile {
+		profileId, err := as.LNSCreateDeviceProfile()
+		if err != nil {
+			return errors.Wrap(err, "create device-profile error")
+		}
+
+		dpID, err := uuid.FromString(profileId)
+		if err != nil {
+			return err
+		}
+		s.deviceProfileID = dpID
+
+		return nil
 	}
 
-	dpID, err := uuid.FromString(profileId)
+	profiles, err := as.LNSGetProfiles()
 	if err != nil {
 		return err
 	}
-	s.deviceProfileID = dpID
+
+	s.deviceProfiles = profiles
 
 	return nil
 }
 
 func (s *LNSSimulation) tearDownDeviceProfile() error {
 	log.Info("simulator: tear-down device-profile")
+
+	if !config.C.ChirpStack.API.UseNewProfile {
+		return nil
+	}
 
 	err := as.LNSDeleteDeviceProfile(s.deviceProfileID.String())
 	if err != nil {
@@ -323,17 +341,32 @@ func (s *LNSSimulation) tearDownDeviceProfile() error {
 func (s *LNSSimulation) setupApplication() error {
 	log.Info("simulator: init application")
 
-	id, err := as.LNSCreateApplication()
-	if err != nil {
-		return errors.Wrap(err, "create applicaiton error")
+	if config.C.ChirpStack.API.UseNewApp {
+		id, err := as.LNSCreateApplication()
+		if err != nil {
+			return errors.Wrap(err, "create applicaiton error")
+		}
+
+		s.applicationID = id
+
+		return nil
 	}
 
-	s.applicationID = id
+	apps, err := as.LNSGetApplications()
+	if err != nil {
+		return err
+	}
+	s.applications = apps
+
 	return nil
 }
 
 func (s *LNSSimulation) tearDownApplication() error {
 	log.Info("simulator: tear-down application")
+
+	if !config.C.ChirpStack.API.UseNewApp {
+		return nil
+	}
 
 	err := as.LNSDeleteApplication(s.applicationID)
 	if err != nil {
@@ -359,13 +392,35 @@ func (s *LNSSimulation) setupDevices() error {
 
 	for _, ldcfg := range records {
 		// TODO: 需要使用get获取对应的profileId和payloadCodecId
+		profileID := ""
+		for _, p := range s.deviceProfiles {
+			if p.Name == ldcfg.DeviceProfile {
+				profileID = p.Profile.ProfileID
+				break
+			}
+		}
+
+		if profileID == "" {
+			return errors.Errorf("can not find device profile: %s", ldcfg.DeviceProfile)
+		}
+
+		applicationID := ""
+		for _, a := range s.applications {
+			if a.Name == ldcfg.Application {
+				applicationID = a.ID
+				break
+			}
+		}
+
+		if applicationID == "" {
+			return errors.Errorf("can not find application: %s", ldcfg.Application)
+		}
+
 		eui := ldcfg.DevEUI
-		profileID := s.deviceProfileID
 		appKey := ldcfg.AppKey
 		payloadCodecID := payloadID
-		applicationID := s.applicationID
 
-		err := as.LNSCreateDevices(eui, profileID.String(), appKey, payloadCodecID, applicationID)
+		err := as.LNSCreateDevices(eui, profileID, appKey, payloadCodecID, applicationID)
 
 		if err != nil {
 			log.Error(err)
