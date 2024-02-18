@@ -186,18 +186,22 @@ func (s *LNSSimulation) runSimulation() error {
 	defer cancel()
 
 	for devEUI, appKey := range s.deviceAppKeys {
-		devGateways := make(map[int]*simulator.Gateway)
-		devNumGateways := s.gatewayMinCount + mrand.Intn(s.gatewayMaxCount-s.gatewayMinCount+1)
-
-		for len(devGateways) < devNumGateways {
-			// pick random gateway index
-			n := mrand.Intn(len(gateways))
-			devGateways[n] = gateways[n]
-		}
-
 		var gws []*simulator.Gateway
-		for k := range devGateways {
-			gws = append(gws, devGateways[k])
+		if config.C.ChirpStack.API.UseNewGateway {
+			devGateways := make(map[int]*simulator.Gateway)
+			devNumGateways := s.gatewayMinCount + mrand.Intn(s.gatewayMaxCount-s.gatewayMinCount+1)
+
+			for len(devGateways) < devNumGateways {
+				// pick random gateway index
+				n := mrand.Intn(len(gateways))
+				devGateways[n] = gateways[n]
+			}
+
+			for k := range devGateways {
+				gws = append(gws, devGateways[k])
+			}
+		} else {
+			gws = gateways
 		}
 
 		zeroDuration := time.Duration(0)

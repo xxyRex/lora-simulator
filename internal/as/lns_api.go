@@ -413,7 +413,7 @@ func LNSCreateDevices(eui, profileId, appKey, payloadCodecID, applicationID stri
 		"profileID": "` + profileId + `",
 		"payloadCodecID": "` + payloadCodecID + `",
 		"fPort": 1,
-		"appKey": "` + "12345678123456781234567812345678" + `",
+		"appKey": "` + appKey + `",
 		"skipFCntCheck": true,
 		"devAddr": "",
 		"appSKey": "",
