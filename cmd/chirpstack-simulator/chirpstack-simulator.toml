@@ -90,7 +90,7 @@ duration="5m"
 #
 # This is the time that the simulator takes to activate the devices. This
 # value must be less than the simulator duration.
-activation_time="1m"
+activation_time="10s"
 
   # Device configuration.
   [simulator.device]
@@ -99,7 +99,7 @@ activation_time="1m"
   count=100
 
   # Uplink interval.
-  uplink_interval="10s"
+  uplink_interval="1s"
 
   # FPort.
   f_port=1

@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/robertkrimen/otto"
 	log "github.com/sirupsen/logrus"
 
 	"sync/atomic"
 
+	"github.com/brocaar/chirpstack-simulator/internal/as"
 	"github.com/brocaar/lorawan"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
@@ -116,6 +118,8 @@ type Device struct {
 	datadownCount uint64
 
 	joinReqSent bool
+
+	payloadCodec as.PayloadCodecItem
 }
 
 // WithAppKey sets the AppKey.
@@ -210,6 +214,13 @@ func WithUplinkTXInfo(txInfo gw.UplinkTxInfo) DeviceOption {
 func WithDownlinkHandlerFunc(f func(confirmed, ack bool, fCntDown uint32, fPort uint8, data []byte) error) DeviceOption {
 	return func(d *Device) error {
 		d.downlinkHandlerFunc = f
+		return nil
+	}
+}
+
+func WithPayloadCodec(payloadCodec as.PayloadCodecItem) DeviceOption {
+	return func(d *Device) error {
+		d.payloadCodec = payloadCodec
 		return nil
 	}
 }
@@ -362,6 +373,55 @@ func (d *Device) dataUp() {
 	mType := lorawan.UnconfirmedDataUp
 	if d.confirmed {
 		mType = lorawan.ConfirmedDataUp
+	}
+
+	switch d.payloadCodec.Name {
+	case "UC300":
+		postscript := `
+
+			var encodedBytes = Encode(1, {
+				ipso_version: "v1.2",
+				hardware_version: "v1.0",
+				firmware_version: "v2.5",
+				gpio_input_1: 0,
+				gpio_output_1: 1
+			});
+			
+		`
+		vm := otto.New()
+		js := d.payloadCodec.EncoderScript + postscript
+		if _, err := vm.Run(js); err != nil {
+			panic(err)
+		}
+		value, err := vm.Get("encodedBytes")
+		if err != nil {
+			log.Error("dataUp get encodedBytes failed ", err)
+			return
+		}
+		// 将值转换为Go中的切片
+		exportedValue, err := value.Export()
+		if err != nil {
+			panic(err) // 如果有错误，抛出异常
+		}
+
+		encodedBytes, ok := exportedValue.([]interface{})
+		if !ok {
+			panic("encodedBytes is not a []interface{}")
+		}
+
+		// 将interface{}切片转换为字节切片
+		var bytes []byte
+		for _, byteVal := range encodedBytes {
+			if num, ok := byteVal.(int32); ok {
+				bytes = append(bytes, byte(num))
+			} else if num, ok := byteVal.(int64); ok {
+				bytes = append(bytes, byte(num))
+			} else {
+				panic("unexpceted type")
+			}
+		}
+
+		d.payload = bytes
 	}
 
 	phy := lorawan.PHYPayload{

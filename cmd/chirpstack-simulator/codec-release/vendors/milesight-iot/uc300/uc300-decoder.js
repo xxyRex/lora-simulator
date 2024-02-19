@@ -406,3 +406,5 @@ function readSerialNumber(bytes) {
     }
     return temp.join("");
 }
+
+// module.exports.Decode = Decode;

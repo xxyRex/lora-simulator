@@ -4,9 +4,11 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"io"
 	mrand "math/rand"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -22,6 +24,8 @@ import (
 	"github.com/brocaar/lorawan"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
+
+var SupportedPayloadCodecs = []string{"UC300"}
 
 // Start starts the simulator.
 func LNSStart(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
@@ -55,6 +59,7 @@ func LNSStart(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 			deviceAppKeys:        make(map[lorawan.EUI64]lorawan.AES128Key),
 			eventTopicTemplate:   c.Gateway.EventTopicTemplate,
 			commandTopicTemplate: c.Gateway.CommandTopicTemplate,
+			euiCodecMap:          make(map[lorawan.EUI64]as.PayloadCodecItem),
 		}
 
 		go sim.start()
@@ -90,6 +95,8 @@ type LNSSimulation struct {
 	deviceProfiles []as.ProfileResultJson
 	applications   []as.ApplicationJson
 	payloadCodecs  []as.PayloadCodecItem
+
+	euiCodecMap map[lorawan.EUI64]as.PayloadCodecItem
 }
 
 func (s *LNSSimulation) start() {
@@ -229,6 +236,7 @@ func (s *LNSSimulation) runSimulation() error {
 					},
 				},
 			}),
+			simulator.WithPayloadCodec(s.euiCodecMap[devEUI]),
 		)
 		if err != nil {
 			return errors.Wrap(err, "new device error")
@@ -240,7 +248,7 @@ func (s *LNSSimulation) runSimulation() error {
 	log.Info("len(devices): ", len(devices))
 
 	go func() {
-		sigChan := make(chan os.Signal)
+		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 		select {
@@ -395,7 +403,6 @@ func (s *LNSSimulation) setupDevices() error {
 	}
 
 	for _, ldcfg := range records {
-		// TODO: 需要使用get获取对应的profileId和payloadCodecId
 		profileID := ""
 		for _, p := range s.deviceProfiles {
 			if p.Name == ldcfg.DeviceProfile {
@@ -421,9 +428,11 @@ func (s *LNSSimulation) setupDevices() error {
 		}
 
 		payloadCodecID := ""
+		var codec as.PayloadCodecItem
 		for _, c := range s.payloadCodecs {
 			if c.Name == ldcfg.PayloadCodec {
 				payloadCodecID = c.ID
+				codec = c
 				break
 			}
 		}
@@ -448,6 +457,7 @@ func (s *LNSSimulation) setupDevices() error {
 		appKeyAES.UnmarshalText([]byte(appKey))
 
 		s.deviceAppKeys[devEUI] = appKeyAES
+		s.euiCodecMap[devEUI] = codec
 	}
 
 	return nil
@@ -475,7 +485,27 @@ func (s *LNSSimulation) setupPayloadCodec() error {
 		return nil
 	}
 
+	codecDir := "codec-release/vendors/milesight-iot/"
 	s.payloadCodecs = codecs
+
+	for i, c := range s.payloadCodecs {
+		for _, sc := range SupportedPayloadCodecs {
+			if c.Name != sc {
+				continue
+			}
+
+			ecPath := codecDir + strings.ToLower(sc) + "/" + strings.ToLower(sc) + "-encoder.js"
+			file, err := os.Open(ecPath)
+			if err != nil {
+				return err
+			}
+			buf, _ := io.ReadAll(file)
+			s.payloadCodecs[i].EncoderScript = string(buf)
+			file.Close()
+			break
+
+		}
+	}
 
 	return nil
 }
