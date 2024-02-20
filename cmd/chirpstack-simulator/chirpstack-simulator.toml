@@ -5,6 +5,8 @@
   log_level=4
 
   channel_plan="EU868"
+  
+  use_dynamic_payload=true
 
 # ChirpStack configuration.
 [chirpstack]
@@ -98,7 +100,7 @@ activation_time="10s"
   [simulator.device]
 
   # Number of devices to simulate.
-  count=100
+  count=10
 
   # Uplink interval.
   uplink_interval="10s"

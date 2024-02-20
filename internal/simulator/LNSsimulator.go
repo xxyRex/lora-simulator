@@ -1,13 +1,17 @@
 package simulator
 
 import (
+	"bufio"
 	"context"
 	"crypto/rand"
+	"encoding/csv"
 	"encoding/hex"
+	"fmt"
 	"io"
 	mrand "math/rand"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -394,8 +398,83 @@ func (s *LNSSimulation) tearDownApplication() error {
 	return nil
 }
 
+func generateRandomString() string {
+	randomBytes := make([]byte, 16)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return hex.EncodeToString(randomBytes)
+}
+
+func generateDevices(num int) error {
+	srcFile, err := os.Open("base_devices_export.csv")
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create("devices_import.csv")
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	defer dstFile.Close()
+
+	srcReader := csv.NewReader(bufio.NewReader(srcFile))
+	dstWriter := csv.NewWriter(bufio.NewWriter(dstFile))
+
+	// Read the header line
+	header, err := srcReader.Read()
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	dstWriter.Write(header)
+
+	// Read the base line
+	baseLine, err := srcReader.Read()
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	baseEUI, err := strconv.ParseUint(baseLine[0], 16, 64)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	for i := 1; i <= num; i++ {
+		newEUI := baseEUI + uint64(i)
+		newEUIStr := fmt.Sprintf("%016x", newEUI)
+
+		baseLine[0] = newEUIStr
+		baseLine[1] = newEUIStr
+		baseLine[2] = newEUIStr
+		baseLine[7] = generateRandomString()
+		if err := dstWriter.Write(baseLine); err != nil {
+			log.Fatal(err)
+			return err
+		}
+	}
+
+	dstWriter.Flush()
+	if err := dstWriter.Error(); err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	return nil
+}
+
 func (s *LNSSimulation) setupDevices() error {
 	log.Info("simulator: init devices")
+
+	if err := generateDevices(s.deviceCount); err != nil {
+		panic(err)
+	}
 
 	ret, records := as.LoadLoRaWANDevCfg("devices_import.csv", 1)
 	if !ret {

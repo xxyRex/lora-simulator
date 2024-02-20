@@ -6,6 +6,9 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,12 +19,15 @@ import (
 	"sync/atomic"
 
 	"github.com/brocaar/chirpstack-simulator/internal/as"
+	"github.com/brocaar/chirpstack-simulator/internal/config"
 	"github.com/brocaar/lorawan"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 // DeviceOption is the interface for a device option.
 type DeviceOption func(*Device) error
+
+var codecDir = "codec-release/vendors/milesight-iot/"
 
 type deviceState int
 
@@ -63,6 +69,8 @@ type Device struct {
 
 	// Payload (plaintext) which the device sends as uplink.
 	payload []byte
+
+	encoderScriptFileModTime time.Time
 
 	// FPort used for sending uplinks.
 	fPort uint8
@@ -375,22 +383,25 @@ func (d *Device) dataUp() {
 		mType = lorawan.ConfirmedDataUp
 	}
 
-	switch d.payloadCodec.Name {
-	case "UC300":
-		postscript := `
+	ecPath := codecDir + strings.ToLower(d.payloadCodec.Name) + "/" + strings.ToLower(d.payloadCodec.Name) + "-encoder.js"
+	fileInfo, err := os.Stat(ecPath)
+	if err != nil {
+		panic(err)
+	}
 
-			var encodedBytes = Encode(1, {
-				ipso_version: "v1.2",
-				hardware_version: "v1.0",
-				firmware_version: "v2.5",
-				gpio_input_1: 0,
-				gpio_output_1: 1
-			});
-			
-		`
+	if config.C.General.UseDynamicPayload && !d.encoderScriptFileModTime.Equal(fileInfo.ModTime()) {
+		d.encoderScriptFileModTime = fileInfo.ModTime()
+
+		file, err := os.Open(ecPath)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+		buf, _ := io.ReadAll(file)
+		d.payloadCodec.EncoderScript = string(buf)
+
 		vm := otto.New()
-		js := d.payloadCodec.EncoderScript + postscript
-		if _, err := vm.Run(js); err != nil {
+		if _, err := vm.Run(d.payloadCodec.EncoderScript); err != nil {
 			panic(err)
 		}
 		value, err := vm.Get("encodedBytes")
@@ -415,6 +426,10 @@ func (d *Device) dataUp() {
 			if num, ok := byteVal.(int32); ok {
 				bytes = append(bytes, byte(num))
 			} else if num, ok := byteVal.(int64); ok {
+				bytes = append(bytes, byte(num))
+			} else if num, ok := byteVal.(float64); ok {
+				bytes = append(bytes, byte(num))
+			} else if num, ok := byteVal.(float32); ok {
 				bytes = append(bytes, byte(num))
 			} else {
 				panic("unexpceted type")
