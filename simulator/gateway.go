@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/brocaar/chirpstack-simulator/internal/config"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
@@ -78,6 +79,118 @@ type LNSTXInfo struct {
 	IPol              *bool         `json:"iPol"`                        // when left nil, the gateway-bridge will use the default (true for LoRa modulation)
 	Board             int           `json:"board"`                       // Concentrator board used for RX
 	Antenna           int           `json:"antenna"`                     // Antenna number on which signal has been received
+}
+
+var as923_1TxInfo = LNSTXInfo{
+	Frequency: 923200000,
+	DataRate: band.DataRate{
+		Modulation:   "LORA",
+		SpreadFactor: 10,
+		Bandwidth:    125,
+	},
+}
+
+var as923_2TxInfo = LNSTXInfo{
+	Frequency: 921400000,
+	DataRate: band.DataRate{
+		Modulation:   "LORA",
+		SpreadFactor: 10,
+		Bandwidth:    125,
+	},
+}
+
+var as915TxInfo = LNSTXInfo{
+	Frequency: 921400000,
+	DataRate: band.DataRate{
+		Modulation:   "LORA",
+		SpreadFactor: 10,
+		Bandwidth:    125,
+	},
+}
+
+var as923_3TxInfo = LNSTXInfo{
+	Frequency: 916600000,
+	DataRate: band.DataRate{
+		Modulation:   "LORA",
+		SpreadFactor: 10,
+		Bandwidth:    125,
+	},
+}
+
+var as923_4TxInfo = LNSTXInfo{
+	Frequency: 917300000,
+	DataRate: band.DataRate{
+		Modulation:   "LORA",
+		SpreadFactor: 10,
+		Bandwidth:    125,
+	},
+}
+
+var au915TxInfo = LNSTXInfo{
+	Frequency: 915200000,
+	DataRate: band.DataRate{
+		Modulation:   "LORA",
+		SpreadFactor: 12,
+		Bandwidth:    500,
+	},
+}
+
+var cn470TxInfo = LNSTXInfo{
+	Frequency: 470300000,
+	DataRate: band.DataRate{
+		Modulation:   "LORA",
+		SpreadFactor: 12,
+		Bandwidth:    125,
+	},
+}
+
+var kr920TxInfo = LNSTXInfo{
+	Frequency: 920900000,
+	DataRate: band.DataRate{
+		Modulation:   "LORA",
+		SpreadFactor: 12,
+		Bandwidth:    125,
+	},
+}
+
+var eu868TxInfo = LNSTXInfo{
+	Frequency: 868100000,
+	DataRate: band.DataRate{
+		Modulation:   "LORA",
+		SpreadFactor: 12,
+		Bandwidth:    125,
+	},
+}
+
+var in865TxInfo = LNSTXInfo{
+	Frequency: 865062500,
+	DataRate: band.DataRate{
+		Modulation:   "LORA",
+		SpreadFactor: 12,
+		Bandwidth:    125,
+	},
+}
+
+var ru864TxInfo = LNSTXInfo{
+	Frequency: 868900000,
+	DataRate: band.DataRate{
+		Modulation:   "LORA",
+		SpreadFactor: 12,
+		Bandwidth:    125,
+	},
+}
+
+var txInfoMap = map[string]LNSTXInfo{
+	"AS923-1": as923_1TxInfo,
+	"AS923-2": as923_2TxInfo,
+	"AS923-3": as923_3TxInfo,
+	"AS923-4": as923_4TxInfo,
+	"AU915":   au915TxInfo,
+	"CN470":   cn470TxInfo,
+	"KR920":   kr920TxInfo,
+	"EU868":   eu868TxInfo,
+	"IN865":   in865TxInfo,
+	"RU864":   ru864TxInfo,
 }
 
 type LNSTXPacketBytes struct {
@@ -264,21 +377,19 @@ func NewGateway(opts ...GatewayOption) (*Gateway, error) {
 // SendUplinkFrame sends the given uplink frame.
 func (g *Gateway) SendUplinkFrame(pl LNSRXPacketBytes) error {
 	currentTime := time.Now()
+	channelPlanTxInfo := txInfoMap[config.C.General.ChannelPlan]
+
 	pl.RXInfo = LNSRXInfo{
 		MAC:       g.gatewayID,
 		Time:      &currentTime,
-		Frequency: 868500000,
+		Frequency: channelPlanTxInfo.Frequency,
 		Channel:   2,
 		CodeRate:  "4/5",
 		RSSI:      -63,
 		LoRaSNR:   8.5,
-		DataRate: band.DataRate{
-			Modulation:   "LORA",
-			SpreadFactor: 10,
-			Bandwidth:    125,
-		},
-		Board:   0,
-		Antenna: 0,
+		DataRate:  channelPlanTxInfo.DataRate,
+		Board:     0,
+		Antenna:   0,
 	}
 
 	jsonBytes, err := json.Marshal(&pl)

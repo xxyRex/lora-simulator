@@ -36,11 +36,12 @@ func run(cnd *cobra.Command, args []string) error {
 	for _, t := range tasks {
 		if err := t(ctx, &wg); err != nil {
 			log.Fatal(err)
+			panic("panic while running")
 		}
 	}
 
 	exitChan := make(chan struct{})
-	sigChan := make(chan os.Signal)
+	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	<-sigChan
 	go func() {

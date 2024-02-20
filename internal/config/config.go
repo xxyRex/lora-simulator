@@ -10,7 +10,8 @@ var Version string
 // Config defines the configuration.
 type Config struct {
 	General struct {
-		LogLevel int `mapstructure:"log_level"`
+		LogLevel    int    `mapstructure:"log_level"`
+		ChannelPlan string `mapstructure:"channel_plan"`
 	}
 
 	ChirpStack struct {
@@ -24,6 +25,7 @@ type Config struct {
 			UseNewGateway   bool   `mapstructure:"use_new_gateway"`
 			UseNewProfile   bool   `mapstructure:"use_new_profile"`
 			UseNewApp       bool   `mapstructure:"use_new_app"`
+			UseOldAuth      bool   `mapstructure:"use_old_auth"`
 			CleanBeforeTest bool   `mapstructure:"clean_before_test"`
 			Insecure        bool   `mapstructure:"insecure"`
 		} `mapstructure:"api"`

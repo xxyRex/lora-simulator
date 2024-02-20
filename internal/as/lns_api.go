@@ -139,6 +139,7 @@ func LNSSetup(c config.Config) error {
 	jwt, err := LoginDeviceHub()
 	if err != nil {
 		log.Error(err)
+		return err
 	}
 
 	log.Info(jwt)
@@ -179,6 +180,10 @@ func LoginDeviceHub() (string, error) {
 			return "", err
 		}
 		password = ps
+	}
+
+	if config.C.ChirpStack.API.UseOldAuth {
+		password = "NicJjG18XOV3U1efQyo8AQ=="
 	}
 
 	data := `{
