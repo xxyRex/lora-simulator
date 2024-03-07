@@ -43,6 +43,12 @@ function Encode(fPort, object) {
       bytes.push(object.humidity * 2);
   }
 
+  if (object.hasOwnProperty('lorawan_class')) {
+    bytes.push(0xff);
+    bytes.push(0x0f);
+    bytes.push(object.lorawan_class);
+}
+
   return bytes;
 }
 
@@ -73,11 +79,10 @@ function writeFirmwareVersion(version) {
 }
 
 // Usage:
-// var encodedBytes = Encode(1, {
-//   ipso_version: "v1.2",
-//   hardware_version: "v1.0",
-//   firmware_version: "v2.5",
-//   battery: 100,
-//   temperature: 22.5,
-//   humidity: 11.5
-// });
+var encodedBytes = Encode(1, {
+  ipso_version:"1.1",
+  battery: 100,
+  temperature: 50.6,
+  humidity: 11.5,
+  lorawan_class: 0
+});

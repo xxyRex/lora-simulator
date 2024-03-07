@@ -145,13 +145,14 @@ function writeSerialNumber(serialNumber) {
     return bytes;
 }
 
-// var encodedBytes = Encode(1, {
-//     ipso_version: "v1.2",
-//     hardware_version: "v1.0",
-//     firmware_version: "v2.5",
-//     gpio_input_1: 0,
-//     gpio_output_1: 1
-// });
+// 变量名必须固定为encodedBytes
+var encodedBytes = Encode(1, {
+    ipso_version: "v1.2",
+    hardware_version: "v1.0",
+    firmware_version: "v2.5",
+    gpio_input_1: 1,
+    gpio_output_1: 1
+});
 
 // console.log(encodedBytes)
 
