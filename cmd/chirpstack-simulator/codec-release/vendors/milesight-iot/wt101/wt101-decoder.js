@@ -163,3 +163,5 @@ function readMotorCalibration(type) {
             return "unknown";
     }
 }
+
+module.exports.Decode = Decode;

@@ -25,7 +25,9 @@
     # Server.
     #
     # This must point to the ChirpStack API interface.
-    server="http://192.168.40.19"
+    server="http://192.168.40.147"
+    
+    login_url="/api/internal/login"
 
     # Insecure.
     #
@@ -40,26 +42,26 @@
     [chirpstack.integration.mqtt]
 
     # MQTT server.
-    server="tcp://192.168.40.19:1883"
+    server="tcp://192.168.40.147:1883"
 
     # Username.
-    username="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoibG5zIn0.G9DInmih-aPqBm2pj8fGWao-dqToV7NZiRGFU2BWgHI"
+    username="lorawan"
 
     # Password.
-    password=""
+    password="Urs@L1nk#Ms2020"
 
 
   # MQTT gateway backend.
   [chirpstack.gateway.backend.mqtt]
 
     # MQTT server.
-    server="tcp://192.168.40.19:1883"
+    server="tcp://192.168.40.147:1883"
 
     # Username.
-    username="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoibG5zIn0.G9DInmih-aPqBm2pj8fGWao-dqToV7NZiRGFU2BWgHI"
+    username="lorawan"
 
     # Password.
-    password=""
+    password="Urs@L1nk#Ms2020"
 
 
 # Simulator configuration.
@@ -82,7 +84,7 @@ duration="5m"
 #
 # This is the time that the simulator takes to activate the devices. This
 # value must be less than the simulator duration.
-activation_time="1m"
+activation_time="0m"
 
   # Device configuration.
   [simulator.device]

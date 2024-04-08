@@ -82,7 +82,7 @@ function writeFirmwareVersion(version) {
 var encodedBytes = Encode(1, {
   ipso_version:"1.1",
   battery: 100,
-  temperature: 50.6,
+  temperature: 60.6,
   humidity: 11.5,
   lorawan_class: 0
 });

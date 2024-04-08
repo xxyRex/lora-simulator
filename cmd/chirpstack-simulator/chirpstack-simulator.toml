@@ -88,7 +88,7 @@ tenant_id="f6f7d81d-647f-4c7f-8409-3e5218c0c523"
 #
 # This defines the duration of the simulation. If set to '0s', the simulation
 # will run until terminated. This includes the activation time.
-duration="60m"
+duration="0s"
 
 # Activation time.
 #
@@ -100,10 +100,10 @@ activation_time="10s"
   [simulator.device]
 
   # Number of devices to simulate.
-  count=10
+  count=1
 
   # Uplink interval.
-  uplink_interval="10s"
+  uplink_interval="2s"
 
   # FPort.
   f_port=1

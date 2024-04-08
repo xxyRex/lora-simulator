@@ -7,3 +7,4 @@
 
 # builds
 /build/
+cmd/chirpstack-simulator/simulator.log

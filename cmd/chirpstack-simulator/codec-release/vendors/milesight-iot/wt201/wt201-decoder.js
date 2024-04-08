@@ -490,3 +490,5 @@ function readWeekRecycleSettings(type) {
     }
     return week_enable;
 }
+
+module.exports.Decode = Decode;
