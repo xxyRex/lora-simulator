@@ -8,3 +8,4 @@
 # builds
 /build/
 cmd/chirpstack-simulator/simulator.log
+__debug_bin*

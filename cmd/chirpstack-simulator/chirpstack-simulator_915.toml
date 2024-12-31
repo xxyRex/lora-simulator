@@ -4,7 +4,7 @@
   # debug=5, info=4, warning=3, error=2, fatal=1, panic=0
   log_level=4
 
-  channel_plan="EU868"
+  channel_plan="AU915"
   
   use_dynamic_payload=true
 
@@ -112,7 +112,7 @@ activation_time="2s"
   payload="010203"
 
   # Frequency (Hz).
-  frequency=868100000
+  frequency=916000000
 
   # Bandwidth (Hz).
   bandwidth=125000

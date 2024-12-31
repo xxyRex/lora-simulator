@@ -25,7 +25,7 @@
     # Server.
     #
     # This must point to the ChirpStack API interface.
-    server="http://192.168.40.147"
+    server="http://192.168.40.148"
     
     login_url="/api/internal/login"
 
@@ -42,7 +42,7 @@
     [chirpstack.integration.mqtt]
 
     # MQTT server.
-    server="tcp://192.168.40.147:1883"
+    server="tcp://192.168.40.148:1883"
 
     # Username.
     username="lorawan"
@@ -55,7 +55,7 @@
   [chirpstack.gateway.backend.mqtt]
 
     # MQTT server.
-    server="tcp://192.168.40.147:1883"
+    server="tcp://192.168.40.148:1883"
 
     # Username.
     username="lorawan"

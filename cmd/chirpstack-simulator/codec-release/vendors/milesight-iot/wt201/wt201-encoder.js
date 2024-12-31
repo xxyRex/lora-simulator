@@ -422,7 +422,7 @@ var decoded = {
     sn:"623465780367110",
     temperature: 29.3,
     temperature_target: 22.0,
-    temperature_ctl_mode: 5,
+    temperature_ctl_mode: 3,
     temperature_ctl_status: 6, // stage-1 cool
     system_status: 1,
     plan_schedule: [

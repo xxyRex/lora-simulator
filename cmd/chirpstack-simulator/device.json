@@ -1,0 +1,14 @@
+{
+    "device_status": {
+        "uplink_paused": false,
+        "uplink_type": "UpUnc"
+    },
+    "object": {
+        "temperature_control": {
+            "mode": 1,
+            "temperature": 22.5
+        },
+        
+        "temperature_unit": 0
+    }
+}

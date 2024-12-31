@@ -5,6 +5,7 @@ import (
 	crand "crypto/rand"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -128,6 +129,8 @@ type Device struct {
 	joinReqSent bool
 
 	payloadCodec as.PayloadCodecItem
+
+	config *Configuration
 }
 
 // WithAppKey sets the AppKey.
@@ -262,6 +265,32 @@ func NewDevice(ctx context.Context, wg *sync.WaitGroup, opts ...DeviceOption) (*
 	return d, nil
 }
 
+type DeviceStatus struct {
+	UplinkPaused bool   `json:"uplink_paused"`
+	UplinkType   string `json:"uplink_type"`
+}
+
+type Configuration struct {
+	DeviceStatus DeviceStatus           `json:"device_status"`
+	Object       map[string]interface{} `json:"object"`
+}
+
+func getConfiguration(filePath string) (*Configuration, error) {
+	// Read the file content
+	fileContent, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("error reading file: %v", err)
+	}
+
+	// Parse the JSON
+	var config Configuration
+	if err := json.Unmarshal(fileContent, &config); err != nil {
+		return nil, fmt.Errorf("error parsing JSON: %v", err)
+	}
+
+	return &config, nil
+}
+
 // uplinkLoop first handle the OTAA activation, after which it will periodically
 // sends an uplink with the configured payload and fport.
 func (d *Device) uplinkLoop() {
@@ -282,16 +311,26 @@ func (d *Device) uplinkLoop() {
 			d.joinRequest()
 			time.Sleep(6 * time.Second)
 		case deviceStateActivated:
-			d.dataUp()
+			config, err := getConfiguration("device.json")
+			d.config = config
+			if err == nil && config.DeviceStatus.UplinkPaused {
+				continue
+			} else {
+				if d.config.DeviceStatus.UplinkType == "UpUnc" {
+					d.dataUp(lorawan.UnconfirmedDataUp, false)
+				} else {
+					d.dataUp(lorawan.ConfirmedDataUp, false)
+				}
 
-			if d.uplinkCount != 0 {
-				if d.fCntUp >= d.uplinkCount {
-					// d.cancel() also cancels the downlink loop. Wait one
-					// second in order to process any potential downlink
-					// response (e.g. and ack).
-					time.Sleep(time.Second)
-					d.cancel()
-					return
+				if d.uplinkCount != 0 {
+					if d.fCntUp >= d.uplinkCount {
+						// d.cancel() also cancels the downlink loop. Wait one
+						// second in order to process any potential downlink
+						// response (e.g. and ack).
+						time.Sleep(time.Second)
+						d.cancel()
+						return
+					}
 				}
 			}
 
@@ -368,7 +407,7 @@ func (d *Device) joinRequest() {
 }
 
 // dataUp sends an data uplink.
-func (d *Device) dataUp() {
+func (d *Device) dataUp(mType lorawan.MType, ack bool) {
 	d.dataUpCount++
 
 	log.WithFields(log.Fields{
@@ -377,11 +416,6 @@ func (d *Device) dataUp() {
 		"confirmed":    d.confirmed,
 		"dataUpCount:": d.dataUpCount,
 	}).Info("simulator: send uplink data")
-
-	mType := lorawan.UnconfirmedDataUp
-	if d.confirmed {
-		mType = lorawan.ConfirmedDataUp
-	}
 
 	ecPath := codecDir + strings.ToLower(d.payloadCodec.Name) + "/" + strings.ToLower(d.payloadCodec.Name) + "-encoder.js"
 	fileInfo, err := os.Stat(ecPath)
@@ -415,24 +449,33 @@ func (d *Device) dataUp() {
 			panic(err) // 如果有错误，抛出异常
 		}
 
-		encodedBytes, ok := exportedValue.([]interface{})
-		if !ok {
-			panic("encodedBytes is not a []interface{}")
-		}
-
-		// 将interface{}切片转换为字节切片
 		var bytes []byte
-		for _, byteVal := range encodedBytes {
-			if num, ok := byteVal.(int32); ok {
-				bytes = append(bytes, byte(num))
-			} else if num, ok := byteVal.(int64); ok {
-				bytes = append(bytes, byte(num))
-			} else if num, ok := byteVal.(float64); ok {
-				bytes = append(bytes, byte(num))
-			} else if num, ok := byteVal.(float32); ok {
-				bytes = append(bytes, byte(num))
-			} else {
-				panic("unexpceted type")
+
+		int32Slice, isInt32Slice := exportedValue.([]int32)
+		if isInt32Slice {
+			bytes = make([]byte, len(int32Slice))
+			for i, num := range int32Slice {
+				bytes[i] = byte(num)
+			}
+		} else {
+			encodedBytes, ok := exportedValue.([]interface{})
+			if !ok {
+				panic("encodedBytes is not a []interface{}")
+			}
+
+			// 将interface{}切片转换为字节切片
+			for _, byteVal := range encodedBytes {
+				if num, ok := byteVal.(int32); ok {
+					bytes = append(bytes, byte(num))
+				} else if num, ok := byteVal.(int64); ok {
+					bytes = append(bytes, byte(num))
+				} else if num, ok := byteVal.(float64); ok {
+					bytes = append(bytes, byte(num))
+				} else if num, ok := byteVal.(float32); ok {
+					bytes = append(bytes, byte(num))
+				} else {
+					panic("unexpceted type")
+				}
 			}
 		}
 
@@ -450,6 +493,7 @@ func (d *Device) dataUp() {
 				FCnt:    d.fCntUp,
 				FCtrl: lorawan.FCtrl{
 					ADR: false,
+					ACK: ack,
 				},
 			},
 			FPort: &d.fPort,
@@ -577,11 +621,16 @@ func (d *Device) downlinkData(phy lorawan.PHYPayload) error {
 		"datadownCount": d.datadownCount,
 	}).Info("simulator: device received downlink data")
 
-	if d.downlinkHandlerFunc == nil {
-		return nil
+	if phy.MHDR.MType == lorawan.ConfirmedDataDown {
+		d.dataUp(lorawan.UnconfirmedDataUp, true)
 	}
 
-	return d.downlinkHandlerFunc(phy.MHDR.MType == lorawan.ConfirmedDataDown, macPL.FHDR.FCtrl.ACK, d.fCntDown, fPort, data)
+	return nil
+	// if d.downlinkHandlerFunc == nil {
+	// 	return nil
+	// }
+
+	// return d.downlinkHandlerFunc(phy.MHDR.MType == lorawan.ConfirmedDataDown, macPL.FHDR.FCtrl.ACK, d.fCntDown, fPort, data)
 }
 
 // sendUplink sends

@@ -564,7 +564,7 @@ func (s *LNSSimulation) setupPayloadCodec() error {
 		return nil
 	}
 
-	codecDir := "codec-release/vendors/milesight-iot/"
+	codecDir := "codec/vendors/milesight-iot/"
 	s.payloadCodecs = codecs
 
 	for i, c := range s.payloadCodecs {
