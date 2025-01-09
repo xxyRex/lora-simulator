@@ -28,7 +28,7 @@ import (
 // DeviceOption is the interface for a device option.
 type DeviceOption func(*Device) error
 
-var codecDir = "codec-release/vendors/milesight-iot/"
+var CODEC_DIR = "payload_en_decoder/codec-release/vendors/milesight-iot/"
 
 type deviceState int
 
@@ -311,7 +311,7 @@ func (d *Device) uplinkLoop() {
 			d.joinRequest()
 			time.Sleep(6 * time.Second)
 		case deviceStateActivated:
-			config, err := getConfiguration("device.json")
+			config, err := getConfiguration("config/device.json")
 			d.config = config
 			if err == nil && config.DeviceStatus.UplinkPaused {
 				continue
@@ -417,7 +417,7 @@ func (d *Device) dataUp(mType lorawan.MType, ack bool) {
 		"dataUpCount:": d.dataUpCount,
 	}).Info("simulator: send uplink data")
 
-	ecPath := codecDir + strings.ToLower(d.payloadCodec.Name) + "/" + strings.ToLower(d.payloadCodec.Name) + "-encoder.js"
+	ecPath := CODEC_DIR + strings.ToLower(d.payloadCodec.Name) + "/" + strings.ToLower(d.payloadCodec.Name) + "-encoder.js"
 	fileInfo, err := os.Stat(ecPath)
 	if err != nil {
 		panic(err)

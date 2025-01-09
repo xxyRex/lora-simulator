@@ -18,6 +18,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	APPLICATION_NAME = "test"
+)
+
 var jwtConn string
 
 func sha256Hash(text string) string {
@@ -226,20 +230,30 @@ func LoginDeviceHub() (string, error) {
 
 func LNSCreateApplication() (string, error) {
 	url := "/lns/api/v1/urapplications"
-	if !config.C.ChirpStack.API.IsLNS {
-		url = "/api/urapplications"
-	}
-
 	data := `
 	{
 		"organizationID": "1",
 		"serviceProfileID": "f6f7d81d-647f-4c7f-8409-3e5218c0c523",
-		"name": "simulator_test"
+		"name": "` + APPLICATION_NAME + `"
 	}
 	`
 
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/urapplications"
+		data = `
+		{
+			"metadata": true,
+			"description": "test",
+			"name": "` + APPLICATION_NAME + `",
+			"organizationID": "1",
+			"serviceProfileID": "f6f7d81d-647f-4c7f-8409-3e5218c0c523"
+		}
+		`
+	}
+
 	bytes, err := post(url, data, jwtConn)
 	if err != nil {
+		log.Error("LNSCreateApplication failed ", err)
 		return "", err
 	}
 
@@ -274,7 +288,7 @@ func LNSDeleteApplication(applicationID string) error {
 
 	resp := string(bytes)
 	if resp != "{}" {
-		return errors.Errorf("failed to delete application " + resp)
+		return errors.New("failed to delete application: " + resp)
 	}
 
 	return nil
@@ -329,7 +343,7 @@ func LNSDeleteGateway(id string) error {
 
 	resp := string(bytes)
 	if resp != "{}" {
-		return errors.Errorf("failed to delete gateway " + resp)
+		return errors.New("failed to delete gateway " + resp)
 	}
 
 	return nil
@@ -398,13 +412,13 @@ func LNSDeleteDeviceProfile(profileID string) error {
 
 	ret := string(bytes)
 	if ret != `{}` {
-		return errors.Errorf("failed to delete device: " + ret)
+		return errors.New("failed to delete device: " + ret)
 	}
 
 	return nil
 }
 
-func LNSCreateDevices(eui, profileId, appKey, payloadCodecID, applicationID string) error {
+func LNSCreateDevices(eui, name, profileId, appKey, payloadCodecID, applicationID string) error {
 	url := "/lns/api/v1/urdevices"
 	if !config.C.ChirpStack.API.IsLNS {
 		url = "/api/urdevices"
@@ -413,7 +427,7 @@ func LNSCreateDevices(eui, profileId, appKey, payloadCodecID, applicationID stri
 	data := `
 	{
 		"devEUI": "` + eui + `",
-		"name": "` + eui + `",
+		"name": "` + name + `",
 		"description": "` + eui + `",
 		"profileID": "` + profileId + `",
 		"payloadCodecID": "` + payloadCodecID + `",
@@ -436,7 +450,7 @@ func LNSCreateDevices(eui, profileId, appKey, payloadCodecID, applicationID stri
 
 	ret := string(bytes)
 	if ret != `{"code":200,"error":""}` {
-		return errors.Errorf("failed to create device: " + ret)
+		return errors.New("failed to create device: " + ret)
 	}
 
 	return nil
@@ -455,7 +469,7 @@ func LNSDeleteDevices(eui string) error {
 
 	ret := string(bytes)
 	if ret != `{}` {
-		return errors.Errorf("failed to delete device: " + ret)
+		return errors.New("failed to delete device: " + ret)
 	}
 
 	return nil
@@ -664,4 +678,142 @@ func LNSGetApplications() ([]ApplicationJson, error) {
 	}
 
 	return apps.Result, nil
+}
+
+func DeleteAllDevices() error {
+	url := "/lns/api/v1/urdevicesall"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/urdevicesall"
+	}
+
+	bytes, err := delete(url, "", jwtConn)
+	if err != nil {
+		return err
+	}
+
+	ret := string(bytes)
+	if ret != `{}` {
+		return errors.New("failed to delete all devices: " + ret)
+	}
+
+	return nil
+}
+
+type AvailableBACnetObjects struct {
+	Total   int64         `json:"total"`
+	NOCData []interface{} `json:"noc_data"`
+	Data    []BACnetDatum `json:"data"`
+}
+
+type BACnetDatum struct {
+	ID      string         `json:"id"`
+	DevEui  string         `json:"dev_eui"`
+	Name    string         `json:"name"`
+	Type    string         `json:"type"`
+	IDS     []interface{}  `json:"ids"`
+	Objects []BACnetObject `json:"objects"`
+}
+
+type BACnetObject struct {
+	ID                   string        `json:"id"`
+	DevEui               string        `json:"dev_eui"`
+	Name                 string        `json:"name"`
+	PayloadCodecObjectID string        `json:"payload_codec_object_id"`
+	LoraName             string        `json:"lora_name"`
+	LoraUnitTypeID       int64         `json:"lora_unit_type_id"`
+	Type                 string        `json:"type"`
+	Description          string        `json:"description"`
+	UnitTypeID           int64         `json:"unit_type_id"`
+	CovEnable            int64         `json:"cov_enable"`
+	CovIncrement         string        `json:"cov_increment"`
+	Polarity             int64         `json:"polarity"`
+	RelinquishDefault    string        `json:"relinquish_default"`
+	InactiveText         string        `json:"inactive_text"`
+	ActiveText           string        `json:"active_text"`
+	NotificationClass    int64         `json:"notification_class"`
+	HighLimit            string        `json:"high_limit"`
+	LowLimit             string        `json:"low_limit"`
+	Deadband             string        `json:"deadband"`
+	LimitEnable          int64         `json:"limit_enable"`
+	EventEnable          int64         `json:"event_enable"`
+	NotifyType           int64         `json:"notify_type"`
+	AlarmValue           int64         `json:"alarm_value"`
+	AlarmValueArray      []interface{} `json:"alarm_value_array"`
+	FaultValueArray      []interface{} `json:"fault_value_array"`
+	FeedbackValue        int64         `json:"feedback_value"`
+	TimeDelay            int64         `json:"time_delay"`
+	Unit                 string        `json:"unit"`
+	InstanceID           int64         `json:"instance_id"`
+	NumberOfStates       int64         `json:"number_of_states"`
+	StateText            []string      `json:"state_text"`
+	Values               []Value       `json:"values"`
+	Reference            []string      `json:"reference"`
+	Count                int64         `json:"count"`
+	Units                []interface{} `json:"units"`
+	TypeAlias            string        `json:"type_alias"`
+	Value                string        `json:"value"`
+	UpdatedTimes         int64         `json:"updated_times"`
+	UpdatedAt            string        `json:"updated_at"`
+}
+
+type Value struct {
+	Name  string `json:"name"`
+	Value int64  `json:"value"`
+}
+
+func GetAvailableBACnetObjects(search string, order string, offset int, limit int) (AvailableBACnetObjects, error) {
+	url := "/lns/api/v1/bacnet/getAll"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/bacnet/getAll"
+	}
+
+	data := fmt.Sprintf(`{"search":"%s","order":"%s","offset":%d,"limit":%d}`, search, order, offset, limit)
+
+	var res AvailableBACnetObjects
+
+	bytes, err := post(url, data, jwtConn)
+	if err != nil {
+		return res, err
+	}
+
+	err = json.Unmarshal(bytes, &res)
+	if err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+
+type AddBACnetObjectsRequest struct {
+	Base        string        `json:"base"`
+	BACnetDatum []BACnetDatum `json:"data"`
+}
+
+func AddBACnetObjects(data []BACnetDatum) error {
+	url := "/lns/api/v1/bacnet/add"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/bacnet/add"
+	}
+
+	request := AddBACnetObjectsRequest{
+		Base:        "object",
+		BACnetDatum: data,
+	}
+
+	requestJSON, err := json.Marshal(request)
+	if err != nil {
+		return err
+	}
+
+	bytes, err := post(url, string(requestJSON), jwtConn)
+	if err != nil {
+		return err
+	}
+	// {"error":"","code":0}
+	ret := string(bytes)
+	if ret != `{"error":"","code":0}` {
+		return errors.New("failed to add BACnet objects: " + ret)
+	}
+
+	return nil
 }

@@ -28,6 +28,7 @@ type Config struct {
 			UseNewApp       bool   `mapstructure:"use_new_app"`
 			UseOldAuth      bool   `mapstructure:"use_old_auth"`
 			CleanBeforeTest bool   `mapstructure:"clean_before_test"`
+			AddBACnet       bool   `mapstructure:"add_bacnet"`
 			Insecure        bool   `mapstructure:"insecure"`
 		} `mapstructure:"api"`
 

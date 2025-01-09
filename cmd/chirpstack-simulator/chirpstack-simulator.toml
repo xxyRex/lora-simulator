@@ -1,77 +1,78 @@
 [general]
-  # Log level
-  #
-  # debug=5, info=4, warning=3, error=2, fatal=1, panic=0
-  log_level=4
+# Log level
+#
+# debug=5, info=4, warning=3, error=2, fatal=1, panic=0
+log_level = 4
 
-  channel_plan="EU868"
-  
-  use_dynamic_payload=true
+channel_plan = "EU868"
+
+use_dynamic_payload = true
 
 # ChirpStack configuration.
 [chirpstack]
 
-  # API configuration.
-  #
-  # This configuration is used to automatically create the:
-  #   * Device profile
-  #   * Gateways
-  #   * Application
-  #   * Devices
-  [chirpstack.api]
+# API configuration.
+#
+# This configuration is used to automatically create the:
+#   * Device profile
+#   * Gateways
+#   * Application
+#   * Devices
+[chirpstack.api]
 
-    # API key.
-    #
-    # The API key can be obtained through the ChirpStack web-interface.
-    api_key=""
+# API key.
+#
+# The API key can be obtained through the ChirpStack web-interface.
+api_key = ""
 
-    # Server.
-    #
-    # This must point to the ChirpStack API interface.
-    server="http://192.168.40.147"
-    login_url="/api/internal/login"
-    username="admin"
-    password="password"
-    is_lns=false
-    use_new_gateway=false
-    use_new_profile=false
-    use_new_app=false
-    use_old_auth=false
-    clean_before_test=true
-    teardown_after_test=true
+# Server.
+#
+# This must point to the ChirpStack API interface.
+server = "http://192.168.40.148"
+login_url = "/api/internal/login"
+username = "admin"
+password = "password"
+is_lns = false
+use_new_gateway = false
+use_new_profile = false
+use_new_app = true
+use_old_auth = false
+clean_before_test = true
+teardown_after_test = true
+add_bacnet = true
 
-    # Insecure.
-    #
-    # Set this to true when the endpoint is not using TLS.
-    insecure=true
+# Insecure.
+#
+# Set this to true when the endpoint is not using TLS.
+insecure = true
 
-    # MQTT integration configuration.
-    #
-    # This integration is used for counting the number of uplinks that are
-    # published by the ChirpStack MQTT integration.
-    [chirpstack.integration.mqtt]
+# MQTT integration configuration.
+#
+# This integration is used for counting the number of uplinks that are
+# published by the ChirpStack MQTT integration.
+[chirpstack.integration.mqtt]
 
-    # MQTT server.
-    server="tcp://192.168.40.147:1883"
+# MQTT server.
+server = "tcp://192.168.40.148:1883"
 
-    # Username.
-    username="lorawan"
+# Username.
+username = "lorawan"
 
-    # Password.
-    password="Urs@L1nk#Ms2020"
+# Password.
+password = "Urs@L1nk#Ms2020"
 
 
-  # MQTT gateway backend.
-  [chirpstack.gateway.backend.mqtt]
+# MQTT gateway backend.
+[chirpstack.gateway.backend.mqtt]
 
-    # MQTT server.
-    server="tcp://192.168.40.147:1883"
+# MQTT server.
+server = "tcp://192.168.40.148:1883"
 
-    # Username.
-    username="lorawan"
+# Username.
+username = "lorawan"
 
-    # Password.
-    password="Urs@L1nk#Ms2020"
+# Password.
+password = "Urs@L1nk#Ms2020"
 
 
 # Simulator configuration.
@@ -82,58 +83,58 @@
 # Tenant ID.
 #
 # It is recommended to create a new tenant in ChirpStack.
-tenant_id="f6f7d81d-647f-4c7f-8409-3e5218c0c523"
+tenant_id = "f6f7d81d-647f-4c7f-8409-3e5218c0c523"
 
 # Duration.
 #
 # This defines the duration of the simulation. If set to '0s', the simulation
 # will run until terminated. This includes the activation time.
-duration="0s"
+duration = "0s"
 
 # Activation time.
 #
 # This is the time that the simulator takes to activate the devices. This
 # value must be less than the simulator duration.
-activation_time="2s"
+activation_time = "2s"
 
-  # Device configuration.
-  [simulator.device]
+# Device configuration.
+[simulator.device]
 
-  # Number of devices to simulate.
-  count=1
+# Number of devices to simulate.
+count = 50
 
-  # Uplink interval.
-  uplink_interval="10s"
+# Uplink interval.
+uplink_interval = "10s"
 
-  # FPort.
-  f_port=1
+# FPort.
+f_port = 1
 
-  # Payload (HEX encoded).
-  payload="010203"
+# Payload (HEX encoded).
+payload = "010203"
 
-  # Frequency (Hz).
-  frequency=868100000
+# Frequency (Hz).
+frequency = 868100000
 
-  # Bandwidth (Hz).
-  bandwidth=125000
+# Bandwidth (Hz).
+bandwidth = 125000
 
-  # Spreading-factor.
-  spreading_factor=7
+# Spreading-factor.
+spreading_factor = 7
 
-  # Gateway configuration.
-  [simulator.gateway]
+# Gateway configuration.
+[simulator.gateway]
 
-  # Event topic template.
-  event_topic_template="gateway/{{ .GatewayID }}/rx"
+# Event topic template.
+event_topic_template = "gateway/{{ .GatewayID }}/rx"
 
-  # Command topic template.
-  command_topic_template="gateway/{{ .GatewayID }}/tx"
+# Command topic template.
+command_topic_template = "gateway/{{ .GatewayID }}/tx"
 
-  # Min number of receiving gateways.
-  min_count=3
+# Min number of receiving gateways.
+min_count = 3
 
-  # Max number of receiving gateways.
-  max_count=5
+# Max number of receiving gateways.
+max_count = 5
 
 
 # Prometheus metrics configuration.
@@ -150,4 +151,4 @@ activation_time="2s"
 # IP:port to bind the Prometheus endpoint to.
 #
 # Metrics can be retrieved from /metrics.
-bind="0.0.0.0:9000"
+bind = "0.0.0.0:9000"

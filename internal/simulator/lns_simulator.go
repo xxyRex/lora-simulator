@@ -1,10 +1,8 @@
 package simulator
 
 import (
-	"bufio"
 	"context"
 	"crypto/rand"
-	"encoding/csv"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -27,6 +25,7 @@ import (
 	"github.com/brocaar/chirpstack-simulator/simulator"
 	"github.com/brocaar/lorawan"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
+	"github.com/gocarina/gocsv"
 )
 
 var SupportedPayloadCodecs = []string{"UC300"}
@@ -127,6 +126,10 @@ func (s *LNSSimulation) start() {
 func (s *LNSSimulation) init() error {
 	log.Info("LNSSimulation: setting up")
 
+	if err := as.DeleteAllDevices(); err != nil {
+		return err
+	}
+
 	if err := s.setupGateways(); err != nil {
 		return err
 	}
@@ -144,6 +147,10 @@ func (s *LNSSimulation) init() error {
 	}
 
 	if err := s.setupDevices(); err != nil {
+		return err
+	}
+
+	if err := s.setupBACnet(); err != nil {
 		return err
 	}
 
@@ -362,6 +369,20 @@ func (s *LNSSimulation) tearDownDeviceProfile() error {
 func (s *LNSSimulation) setupApplication() error {
 	log.Info("simulator: init application")
 
+	apps, err := as.LNSGetApplications()
+	if err != nil {
+		return err
+	}
+
+	s.applications = apps
+
+	for _, app := range apps {
+		if app.Name == as.APPLICATION_NAME {
+			s.applicationID = app.ID
+			return nil
+		}
+	}
+
 	if config.C.ChirpStack.API.UseNewApp {
 		id, err := as.LNSCreateApplication()
 		if err != nil {
@@ -373,10 +394,11 @@ func (s *LNSSimulation) setupApplication() error {
 		return nil
 	}
 
-	apps, err := as.LNSGetApplications()
+	apps, err = as.LNSGetApplications()
 	if err != nil {
 		return err
 	}
+
 	s.applications = apps
 
 	return nil
@@ -407,63 +429,70 @@ func generateRandomString() string {
 	return hex.EncodeToString(randomBytes)
 }
 
+type Device struct {
+	DevEUI        string `csv:"deveui"`
+	Name          string `csv:"name"`
+	Description   string `csv:"description"`
+	Application   string `csv:"application"`
+	DeviceProfile string `csv:"deviceprofile"`
+	PayloadCodec  string `csv:"payloadcodec"`
+	FPort         string `csv:"fport"`
+	AppKey        string `csv:"appkey"`
+	DevAddr       string `csv:"devaddr"`
+	NwkSKey       string `csv:"nwkskey"`
+	AppSKey       string `csv:"appskey"`
+}
+
 func generateDevices(num int) error {
-	srcFile, err := os.Open("base_devices_export.csv")
+	srcFile, err := os.Open("config/base_devices_export.csv")
 	if err != nil {
-		log.Fatal(err)
-		return err
+		return fmt.Errorf("打开源文件失败: %w", err)
 	}
 	defer srcFile.Close()
 
-	dstFile, err := os.Create("devices_import.csv")
-	if err != nil {
-		log.Fatal(err)
-		return err
+	var baseDevices []Device
+	if err := gocsv.UnmarshalFile(srcFile, &baseDevices); err != nil {
+		return fmt.Errorf("解析源CSV文件失败: %w", err)
 	}
-	defer dstFile.Close()
-
-	srcReader := csv.NewReader(bufio.NewReader(srcFile))
-	dstWriter := csv.NewWriter(bufio.NewWriter(dstFile))
-
-	// Read the header line
-	header, err := srcReader.Read()
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
-	dstWriter.Write(header)
-
-	// Read the base line
-	baseLine, err := srcReader.Read()
-	if err != nil {
-		log.Fatal(err)
-		return err
+	if len(baseDevices) == 0 {
+		return fmt.Errorf("基础设备模板为空")
 	}
 
-	baseEUI, err := strconv.ParseUint(baseLine[0], 16, 64)
+	baseDevice := baseDevices[0]
+	baseEUI, err := strconv.ParseUint(baseDevice.DevEUI, 16, 64)
 	if err != nil {
-		log.Fatal(err)
-		return err
+		return fmt.Errorf("解析基础DevEUI失败: %w", err)
 	}
 
-	for i := 1; i <= num; i++ {
-		newEUI := baseEUI + uint64(i)
+	devices := make([]Device, num)
+	for i := 0; i < num; i++ {
+		newEUI := baseEUI + uint64(i+1)
 		newEUIStr := fmt.Sprintf("%016x", newEUI)
+		newName := fmt.Sprintf("%s-%d", baseDevice.PayloadCodec, i+1)
 
-		baseLine[0] = newEUIStr
-		baseLine[1] = newEUIStr
-		baseLine[2] = newEUIStr
-		baseLine[7] = generateRandomString()
-		if err := dstWriter.Write(baseLine); err != nil {
-			log.Fatal(err)
-			return err
+		devices[i] = Device{
+			DevEUI:        newEUIStr,
+			Name:          newName,
+			Description:   newEUIStr,
+			Application:   baseDevice.Application,
+			DeviceProfile: baseDevice.DeviceProfile,
+			PayloadCodec:  baseDevice.PayloadCodec,
+			FPort:         baseDevice.FPort,
+			AppKey:        generateRandomString(),
+			DevAddr:       baseDevice.DevAddr,
+			NwkSKey:       baseDevice.NwkSKey,
+			AppSKey:       baseDevice.AppSKey,
 		}
 	}
 
-	dstWriter.Flush()
-	if err := dstWriter.Error(); err != nil {
-		log.Fatal(err)
-		return err
+	dstFile, err := os.Create("devices_import.csv")
+	if err != nil {
+		return fmt.Errorf("创建目标文件失败: %w", err)
+	}
+	defer dstFile.Close()
+
+	if err := gocsv.MarshalFile(&devices, dstFile); err != nil {
+		return fmt.Errorf("写入CSV文件失败: %w", err)
 	}
 
 	return nil
@@ -522,8 +551,9 @@ func (s *LNSSimulation) setupDevices() error {
 
 		eui := ldcfg.DevEUI
 		appKey := ldcfg.AppKey
+		name := ldcfg.Name
 
-		err := as.LNSCreateDevices(eui, profileID, appKey, payloadCodecID, applicationID)
+		err := as.LNSCreateDevices(eui, name, profileID, appKey, payloadCodecID, applicationID)
 
 		if err != nil {
 			log.Error(err)
@@ -564,7 +594,6 @@ func (s *LNSSimulation) setupPayloadCodec() error {
 		return nil
 	}
 
-	codecDir := "codec/vendors/milesight-iot/"
 	s.payloadCodecs = codecs
 
 	for i, c := range s.payloadCodecs {
@@ -573,7 +602,7 @@ func (s *LNSSimulation) setupPayloadCodec() error {
 				continue
 			}
 
-			ecPath := codecDir + strings.ToLower(sc) + "/" + strings.ToLower(sc) + "-encoder.js"
+			ecPath := simulator.CODEC_DIR + strings.ToLower(sc) + "/" + strings.ToLower(sc) + "-encoder.js"
 			file, err := os.Open(ecPath)
 			if err != nil {
 				return err
@@ -584,6 +613,39 @@ func (s *LNSSimulation) setupPayloadCodec() error {
 			break
 
 		}
+	}
+
+	return nil
+}
+
+func (s *LNSSimulation) setupBACnet() error {
+	log.Info("simulator: creating BACnet objects")
+
+	if !config.C.ChirpStack.API.AddBACnet {
+		return nil
+	}
+
+	objects, err := as.GetAvailableBACnetObjects("", "asc", 0, 1)
+	if err != nil {
+		return err
+	}
+
+	log.Info("total count: ", objects.Total)
+
+	const MAX_ADD_DATUM = 10
+
+	for i := 0; i < int(objects.Total); i += MAX_ADD_DATUM {
+		objects, err := as.GetAvailableBACnetObjects("", "asc", i, MAX_ADD_DATUM)
+		if err != nil {
+			return err
+		}
+
+		err = as.AddBACnetObjects(objects.Data)
+		if err != nil {
+			return err
+		}
+
+		log.Infof("added %d objects", len(objects.Data))
 	}
 
 	return nil

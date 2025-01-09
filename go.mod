@@ -6,6 +6,7 @@ require (
 	github.com/brocaar/lorawan v0.0.0-20191105091820-9ed596703a6c
 	github.com/chirpstack/chirpstack/api/go/v4 v4.0.0-rc.2
 	github.com/eclipse/paho.mqtt.golang v1.2.0
+	github.com/gocarina/gocsv v0.0.0-20240520201108-78e41c74b4b1 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/golang/protobuf v1.5.2
 	github.com/pkg/errors v0.8.1
