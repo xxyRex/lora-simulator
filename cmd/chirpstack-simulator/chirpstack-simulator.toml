@@ -101,7 +101,7 @@ activation_time = "2s"
 [simulator.device]
 
 # Number of devices to simulate.
-count = 50
+count = 1
 
 # Uplink interval.
 uplink_interval = "10s"

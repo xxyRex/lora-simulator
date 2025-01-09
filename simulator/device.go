@@ -28,7 +28,11 @@ import (
 // DeviceOption is the interface for a device option.
 type DeviceOption func(*Device) error
 
-var CODEC_DIR = "payload_en_decoder/codec-release/vendors/milesight-iot/"
+const (
+	CODEC_PARENT_DIR = "payload_en_decoder"
+	CODEC_DIR        = CODEC_PARENT_DIR + "/codec-release/vendors/milesight-iot/"
+	TEST_DATA_PATH   = CODEC_PARENT_DIR + "/test-data.json"
+)
 
 type deviceState int
 
@@ -406,21 +410,90 @@ func (d *Device) joinRequest() {
 	deviceJoinRequestCounter().Inc()
 }
 
+// encodePayload 执行 JS 编码器并返回编码后的字节数组
+func (d *Device) encodePayload(encoderScript string) ([]byte, error) {
+	// 读取测试数据
+	testDataFile, err := os.Open(TEST_DATA_PATH)
+	if err != nil {
+		return nil, fmt.Errorf("open test data file error: %v", err)
+	}
+	defer testDataFile.Close()
+
+	var testData map[string]interface{}
+	if err := json.NewDecoder(testDataFile).Decode(&testData); err != nil {
+		return nil, fmt.Errorf("decode test data error: %v", err)
+	}
+
+	// 创建新的 VM 实例
+	vm := otto.New()
+
+	// 执行编码器脚本,注册 Encode 函数
+	if _, err := vm.Run(encoderScript); err != nil {
+		return nil, fmt.Errorf("execute encoder script error: %v", err)
+	}
+
+	// 调用 Encode 函数
+	encode, err := vm.Get("Encode")
+	if err != nil {
+		return nil, fmt.Errorf("get encode function error: %v", err)
+	}
+
+	result, err := encode.Call(otto.NullValue(), nil, testData)
+	if err != nil {
+		return nil, fmt.Errorf("call encode function error: %v", err)
+	}
+
+	// 将结果转换为字节数组
+	exportedValue, err := result.Export()
+	if err != nil {
+		return nil, fmt.Errorf("export result error: %v", err)
+	}
+
+	var bytes []byte
+
+	// 处理不同类型的返回值
+	int32Slice, isInt32Slice := exportedValue.([]int32)
+	if isInt32Slice {
+		bytes = make([]byte, len(int32Slice))
+		for i, num := range int32Slice {
+			bytes[i] = byte(num)
+		}
+	} else {
+		encodedBytes, ok := exportedValue.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("encodedBytes is not a []interface{}")
+		}
+
+		for _, byteVal := range encodedBytes {
+			if num, ok := byteVal.(int32); ok {
+				bytes = append(bytes, byte(num))
+			} else if num, ok := byteVal.(int); ok {
+				bytes = append(bytes, byte(num))
+			} else if num, ok := byteVal.(int64); ok {
+				bytes = append(bytes, byte(num))
+			} else if num, ok := byteVal.(float64); ok {
+				bytes = append(bytes, byte(num))
+			} else if num, ok := byteVal.(float32); ok {
+				bytes = append(bytes, byte(num))
+			} else {
+				return nil, fmt.Errorf("unexpected type for byte value")
+			}
+		}
+	}
+
+	return bytes, nil
+}
+
 // dataUp sends an data uplink.
 func (d *Device) dataUp(mType lorawan.MType, ack bool) {
 	d.dataUpCount++
 
-	log.WithFields(log.Fields{
-		"dev_eui":      d.devEUI,
-		"dev_addr":     d.devAddr,
-		"confirmed":    d.confirmed,
-		"dataUpCount:": d.dataUpCount,
-	}).Info("simulator: send uplink data")
-
 	ecPath := CODEC_DIR + strings.ToLower(d.payloadCodec.Name) + "/" + strings.ToLower(d.payloadCodec.Name) + "-encoder.js"
+
 	fileInfo, err := os.Stat(ecPath)
 	if err != nil {
-		panic(err)
+		log.Errorf("stat encoder file error: %v", err)
+		return
 	}
 
 	if config.C.General.UseDynamicPayload && !d.encoderScriptFileModTime.Equal(fileInfo.ModTime()) {
@@ -428,55 +501,16 @@ func (d *Device) dataUp(mType lorawan.MType, ack bool) {
 
 		file, err := os.Open(ecPath)
 		if err != nil {
-			panic(err)
-		}
-		defer file.Close()
-		buf, _ := io.ReadAll(file)
-		d.payloadCodec.EncoderScript = string(buf)
-
-		vm := otto.New()
-		if _, err := vm.Run(d.payloadCodec.EncoderScript); err != nil {
-			panic(err)
-		}
-		value, err := vm.Get("encodedBytes")
-		if err != nil {
-			log.Error("dataUp get encodedBytes failed ", err)
+			log.Errorf("open encoder file error: %v", err)
 			return
 		}
-		// 将值转换为Go中的切片
-		exportedValue, err := value.Export()
+		defer file.Close()
+		encoderScript, _ := io.ReadAll(file)
+
+		bytes, err := d.encodePayload(string(encoderScript))
 		if err != nil {
-			panic(err) // 如果有错误，抛出异常
-		}
-
-		var bytes []byte
-
-		int32Slice, isInt32Slice := exportedValue.([]int32)
-		if isInt32Slice {
-			bytes = make([]byte, len(int32Slice))
-			for i, num := range int32Slice {
-				bytes[i] = byte(num)
-			}
-		} else {
-			encodedBytes, ok := exportedValue.([]interface{})
-			if !ok {
-				panic("encodedBytes is not a []interface{}")
-			}
-
-			// 将interface{}切片转换为字节切片
-			for _, byteVal := range encodedBytes {
-				if num, ok := byteVal.(int32); ok {
-					bytes = append(bytes, byte(num))
-				} else if num, ok := byteVal.(int64); ok {
-					bytes = append(bytes, byte(num))
-				} else if num, ok := byteVal.(float64); ok {
-					bytes = append(bytes, byte(num))
-				} else if num, ok := byteVal.(float32); ok {
-					bytes = append(bytes, byte(num))
-				} else {
-					panic("unexpceted type")
-				}
-			}
+			log.Errorf("encode payload error: %v", err)
+			return
 		}
 
 		d.payload = bytes
@@ -523,7 +557,7 @@ func (d *Device) dataUp(mType lorawan.MType, ack bool) {
 // joinAccept validates and handles the join-accept downlink.
 func (d *Device) joinAccept(phy lorawan.PHYPayload) error {
 	if atomic.LoadInt32(&d.joinWindowFlag) == 0 {
-		return errors.Errorf("not my join window " + d.devEUI.String())
+		return errors.New("not my join window " + d.devEUI.String())
 	}
 
 	err := phy.DecryptJoinAcceptPayload(d.appKey)

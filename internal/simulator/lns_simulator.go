@@ -391,15 +391,12 @@ func (s *LNSSimulation) setupApplication() error {
 
 		s.applicationID = id
 
-		return nil
+		apps, err = as.LNSGetApplications()
+		if err != nil {
+			return err
+		}
+		s.applications = apps
 	}
-
-	apps, err = as.LNSGetApplications()
-	if err != nil {
-		return err
-	}
-
-	s.applications = apps
 
 	return nil
 }
@@ -605,7 +602,8 @@ func (s *LNSSimulation) setupPayloadCodec() error {
 			ecPath := simulator.CODEC_DIR + strings.ToLower(sc) + "/" + strings.ToLower(sc) + "-encoder.js"
 			file, err := os.Open(ecPath)
 			if err != nil {
-				return err
+				log.Error("open encoder script error: ", err)
+				continue
 			}
 			buf, _ := io.ReadAll(file)
 			s.payloadCodecs[i].EncoderScript = string(buf)
