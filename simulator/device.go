@@ -489,15 +489,14 @@ func (d *Device) dataUp(mType lorawan.MType, ack bool) {
 	d.dataUpCount++
 
 	ecPath := CODEC_DIR + strings.ToLower(d.payloadCodec.Name) + "/" + strings.ToLower(d.payloadCodec.Name) + "-encoder.js"
-
-	fileInfo, err := os.Stat(ecPath)
+	testDataInfo, err := os.Stat(TEST_DATA_PATH)
 	if err != nil {
-		log.Errorf("stat encoder file error: %v", err)
+		log.Errorf("stat test data file error: %v", err)
 		return
 	}
 
-	if config.C.General.UseDynamicPayload && !d.encoderScriptFileModTime.Equal(fileInfo.ModTime()) {
-		d.encoderScriptFileModTime = fileInfo.ModTime()
+	if config.C.General.UseDynamicPayload && !d.encoderScriptFileModTime.Equal(testDataInfo.ModTime()) {
+		d.encoderScriptFileModTime = testDataInfo.ModTime()
 
 		file, err := os.Open(ecPath)
 		if err != nil {

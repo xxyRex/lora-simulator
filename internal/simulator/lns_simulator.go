@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	mrand "math/rand"
@@ -638,12 +639,37 @@ func (s *LNSSimulation) setupBACnet() error {
 			return err
 		}
 
+		testDataFile, err := os.Open(simulator.TEST_DATA_PATH)
+		if err != nil {
+			return err
+		}
+		defer testDataFile.Close()
+
+		var testData map[string]interface{}
+		if err := json.NewDecoder(testDataFile).Decode(&testData); err != nil {
+			return err
+		}
+
+		// 创建一个 map 来存储测试数据的键，提高查找效率
+		testDataKeys := make(map[string]struct{})
+		for k := range testData {
+			testDataKeys[k] = struct{}{}
+		}
+
+		for i := range objects.Data {
+			newObjs := []as.BACnetObject{}
+			for _, obj := range objects.Data[i].Objects {
+				if _, exists := testDataKeys[obj.LoraName]; exists {
+					newObjs = append(newObjs, obj)
+				}
+			}
+			objects.Data[i].Objects = newObjs
+		}
+
 		err = as.AddBACnetObjects(objects.Data)
 		if err != nil {
 			return err
 		}
-
-		log.Infof("added %d objects", len(objects.Data))
 	}
 
 	return nil
