@@ -6,12 +6,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	mrand "math/rand"
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -29,7 +27,9 @@ import (
 	"github.com/gocarina/gocsv"
 )
 
-var SupportedPayloadCodecs = []string{"UC300"}
+const (
+	BACNET_SPECIFIC_WRITE_JSON = "bacnet_script/specific_write/objects.json"
+)
 
 // Start starts the simulator.
 func LNSStart(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
@@ -236,7 +236,7 @@ func (s *LNSSimulation) runSimulation() error {
 			simulator.WithOTAADelay(otaaDuration),
 			simulator.WithUplinkPayload(true, s.fPort, s.payload),
 			simulator.WithGateways(gws),
-			simulator.WithUplinkTXInfo(gw.UplinkTxInfo{
+			simulator.WithUplinkTXInfo(&gw.UplinkTxInfo{
 				Frequency: uint32(s.frequency),
 				Modulation: &gw.Modulation{
 					Parameters: &gw.Modulation_Lora{
@@ -594,26 +594,6 @@ func (s *LNSSimulation) setupPayloadCodec() error {
 
 	s.payloadCodecs = codecs
 
-	for i, c := range s.payloadCodecs {
-		for _, sc := range SupportedPayloadCodecs {
-			if c.Name != sc {
-				continue
-			}
-
-			ecPath := simulator.CODEC_DIR + strings.ToLower(sc) + "/" + strings.ToLower(sc) + "-encoder.js"
-			file, err := os.Open(ecPath)
-			if err != nil {
-				log.Error("open encoder script error: ", err)
-				continue
-			}
-			buf, _ := io.ReadAll(file)
-			s.payloadCodecs[i].EncoderScript = string(buf)
-			file.Close()
-			break
-
-		}
-	}
-
 	return nil
 }
 
@@ -629,11 +609,19 @@ func (s *LNSSimulation) setupBACnet() error {
 		return err
 	}
 
+	// save objects to a json file BACNET_SPECIFIC_WRITE_JSON
+	jsonData, err := json.Marshal(objects)
+	if err != nil {
+		return err
+	}
+	os.WriteFile(BACNET_SPECIFIC_WRITE_JSON, jsonData, 0644)
+
 	log.Info("total count: ", objects.Total)
 
-	const MAX_ADD_DATUM = 10
+	const MAX_ADD_DATUM = 20
 
 	for i := 0; i < int(objects.Total); i += MAX_ADD_DATUM {
+		log.Info("add from ", i, " to ", i+MAX_ADD_DATUM)
 		objects, err := as.GetAvailableBACnetObjects("", "asc", i, MAX_ADD_DATUM)
 		if err != nil {
 			return err
@@ -668,8 +656,10 @@ func (s *LNSSimulation) setupBACnet() error {
 
 		err = as.AddBACnetObjects(objects.Data)
 		if err != nil {
-			return err
+			log.Error(err)
+			continue
 		}
+		log.Info("added ", len(objects.Data), " objects")
 	}
 
 	return nil

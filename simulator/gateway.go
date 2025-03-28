@@ -30,7 +30,7 @@ type Gateway struct {
 	gatewayID lorawan.EUI64
 
 	deviceMux sync.RWMutex
-	devices   map[lorawan.EUI64]chan gw.DownlinkFrame
+	devices   map[lorawan.EUI64]chan *gw.DownlinkFrame
 
 	downlinkTxNAckRate int
 	downlinkTxCounter  int
@@ -191,6 +191,7 @@ var txInfoMap = map[string]LNSTXInfo{
 	"EU868":   eu868TxInfo,
 	"IN865":   in865TxInfo,
 	"RU864":   ru864TxInfo,
+	"AS915":   as915TxInfo,
 }
 
 type LNSTXPacketBytes struct {
@@ -344,7 +345,7 @@ func WithCommandTopicTemplate(ct string) GatewayOption {
 // and receiving.
 func NewGateway(opts ...GatewayOption) (*Gateway, error) {
 	gw := &Gateway{
-		devices: make(map[lorawan.EUI64]chan gw.DownlinkFrame),
+		devices: make(map[lorawan.EUI64]chan *gw.DownlinkFrame),
 	}
 
 	for _, o := range opts {
@@ -418,8 +419,8 @@ func (g *Gateway) SendUplinkFrame(pl LNSRXPacketBytes) error {
 }
 
 // sendDownlinkTxAck sends the given downlink Ack.
-func (g *Gateway) sendDownlinkTxAck(pl gw.DownlinkTxAck) error {
-	b, err := proto.Marshal(&pl)
+func (g *Gateway) sendDownlinkTxAck(pl *gw.DownlinkTxAck) error {
+	b, err := proto.Marshal(pl)
 	if err != nil {
 		return errors.Wrap(err, "send tx ack error")
 	}
@@ -441,7 +442,7 @@ func (g *Gateway) sendDownlinkTxAck(pl gw.DownlinkTxAck) error {
 // addDevice adds the given device to the 'coverage' of the gateway.
 // This means that any downlink sent to the gateway will be forwarded to added
 // devices (which will each validate the DevAddr and MIC).
-func (g *Gateway) addDevice(devEUI lorawan.EUI64, c chan gw.DownlinkFrame) {
+func (g *Gateway) addDevice(devEUI lorawan.EUI64, c chan *gw.DownlinkFrame) {
 	g.deviceMux.Lock()
 	defer g.deviceMux.Unlock()
 
@@ -520,7 +521,7 @@ func (g *Gateway) downlinkEventHandler(c mqtt.Client, msg mqtt.Message) {
 			"dev_eui":    devEUI,
 			"gateway_id": g.gatewayID,
 		}).Debug("simulator: forwarding downlink to device")
-		downChan <- pl
+		downChan <- &pl
 	}
 
 	time.Sleep(g.downlinkTxAckDelay)
@@ -551,7 +552,7 @@ func (g *Gateway) downlinkEventHandler(c mqtt.Client, msg mqtt.Message) {
 		Items:      items,
 	}
 
-	if err := g.sendDownlinkTxAck(txNack); err != nil {
+	if err := g.sendDownlinkTxAck(&txNack); err != nil {
 		log.WithError(err).WithFields(log.Fields{
 			"gateway_id": g.gatewayID,
 		}).Error("simulator: send downlink tx ack error")

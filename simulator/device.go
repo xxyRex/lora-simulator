@@ -104,7 +104,7 @@ type Device struct {
 	// Downlink frames channel (used by the gateway). Note that the gateway
 	// forwards downlink frames to all associated devices, as only the device
 	// is able to validate the addressee.
-	downlinkFrames chan gw.DownlinkFrame
+	downlinkFrames chan *gw.DownlinkFrame
 
 	// The associated gateway through which the device simulates its uplinks.
 	gateways []*Gateway
@@ -113,7 +113,7 @@ type Device struct {
 	randomDevNonce bool
 
 	// TXInfo for uplink
-	uplinkTXInfo gw.UplinkTxInfo
+	uplinkTXInfo *gw.UplinkTxInfo
 
 	// Downlink handler function.
 	downlinkHandlerFunc func(confirmed, ack bool, fCntDown uint32, fPort uint8, data []byte) error
@@ -218,7 +218,7 @@ func WithRandomDevNonce() DeviceOption {
 }
 
 // WithUplinkTXInfo sets the TXInfo used for simulating the uplinks.
-func WithUplinkTXInfo(txInfo gw.UplinkTxInfo) DeviceOption {
+func WithUplinkTXInfo(txInfo *gw.UplinkTxInfo) DeviceOption {
 	return func(d *Device) error {
 		d.uplinkTXInfo = txInfo
 		return nil
@@ -249,7 +249,7 @@ func NewDevice(ctx context.Context, wg *sync.WaitGroup, opts ...DeviceOption) (*
 		cancel: cancel,
 		wg:     wg,
 
-		downlinkFrames: make(chan gw.DownlinkFrame, 100),
+		downlinkFrames: make(chan *gw.DownlinkFrame, 100),
 		state:          deviceStateOTAA,
 	}
 

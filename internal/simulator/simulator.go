@@ -172,7 +172,6 @@ func (s *simulation) tearDown() error {
 
 func (s *simulation) runSimulation() error {
 	var gateways []*simulator.Gateway
-	var devices []*simulator.Device
 
 	for _, gatewayID := range s.gatewayIDs {
 		gw, err := simulator.NewGateway(
@@ -209,14 +208,14 @@ func (s *simulation) runSimulation() error {
 			gws = append(gws, devGateways[k])
 		}
 
-		d, err := simulator.NewDevice(ctx, &wg,
+		_, err := simulator.NewDevice(ctx, &wg,
 			simulator.WithDevEUI(devEUI),
 			simulator.WithAppKey(appKey),
 			simulator.WithUplinkInterval(s.uplinkInterval),
 			simulator.WithOTAADelay(time.Duration(mrand.Int63n(int64(s.activationTime)))),
 			simulator.WithUplinkPayload(false, s.fPort, s.payload),
 			simulator.WithGateways(gws),
-			simulator.WithUplinkTXInfo(gw.UplinkTxInfo{
+			simulator.WithUplinkTXInfo(&gw.UplinkTxInfo{
 				Frequency: uint32(s.frequency),
 				Modulation: &gw.Modulation{
 					Parameters: &gw.Modulation_Lora{
@@ -232,12 +231,10 @@ func (s *simulation) runSimulation() error {
 		if err != nil {
 			return errors.Wrap(err, "new device error")
 		}
-
-		devices = append(devices, d)
 	}
 
 	go func() {
-		sigChan := make(chan os.Signal)
+		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 		select {
@@ -417,7 +414,7 @@ func (s *simulation) setupDevices() error {
 				},
 			})
 			if err != nil {
-				log.Fatal("create device error, error: %s", err)
+				log.Fatalf("create device error, error: %s", err)
 			}
 
 			_, err = as.Device().CreateKeys(context.Background(), &api.CreateDeviceKeysRequest{
@@ -430,7 +427,7 @@ func (s *simulation) setupDevices() error {
 				},
 			})
 			if err != nil {
-				log.Fatal("create device keys error, error: %s", err)
+				log.Fatalf("create device keys error, error: %s", err)
 			}
 
 			s.deviceAppKeysMutex.Lock()

@@ -39,7 +39,7 @@ func main() {
 		simulator.WithUplinkInterval(time.Second),
 		simulator.WithUplinkCount(1),
 		simulator.WithUplinkPayload(true, 10, []byte{1, 2, 3}),
-		simulator.WithUplinkTXInfo(gw.UplinkTxInfo{
+		simulator.WithUplinkTXInfo(&gw.UplinkTxInfo{
 			Frequency: 868100000,
 			Modulation: &gw.Modulation{
 				Parameters: &gw.Modulation_Lora{
