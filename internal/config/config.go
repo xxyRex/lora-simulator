@@ -28,8 +28,9 @@ type Config struct {
 			UseNewApp       bool   `mapstructure:"use_new_app"`
 			UseOldAuth      bool   `mapstructure:"use_old_auth"`
 			CleanBeforeTest bool   `mapstructure:"clean_before_test"`
-			AddBACnet       bool   `mapstructure:"add_bacnet"`
+			TestFeature     string `mapstructure:"test_feature"`
 			Insecure        bool   `mapstructure:"insecure"`
+			SshPassword     string `mapstructure:"ssh_password"`
 		} `mapstructure:"api"`
 
 		Integration struct {

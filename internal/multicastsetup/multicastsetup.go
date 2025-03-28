@@ -54,7 +54,7 @@ var (
 
 // map[uplink]...
 var commandPayloadRegistry = map[bool]map[CID]func() CommandPayload{
-	true: {
+	false: {
 		PackageVersionAns:  func() CommandPayload { return &PackageVersionAnsPayload{} },
 		McGroupStatusAns:   func() CommandPayload { return &McGroupStatusAnsPayload{} },
 		McGroupSetupAns:    func() CommandPayload { return &McGroupSetupAnsPayload{} },
@@ -62,7 +62,7 @@ var commandPayloadRegistry = map[bool]map[CID]func() CommandPayload{
 		McClassCSessionAns: func() CommandPayload { return &McClassCSessionAnsPayload{} },
 		McClassBSessionAns: func() CommandPayload { return &McClassBSessionAnsPayload{} },
 	},
-	false: {
+	true: {
 		McGroupStatusReq:   func() CommandPayload { return &McGroupStatusReqPayload{} },
 		McGroupSetupReq:    func() CommandPayload { return &McGroupSetupReqPayload{} },
 		McGroupDeleteReq:   func() CommandPayload { return &McGroupDeleteReqPayload{} },

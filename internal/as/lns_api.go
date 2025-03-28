@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/brocaar/chirpstack-simulator/internal/config"
 	"github.com/brocaar/chirpstack-simulator/internal/utils"
@@ -16,6 +16,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/crypto/ssh"
 )
 
 const (
@@ -68,7 +69,7 @@ func post(url, data, jwt string) ([]byte, error) {
 
 	defer resp.Body.Close()
 
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +97,7 @@ func get(url, data, jwt string) ([]byte, error) {
 
 	defer resp.Body.Close()
 
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +125,7 @@ func delete(url, data, jwt string) ([]byte, error) {
 
 	defer resp.Body.Close()
 
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -678,6 +679,52 @@ func LNSGetApplications() ([]ApplicationJson, error) {
 	}
 
 	return apps.Result, nil
+}
+
+func RestartAppServer() error {
+	server := strings.TrimPrefix(config.C.ChirpStack.API.Server, "http://")
+	server = strings.TrimPrefix(server, "https://")
+	server = strings.Split(server, ":")[0] // 移除端口号（如果有）
+
+	sshConfig := &ssh.ClientConfig{
+		User: "root",
+		Auth: []ssh.AuthMethod{
+			ssh.Password(config.C.ChirpStack.API.SshPassword), // 无密码，根据注释
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Timeout:         10 * time.Second,
+	}
+
+	// 连接到SSH服务器
+	client, err := ssh.Dial("tcp", server+":22", sshConfig)
+	if err != nil {
+		return errors.Wrap(err, "ssh连接失败")
+	}
+	defer client.Close()
+
+	// 创建会话
+	session, err := client.NewSession()
+	if err != nil {
+		return errors.Wrap(err, "创建ssh会话失败")
+	}
+	defer session.Close()
+
+	// 执行命令
+	cmd := "/etc/init.d/lora_app_server restart"
+	output, err := session.CombinedOutput(cmd)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("执行命令失败: %s", string(output)))
+	}
+
+	log.Info("应用服务器重启中...等待5秒")
+	time.Sleep(5 * time.Second)
+
+	log.WithFields(log.Fields{
+		"server": server,
+		"output": string(output),
+	}).Info("应用服务器重启成功")
+
+	return nil
 }
 
 func DeleteAllDevices() error {

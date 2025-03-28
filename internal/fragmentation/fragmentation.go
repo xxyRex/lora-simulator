@@ -49,14 +49,14 @@ var (
 
 // map[uplink]...
 var commandPayloadRegistry = map[bool]map[CID]func() CommandPayload{
-	true: {
+	false: {
 		PackageVersionAns:    func() CommandPayload { return &PackageVersionAnsPayload{} },
 		FragSessionSetupAns:  func() CommandPayload { return &FragSessionSetupAnsPayload{} },
 		FragSessionDeleteAns: func() CommandPayload { return &FragSessionDeleteAnsPayload{} },
 		FragSessionStatusAns: func() CommandPayload { return &FragSessionStatusAnsPayload{} },
 		FragCustomCrcAns:     func() CommandPayload { return &FragCustomCrcAnsPayload{} },
 	},
-	false: {
+	true: {
 		FragSessionSetupReq:  func() CommandPayload { return &FragSessionSetupReqPayload{} },
 		FragSessionDeleteReq: func() CommandPayload { return &FragSessionDeleteReqPayload{} },
 		DataFragment:         func() CommandPayload { return &DataFragmentPayload{} },

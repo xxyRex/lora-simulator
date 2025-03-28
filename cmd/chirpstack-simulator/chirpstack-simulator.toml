@@ -4,7 +4,7 @@
 # debug=5, info=4, warning=3, error=2, fatal=1, panic=0
 log_level = 4
 
-channel_plan = "EU868"
+channel_plan = "CN470"
 
 use_dynamic_payload = true
 
@@ -28,19 +28,32 @@ api_key = ""
 # Server.
 #
 # This must point to the ChirpStack API interface.
-server = "http://192.168.40.148"
-login_url = "/api/internal/login"
-username = "admin"
-password = "password"
-is_lns = false
-use_new_gateway = false
-use_new_profile = false
-use_new_app = true
-use_old_auth = false
-clean_before_test = true
-teardown_after_test = true
-add_bacnet = true
+server = "http://192.168.40.147"
 
+# 网关as api登录url
+login_url = "/api/internal/login"
+# 网关as api登录用户名
+username = "admin"
+# 网关as api登录密码
+password = "password"
+# 是否是devicehubv2 LNS
+is_lns = false
+# devicehubv2 LNS配置
+use_new_gateway = false
+# 暂时无用
+use_new_profile = false
+# 是否每次创建新的application
+use_new_app = true
+# 是否使用旧版校验方式(60.0.0.42-r5前的网关)
+use_old_auth = false
+# 是否每次创建新的application
+clean_before_test = true
+# 结束后是否删除所有数据
+teardown_after_test = false
+# 测试的功能，目前支持bacnet，fuota，normal
+test_feature = "fuota"
+
+# 是否使用TLS
 # Insecure.
 #
 # Set this to true when the endpoint is not using TLS.
@@ -53,7 +66,9 @@ insecure = true
 [chirpstack.integration.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.148:1883"
+server = "tcp://192.168.40.147:1883"
+
+ssh_password = ""
 
 # Username.
 username = "lorawan"
@@ -66,7 +81,7 @@ password = "Urs@L1nk#Ms2020"
 [chirpstack.gateway.backend.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.148:1883"
+server = "tcp://192.168.40.147:1883"
 
 # Username.
 username = "lorawan"
@@ -95,7 +110,7 @@ duration = "0s"
 #
 # This is the time that the simulator takes to activate the devices. This
 # value must be less than the simulator duration.
-activation_time = "2s"
+activation_time = "10s"
 
 # Device configuration.
 [simulator.device]
@@ -104,7 +119,7 @@ activation_time = "2s"
 count = 1
 
 # Uplink interval.
-uplink_interval = "10s"
+uplink_interval = "60s"
 
 # FPort.
 f_port = 1
@@ -113,7 +128,7 @@ f_port = 1
 payload = "010203"
 
 # Frequency (Hz).
-frequency = 868100000
+frequency = 471900000
 
 # Bandwidth (Hz).
 bandwidth = 125000

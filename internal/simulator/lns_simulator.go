@@ -29,6 +29,8 @@ import (
 
 const (
 	BACNET_SPECIFIC_WRITE_JSON = "bacnet_script/specific_write/objects.json"
+	BACNET_FEATURE             = "bacnet"
+	FUOTA_FEATURE              = "fuota"
 )
 
 // Start starts the simulator.
@@ -126,6 +128,8 @@ func (s *LNSSimulation) start() {
 
 func (s *LNSSimulation) init() error {
 	log.Info("LNSSimulation: setting up")
+
+	as.RestartAppServer()
 
 	if err := as.DeleteAllDevices(); err != nil {
 		return err
@@ -600,7 +604,7 @@ func (s *LNSSimulation) setupPayloadCodec() error {
 func (s *LNSSimulation) setupBACnet() error {
 	log.Info("simulator: creating BACnet objects")
 
-	if !config.C.ChirpStack.API.AddBACnet {
+	if config.C.ChirpStack.API.TestFeature != "bacnet" {
 		return nil
 	}
 

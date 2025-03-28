@@ -21,6 +21,8 @@ import (
 
 	"github.com/brocaar/chirpstack-simulator/internal/as"
 	"github.com/brocaar/chirpstack-simulator/internal/config"
+	"github.com/brocaar/chirpstack-simulator/internal/fragmentation"
+	"github.com/brocaar/chirpstack-simulator/internal/multicastsetup"
 	"github.com/brocaar/lorawan"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
@@ -40,6 +42,13 @@ const (
 	deviceStateOTAA deviceState = iota
 	deviceStateActivated
 )
+
+type fuotaProperties struct {
+	McGroupSetupReqPayload      *multicastsetup.McGroupSetupReqPayload
+	McClassCSessionReqPayload   *multicastsetup.McClassCSessionReqPayload
+	FragSessionSetupReqPayload  *fragmentation.FragSessionSetupReqPayload
+	FragSessionStatusReqPayload *fragmentation.FragSessionStatusReqPayload
+}
 
 // Device contains the state of a simulated LoRaWAN OTAA device (1.0.x).
 type Device struct {
@@ -135,6 +144,8 @@ type Device struct {
 	payloadCodec as.PayloadCodecItem
 
 	config *Configuration
+
+	fuotaProperties fuotaProperties
 }
 
 // WithAppKey sets the AppKey.
@@ -484,10 +495,7 @@ func (d *Device) encodePayload(encoderScript string) ([]byte, error) {
 	return bytes, nil
 }
 
-// dataUp sends an data uplink.
-func (d *Device) dataUp(mType lorawan.MType, ack bool) {
-	d.dataUpCount++
-
+func (d *Device) getEncoderData() {
 	ecPath := CODEC_DIR + strings.ToLower(d.payloadCodec.Name) + "/" + strings.ToLower(d.payloadCodec.Name) + "-encoder.js"
 	testDataInfo, err := os.Stat(TEST_DATA_PATH)
 	if err != nil {
@@ -513,6 +521,16 @@ func (d *Device) dataUp(mType lorawan.MType, ack bool) {
 		}
 
 		d.payload = bytes
+		d.fPort = 1
+	}
+}
+
+// dataUp sends an data uplink.
+func (d *Device) dataUp(mType lorawan.MType, ack bool) {
+	d.dataUpCount++
+
+	if config.C.ChirpStack.API.TestFeature != "fuota" {
+		d.getEncoderData()
 	}
 
 	phy := lorawan.PHYPayload{
@@ -596,6 +614,32 @@ func (d *Device) joinAccept(phy lorawan.PHYPayload) error {
 	return nil
 }
 
+func (d *Device) downlinkHandler(confirmed bool, ack bool, fCntDown uint32, fPort uint8, data []byte) error {
+	log.WithFields(log.Fields{
+		"dev_eui":   d.devEUI,
+		"confirmed": confirmed,
+		"ack":       ack,
+		"fCntDown":  fCntDown,
+		"fPort":     fPort,
+		"data":      hex.EncodeToString(data),
+	}).Info("simulator: downlink handler")
+
+	switch fPort {
+	case fragmentation.DefaultFPort:
+		log.WithFields(log.Fields{
+			"dev_eui": d.devEUI,
+		}).Info("simulator: fragmentation")
+		d.handleFragmentationSessionSetupCommand(data)
+	case multicastsetup.DefaultFPort:
+		log.WithFields(log.Fields{
+			"dev_eui": d.devEUI,
+		}).Info("simulator: multicast")
+		d.handleMulticastSetupCommand(data)
+	}
+
+	return nil
+}
+
 // downlinkData validates and handles the downlink data.
 func (d *Device) downlinkData(phy lorawan.PHYPayload) error {
 	ok, err := phy.ValidateDownlinkDataMIC(lorawan.LoRaWAN1_0, 0, d.nwkSKey)
@@ -644,26 +688,13 @@ func (d *Device) downlinkData(phy lorawan.PHYPayload) error {
 	}
 	d.datadownCount++
 
-	log.WithFields(log.Fields{
-		"confirmed":     phy.MHDR.MType == lorawan.ConfirmedDataDown,
-		"ack":           macPL.FHDR.FCtrl.ACK,
-		"f_cnt":         d.fCntDown,
-		"dev_eui":       d.devEUI,
-		"f_port":        fPort,
-		"data":          hex.EncodeToString(data),
-		"datadownCount": d.datadownCount,
-	}).Info("simulator: device received downlink data")
-
 	if phy.MHDR.MType == lorawan.ConfirmedDataDown {
 		d.dataUp(lorawan.UnconfirmedDataUp, true)
 	}
 
-	return nil
-	// if d.downlinkHandlerFunc == nil {
-	// 	return nil
-	// }
+	d.downlinkHandler(phy.MHDR.MType == lorawan.ConfirmedDataDown, macPL.FHDR.FCtrl.ACK, d.fCntDown, fPort, data)
 
-	// return d.downlinkHandlerFunc(phy.MHDR.MType == lorawan.ConfirmedDataDown, macPL.FHDR.FCtrl.ACK, d.fCntDown, fPort, data)
+	return nil
 }
 
 // sendUplink sends
