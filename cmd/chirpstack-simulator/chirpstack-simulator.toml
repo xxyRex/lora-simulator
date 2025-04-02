@@ -52,6 +52,8 @@ clean_before_test = true
 teardown_after_test = false
 # 测试的功能，目前支持bacnet，fuota，normal
 test_feature = "fuota"
+# 是否需要重启as
+restart_as = true
 
 # 是否使用TLS
 # Insecure.

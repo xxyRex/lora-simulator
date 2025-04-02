@@ -129,7 +129,9 @@ func (s *LNSSimulation) start() {
 func (s *LNSSimulation) init() error {
 	log.Info("LNSSimulation: setting up")
 
-	as.RestartAppServer()
+	if config.C.ChirpStack.API.RestartAs {
+		as.RestartAppServer()
+	}
 
 	if err := as.DeleteAllDevices(); err != nil {
 		return err

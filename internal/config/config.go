@@ -31,6 +31,7 @@ type Config struct {
 			TestFeature     string `mapstructure:"test_feature"`
 			Insecure        bool   `mapstructure:"insecure"`
 			SshPassword     string `mapstructure:"ssh_password"`
+			RestartAs       bool   `mapstructure:"restart_as"`
 		} `mapstructure:"api"`
 
 		Integration struct {

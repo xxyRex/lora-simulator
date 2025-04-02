@@ -34,6 +34,7 @@ const (
 	CODEC_PARENT_DIR = "payload_en_decoder"
 	CODEC_DIR        = CODEC_PARENT_DIR + "/codec-release/vendors/milesight-iot/"
 	TEST_DATA_PATH   = CODEC_PARENT_DIR + "/test-data.json"
+	AFTER_JOIN_DELAY = 6 * time.Second
 )
 
 type deviceState int
@@ -48,6 +49,12 @@ type fuotaProperties struct {
 	McClassCSessionReqPayload   *multicastsetup.McClassCSessionReqPayload
 	FragSessionSetupReqPayload  *fragmentation.FragSessionSetupReqPayload
 	FragSessionStatusReqPayload *fragmentation.FragSessionStatusReqPayload
+}
+
+type multicastKeys struct {
+	McKEKey   lorawan.AES128Key
+	McAppSKey lorawan.AES128Key
+	McNetSKey lorawan.AES128Key
 }
 
 // Device contains the state of a simulated LoRaWAN OTAA device (1.0.x).
@@ -143,9 +150,9 @@ type Device struct {
 
 	payloadCodec as.PayloadCodecItem
 
-	config *Configuration
-
 	fuotaProperties fuotaProperties
+
+	multicastKeys multicastKeys
 }
 
 // WithAppKey sets the AppKey.
@@ -280,32 +287,6 @@ func NewDevice(ctx context.Context, wg *sync.WaitGroup, opts ...DeviceOption) (*
 	return d, nil
 }
 
-type DeviceStatus struct {
-	UplinkPaused bool   `json:"uplink_paused"`
-	UplinkType   string `json:"uplink_type"`
-}
-
-type Configuration struct {
-	DeviceStatus DeviceStatus           `json:"device_status"`
-	Object       map[string]interface{} `json:"object"`
-}
-
-func getConfiguration(filePath string) (*Configuration, error) {
-	// Read the file content
-	fileContent, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("error reading file: %v", err)
-	}
-
-	// Parse the JSON
-	var config Configuration
-	if err := json.Unmarshal(fileContent, &config); err != nil {
-		return nil, fmt.Errorf("error parsing JSON: %v", err)
-	}
-
-	return &config, nil
-}
-
 // uplinkLoop first handle the OTAA activation, after which it will periodically
 // sends an uplink with the configured payload and fport.
 func (d *Device) uplinkLoop() {
@@ -324,14 +305,19 @@ func (d *Device) uplinkLoop() {
 		switch d.getState() {
 		case deviceStateOTAA:
 			d.joinRequest()
-			time.Sleep(6 * time.Second)
+			time.Sleep(AFTER_JOIN_DELAY)
 		case deviceStateActivated:
-			config, err := getConfiguration("config/device.json")
-			d.config = config
-			if err == nil && config.DeviceStatus.UplinkPaused {
+			config := GetDynamicDevicesConfig(d.devEUI)
+			paused := false
+			uplinkType := "UpUnc"
+			if config != nil {
+				paused = config.Devices.DeviceStatus.UplinkPaused
+				uplinkType = config.Devices.DeviceStatus.UplinkType
+			}
+			if paused {
 				continue
 			} else {
-				if d.config.DeviceStatus.UplinkType == "UpUnc" {
+				if uplinkType == "UpUnc" {
 					d.dataUp(lorawan.UnconfirmedDataUp, false)
 				} else {
 					d.dataUp(lorawan.ConfirmedDataUp, false)
@@ -527,11 +513,13 @@ func (d *Device) getEncoderData() {
 
 // dataUp sends an data uplink.
 func (d *Device) dataUp(mType lorawan.MType, ack bool) {
+	if d.payload == nil || d.fPort == 0 {
+		return
+	}
+
 	d.dataUpCount++
 
-	if config.C.ChirpStack.API.TestFeature != "fuota" {
-		d.getEncoderData()
-	}
+	d.getEncoderData()
 
 	phy := lorawan.PHYPayload{
 		MHDR: lorawan.MHDR{
@@ -569,6 +557,9 @@ func (d *Device) dataUp(mType lorawan.MType, ack bool) {
 	d.sendUplink(phy)
 
 	deviceUplinkCounter().Inc()
+
+	d.payload = nil
+	d.fPort = 0
 }
 
 // joinAccept validates and handles the join-accept downlink.
@@ -642,7 +633,7 @@ func (d *Device) downlinkHandler(confirmed bool, ack bool, fCntDown uint32, fPor
 
 // downlinkData validates and handles the downlink data.
 func (d *Device) downlinkData(phy lorawan.PHYPayload) error {
-	ok, err := phy.ValidateDownlinkDataMIC(lorawan.LoRaWAN1_0, 0, d.nwkSKey)
+	ok_single, err := phy.ValidateDownlinkDataMIC(lorawan.LoRaWAN1_0, 0, d.nwkSKey)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"dev_eui": d.devEUI,
@@ -650,7 +641,15 @@ func (d *Device) downlinkData(phy lorawan.PHYPayload) error {
 		return nil
 	}
 
-	if !ok {
+	ok_multicast, err := phy.ValidateDownlinkDataMIC(lorawan.LoRaWAN1_0, 0, d.multicastKeys.McNetSKey)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"dev_eui": d.devEUI,
+		}).Debug("simulator: invalid downlink data MIC")
+		return nil
+	}
+
+	if !ok_single && !ok_multicast {
 		log.WithFields(log.Fields{
 			"dev_eui": d.devEUI,
 		}).Debug("simulator: invalid downlink data MIC")
@@ -672,9 +671,16 @@ func (d *Device) downlinkData(phy lorawan.PHYPayload) error {
 	}
 
 	if fPort != 0 {
-		err := phy.DecryptFRMPayload(d.appSKey)
-		if err != nil {
-			return errors.Wrap(err, "decrypt frmpayload error")
+		if ok_single {
+			err := phy.DecryptFRMPayload(d.appSKey)
+			if err != nil {
+				return errors.Wrap(err, "decrypt frmpayload error")
+			}
+		} else if ok_multicast {
+			err := phy.DecryptFRMPayload(d.multicastKeys.McAppSKey)
+			if err != nil {
+				return errors.Wrap(err, "decrypt frmpayload error")
+			}
 		}
 
 		if len(macPL.FRMPayload) != 0 {
