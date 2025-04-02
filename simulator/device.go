@@ -20,7 +20,6 @@ import (
 	"sync/atomic"
 
 	"github.com/brocaar/chirpstack-simulator/internal/as"
-	"github.com/brocaar/chirpstack-simulator/internal/config"
 	"github.com/brocaar/chirpstack-simulator/internal/fragmentation"
 	"github.com/brocaar/chirpstack-simulator/internal/multicastsetup"
 	"github.com/brocaar/lorawan"
@@ -87,6 +86,8 @@ type Device struct {
 
 	// Device sends uplink as confirmed.
 	confirmed bool
+
+	dynamicPayload []byte
 
 	// Payload (plaintext) which the device sends as uplink.
 	payload []byte
@@ -307,6 +308,7 @@ func (d *Device) uplinkLoop() {
 			d.joinRequest()
 			time.Sleep(AFTER_JOIN_DELAY)
 		case deviceStateActivated:
+			d.getEncoderData()
 			config := GetDynamicDevicesConfig(d.devEUI)
 			paused := false
 			uplinkType := "UpUnc"
@@ -489,7 +491,7 @@ func (d *Device) getEncoderData() {
 		return
 	}
 
-	if config.C.General.UseDynamicPayload && !d.encoderScriptFileModTime.Equal(testDataInfo.ModTime()) {
+	if !d.encoderScriptFileModTime.Equal(testDataInfo.ModTime()) {
 		d.encoderScriptFileModTime = testDataInfo.ModTime()
 
 		file, err := os.Open(ecPath)
@@ -507,8 +509,12 @@ func (d *Device) getEncoderData() {
 		}
 
 		d.payload = bytes
-		d.fPort = 1
+		d.dynamicPayload = bytes
+	} else {
+		d.payload = d.dynamicPayload
 	}
+
+	d.fPort = 1
 }
 
 // dataUp sends an data uplink.
@@ -518,8 +524,6 @@ func (d *Device) dataUp(mType lorawan.MType, ack bool) {
 	}
 
 	d.dataUpCount++
-
-	d.getEncoderData()
 
 	phy := lorawan.PHYPayload{
 		MHDR: lorawan.MHDR{

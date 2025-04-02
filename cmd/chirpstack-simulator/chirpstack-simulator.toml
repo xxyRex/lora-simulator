@@ -6,8 +6,6 @@ log_level = 4
 
 channel_plan = "CN470"
 
-use_dynamic_payload = true
-
 # ChirpStack configuration.
 [chirpstack]
 
@@ -121,7 +119,7 @@ activation_time = "10s"
 count = 1
 
 # Uplink interval.
-uplink_interval = "60s"
+uplink_interval = "1s"
 
 # FPort.
 f_port = 1

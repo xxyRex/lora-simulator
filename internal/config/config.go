@@ -12,7 +12,6 @@ type Config struct {
 	General struct {
 		LogLevel          int    `mapstructure:"log_level"`
 		ChannelPlan       string `mapstructure:"channel_plan"`
-		UseDynamicPayload bool   `mapstructure:"use_dynamic_payload"`
 	}
 
 	ChirpStack struct {
