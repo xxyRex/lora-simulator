@@ -294,7 +294,7 @@ func (s *LNSSimulation) setupGateways() error {
 				return errors.Wrap(err, "read random bytes error")
 			}
 
-			err := as.LNSCreateGateway(gatewayID.String(), gatewayID.String())
+			err := as.CreateGateway(gatewayID.String(), gatewayID.String())
 
 			if err != nil {
 				return errors.Wrap(err, "create gateway error")
@@ -306,7 +306,7 @@ func (s *LNSSimulation) setupGateways() error {
 		return nil
 	}
 
-	macs, err := as.LNSGetGateway()
+	macs, err := as.GetGateway()
 	if err != nil {
 		return errors.Wrap(err, "get gateway error")
 	}
@@ -323,7 +323,7 @@ func (s *LNSSimulation) tearDownGateways() error {
 	}
 
 	for _, gatewayID := range s.gatewayIDs {
-		err := as.LNSDeleteGateway(gatewayID.String())
+		err := as.DeleteGateway(gatewayID.String())
 		if err != nil {
 			return errors.Wrap(err, "delete gateway error")
 		}
@@ -349,7 +349,7 @@ func (s *LNSSimulation) setupDeviceProfile() error {
 		return nil
 	}
 
-	profiles, err := as.LNSGetProfiles()
+	profiles, err := as.GetProfiles()
 	if err != nil {
 		return err
 	}
@@ -366,7 +366,7 @@ func (s *LNSSimulation) tearDownDeviceProfile() error {
 		return nil
 	}
 
-	err := as.LNSDeleteDeviceProfile(s.deviceProfileID.String())
+	err := as.DeleteDeviceProfile(s.deviceProfileID.String())
 	if err != nil {
 		log.Error(err)
 		return err
@@ -378,7 +378,7 @@ func (s *LNSSimulation) tearDownDeviceProfile() error {
 func (s *LNSSimulation) setupApplication() error {
 	log.Info("simulator: init application")
 
-	apps, err := as.LNSGetApplications()
+	apps, err := as.GetApplications()
 	if err != nil {
 		return err
 	}
@@ -393,14 +393,14 @@ func (s *LNSSimulation) setupApplication() error {
 	}
 
 	if config.C.ChirpStack.API.UseNewApp {
-		id, err := as.LNSCreateApplication()
+		id, err := as.CreateApplication()
 		if err != nil {
 			return errors.Wrap(err, "create applicaiton error")
 		}
 
 		s.applicationID = id
 
-		apps, err = as.LNSGetApplications()
+		apps, err = as.GetApplications()
 		if err != nil {
 			return err
 		}
@@ -417,7 +417,7 @@ func (s *LNSSimulation) tearDownApplication() error {
 		return nil
 	}
 
-	err := as.LNSDeleteApplication(s.applicationID)
+	err := as.DeleteApplication(s.applicationID)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -559,7 +559,7 @@ func (s *LNSSimulation) setupDevices() error {
 		appKey := ldcfg.AppKey
 		name := ldcfg.Name
 
-		err := as.LNSCreateDevices(eui, name, profileID, appKey, payloadCodecID, applicationID)
+		err := as.CreateDevices(eui, name, profileID, appKey, payloadCodecID, applicationID)
 
 		if err != nil {
 			log.Error(err)
@@ -582,7 +582,7 @@ func (s *LNSSimulation) tearDownDevices() error {
 	log.Info("simulator: tear-down devices")
 
 	for k := range s.deviceAppKeys {
-		err := as.LNSDeleteDevices(k.String())
+		err := as.DeleteDevices(k.String())
 		if err != nil {
 			log.Error(err)
 			return err
@@ -595,7 +595,7 @@ func (s *LNSSimulation) tearDownDevices() error {
 func (s *LNSSimulation) setupPayloadCodec() error {
 	log.Info("simulator: creating gateways")
 
-	codecs, err := as.LNSGetPayloadCoedc()
+	codecs, err := as.GetPayloadCoedc()
 	if err != nil {
 		return nil
 	}

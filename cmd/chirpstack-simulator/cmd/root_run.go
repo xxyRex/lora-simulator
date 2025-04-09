@@ -73,7 +73,7 @@ func printStartMessage(ctx context.Context, wg *sync.WaitGroup) error {
 }
 
 func setupASAPIClient(ctx context.Context, wg *sync.WaitGroup) error {
-	return as.LNSSetup(config.C)
+	return as.Setup(config.C)
 }
 
 func setupASIntegration(ctx context.Context, wg *sync.WaitGroup) error {
