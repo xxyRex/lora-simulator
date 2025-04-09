@@ -4,35 +4,43 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	mrand "math/rand"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/brocaar/chirpstack-simulator/internal/as"
 	"github.com/brocaar/chirpstack-simulator/internal/config"
+	device "github.com/brocaar/chirpstack-simulator/internal/device"
+	"github.com/brocaar/chirpstack-simulator/internal/gateway"
 	"github.com/brocaar/chirpstack-simulator/internal/ns"
-	"github.com/brocaar/chirpstack-simulator/simulator"
 	"github.com/brocaar/lorawan"
-	"github.com/chirpstack/chirpstack/api/go/v4/api"
-	"github.com/chirpstack/chirpstack/api/go/v4/common"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
+	"github.com/gocarina/gocsv"
+)
+
+const (
+	BACNET_SPECIFIC_WRITE_JSON = "bacnet_script/specific_write/objects.json"
+	BACNET_FEATURE             = "bacnet"
+	FUOTA_FEATURE              = "fuota"
+	DEVICES_IMPORT_FILE        = "config/devices_import.csv"
 )
 
 // Start starts the simulator.
-func Start(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
+func LNSStart(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 	for i, c := range c.Simulator {
 		log.WithFields(log.Fields{
 			"i": i,
-		}).Info("simulator: starting simulation")
+		}).Info("LNS simulator: starting LNSSimulation")
 
 		wg.Add(1)
 
@@ -41,7 +49,7 @@ func Start(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 			return errors.Wrap(err, "decode payload error")
 		}
 
-		sim := simulation{
+		sim := LNSSimulation{
 			ctx:                  ctx,
 			wg:                   wg,
 			tenantID:             c.TenantID,
@@ -59,6 +67,7 @@ func Start(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 			deviceAppKeys:        make(map[lorawan.EUI64]lorawan.AES128Key),
 			eventTopicTemplate:   c.Gateway.EventTopicTemplate,
 			commandTopicTemplate: c.Gateway.CommandTopicTemplate,
+			euiCodecMap:          make(map[lorawan.EUI64]as.PayloadCodecItem),
 		}
 
 		go sim.start()
@@ -67,7 +76,7 @@ func Start(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 	return nil
 }
 
-type simulation struct {
+type LNSSimulation struct {
 	ctx             context.Context
 	wg              *sync.WaitGroup
 	tenantID        string
@@ -84,40 +93,49 @@ type simulation struct {
 	bandwidth       int
 	spreadingFactor int
 
-	tenant               *api.Tenant
 	deviceProfileID      uuid.UUID
 	applicationID        string
 	gatewayIDs           []lorawan.EUI64
-	deviceAppKeysMutex   sync.Mutex
 	deviceAppKeys        map[lorawan.EUI64]lorawan.AES128Key
 	eventTopicTemplate   string
 	commandTopicTemplate string
+
+	deviceProfiles []as.ProfileResultJson
+	applications   []as.ApplicationJson
+	payloadCodecs  []as.PayloadCodecItem
+
+	euiCodecMap map[lorawan.EUI64]as.PayloadCodecItem
 }
 
-func (s *simulation) start() {
+func (s *LNSSimulation) start() {
+
 	if err := s.init(); err != nil {
-		log.WithError(err).Error("simulator: init simulation error")
+		log.WithError(err).Error("simulator: init LNSSimulation error")
 	}
 
 	if err := s.runSimulation(); err != nil {
-		log.WithError(err).Error("simulator: simulation error")
+		log.WithError(err).Error("simulator: LNSSimulation error")
 	}
 
-	log.Info("simulator: simulation completed")
+	log.Info("simulator: LNSSimulation completed")
 
 	if err := s.tearDown(); err != nil {
-		log.WithError(err).Error("simulator: tear-down simulation error")
+		log.WithError(err).Error("simulator: tear-down LNSSimulation error")
 	}
 
 	s.wg.Done()
 
-	log.Info("simulation: tear-down completed")
+	log.Info("LNSSimulation: tear-down completed")
 }
 
-func (s *simulation) init() error {
-	log.Info("simulation: setting up")
+func (s *LNSSimulation) init() error {
+	log.Info("LNSSimulation: setting up")
 
-	if err := s.setupTenant(); err != nil {
+	if config.C.ChirpStack.API.RestartAs {
+		as.RestartAppServer()
+	}
+
+	if err := as.DeleteAllDevices(); err != nil {
 		return err
 	}
 
@@ -133,23 +151,23 @@ func (s *simulation) init() error {
 		return err
 	}
 
+	if err := s.setupPayloadCodec(); err != nil {
+		return err
+	}
+
 	if err := s.setupDevices(); err != nil {
 		return err
 	}
 
-	if err := s.setupApplicationIntegration(); err != nil {
+	if err := s.setupBACnet(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *simulation) tearDown() error {
-	log.Info("simulation: cleaning up")
-
-	if err := s.tearDownApplicationIntegration(); err != nil {
-		return err
-	}
+func (s *LNSSimulation) tearDown() error {
+	log.Info("LNSSimulation: cleaning up")
 
 	if err := s.tearDownDevices(); err != nil {
 		return err
@@ -170,15 +188,16 @@ func (s *simulation) tearDown() error {
 	return nil
 }
 
-func (s *simulation) runSimulation() error {
-	var gateways []*simulator.Gateway
+func (s *LNSSimulation) runSimulation() error {
+	var gateways []*gateway.Gateway
+	var devices []*device.Device
 
 	for _, gatewayID := range s.gatewayIDs {
-		gw, err := simulator.NewGateway(
-			simulator.WithGatewayID(gatewayID),
-			simulator.WithMQTTClient(ns.Client()),
-			simulator.WithEventTopicTemplate(s.eventTopicTemplate),
-			simulator.WithCommandTopicTemplate(s.commandTopicTemplate),
+		gw, err := gateway.NewGateway(
+			gateway.WithGatewayID(gatewayID),
+			gateway.WithMQTTClient(ns.Client()),
+			gateway.WithEventTopicTemplate(s.eventTopicTemplate),
+			gateway.WithCommandTopicTemplate(s.commandTopicTemplate),
 		)
 		if err != nil {
 			return errors.Wrap(err, "new gateway error")
@@ -194,28 +213,38 @@ func (s *simulation) runSimulation() error {
 	defer cancel()
 
 	for devEUI, appKey := range s.deviceAppKeys {
-		devGateways := make(map[int]*simulator.Gateway)
-		devNumGateways := s.gatewayMinCount + mrand.Intn(s.gatewayMaxCount-s.gatewayMinCount+1)
+		var gws []*gateway.Gateway
+		if config.C.ChirpStack.API.UseNewGateway {
+			devGateways := make(map[int]*gateway.Gateway)
+			devNumGateways := s.gatewayMinCount + mrand.Intn(s.gatewayMaxCount-s.gatewayMinCount+1)
 
-		for len(devGateways) < devNumGateways {
-			// pick random gateway index
-			n := mrand.Intn(len(gateways))
-			devGateways[n] = gateways[n]
+			for len(devGateways) < devNumGateways {
+				// pick random gateway index
+				n := mrand.Intn(len(gateways))
+				devGateways[n] = gateways[n]
+			}
+
+			for k := range devGateways {
+				gws = append(gws, devGateways[k])
+			}
+		} else {
+			gws = gateways
 		}
 
-		var gws []*simulator.Gateway
-		for k := range devGateways {
-			gws = append(gws, devGateways[k])
+		zeroDuration := time.Duration(0)
+		otaaDuration := time.Duration(0)
+		if s.activationTime != zeroDuration {
+			otaaDuration = time.Duration(mrand.Int63n(int64(s.activationTime)))
 		}
 
-		_, err := simulator.NewDevice(ctx, &wg,
-			simulator.WithDevEUI(devEUI),
-			simulator.WithAppKey(appKey),
-			simulator.WithUplinkInterval(s.uplinkInterval),
-			simulator.WithOTAADelay(time.Duration(mrand.Int63n(int64(s.activationTime)))),
-			simulator.WithUplinkPayload(false, s.fPort, s.payload),
-			simulator.WithGateways(gws),
-			simulator.WithUplinkTXInfo(&gw.UplinkTxInfo{
+		d, err := device.NewDevice(ctx, &wg,
+			device.WithDevEUI(devEUI),
+			device.WithAppKey(appKey),
+			device.WithUplinkInterval(s.uplinkInterval),
+			device.WithOTAADelay(otaaDuration),
+			device.WithUplinkPayload(true, s.fPort, s.payload),
+			device.WithGateways(gws),
+			device.WithUplinkTXInfo(&gw.UplinkTxInfo{
 				Frequency: uint32(s.frequency),
 				Modulation: &gw.Modulation{
 					Parameters: &gw.Modulation_Lora{
@@ -227,11 +256,16 @@ func (s *simulation) runSimulation() error {
 					},
 				},
 			}),
+			device.WithPayloadCodec(s.euiCodecMap[devEUI]),
 		)
 		if err != nil {
 			return errors.Wrap(err, "new device error")
 		}
+
+		devices = append(devices, d)
 	}
+
+	log.Info("len(devices): ", len(devices))
 
 	go func() {
 		sigChan := make(chan os.Signal, 1)
@@ -250,235 +284,390 @@ func (s *simulation) runSimulation() error {
 	return nil
 }
 
-func (s *simulation) setupTenant() error {
-	log.WithFields(log.Fields{
-		"tenant_id": s.tenantID,
-	}).Info("simulator: retrieving tenant")
-	t, err := as.Tenant().Get(context.Background(), &api.GetTenantRequest{
-		Id: s.tenantID,
-	})
-	if err != nil {
-		return errors.Wrap(err, "get tenant error")
-	}
-	s.tenant = t.GetTenant()
-
-	return nil
-}
-
-func (s *simulation) setupGateways() error {
+func (s *LNSSimulation) setupGateways() error {
 	log.Info("simulator: creating gateways")
 
-	for i := 0; i < s.gatewayMaxCount; i++ {
-		var gatewayID lorawan.EUI64
-		if _, err := rand.Read(gatewayID[:]); err != nil {
-			return errors.Wrap(err, "read random bytes error")
+	if config.C.ChirpStack.API.UseNewGateway {
+		for i := 0; i < s.gatewayMaxCount; i++ {
+			var gatewayID lorawan.EUI64
+			if _, err := rand.Read(gatewayID[:]); err != nil {
+				return errors.Wrap(err, "read random bytes error")
+			}
+
+			err := as.LNSCreateGateway(gatewayID.String(), gatewayID.String())
+
+			if err != nil {
+				return errors.Wrap(err, "create gateway error")
+			}
+
+			s.gatewayIDs = append(s.gatewayIDs, gatewayID)
 		}
 
-		_, err := as.Gateway().Create(context.Background(), &api.CreateGatewayRequest{
-			Gateway: &api.Gateway{
-				GatewayId:   gatewayID.String(),
-				Name:        gatewayID.String(),
-				Description: gatewayID.String(),
-				TenantId:    s.tenant.GetId(),
-				Location:    &common.Location{},
-			},
-		})
-		if err != nil {
-			return errors.Wrap(err, "create gateway error")
-		}
-
-		s.gatewayIDs = append(s.gatewayIDs, gatewayID)
+		return nil
 	}
+
+	macs, err := as.LNSGetGateway()
+	if err != nil {
+		return errors.Wrap(err, "get gateway error")
+	}
+
+	s.gatewayIDs = macs
 
 	return nil
 }
 
-func (s *simulation) tearDownGateways() error {
+func (s *LNSSimulation) tearDownGateways() error {
 	log.Info("simulator: tear-down gateways")
+	if !config.C.ChirpStack.API.UseNewGateway {
+		return nil
+	}
 
 	for _, gatewayID := range s.gatewayIDs {
-		_, err := as.Gateway().Delete(context.Background(), &api.DeleteGatewayRequest{
-			GatewayId: gatewayID.String(),
-		})
+		err := as.LNSDeleteGateway(gatewayID.String())
 		if err != nil {
 			return errors.Wrap(err, "delete gateway error")
 		}
 	}
-
 	return nil
 }
 
-func (s *simulation) setupDeviceProfile() error {
+func (s *LNSSimulation) setupDeviceProfile() error {
 	log.Info("simulator: creating device-profile")
 
-	dpName, _ := uuid.NewV4()
+	if config.C.ChirpStack.API.UseNewProfile {
+		profileId, err := as.LNSCreateDeviceProfile()
+		if err != nil {
+			return errors.Wrap(err, "create device-profile error")
+		}
 
-	resp, err := as.DeviceProfile().Create(context.Background(), &api.CreateDeviceProfileRequest{
-		DeviceProfile: &api.DeviceProfile{
-			Name:              dpName.String(),
-			TenantId:          s.tenant.GetId(),
-			MacVersion:        common.MacVersion_LORAWAN_1_0_3,
-			RegParamsRevision: common.RegParamsRevision_B,
-			SupportsOtaa:      true,
-			Region:            common.Region_EU868,
-			AdrAlgorithmId:    "default",
-		},
-	})
-	if err != nil {
-		return errors.Wrap(err, "create device-profile error")
+		dpID, err := uuid.FromString(profileId)
+		if err != nil {
+			return err
+		}
+		s.deviceProfileID = dpID
+
+		return nil
 	}
 
-	dpID, err := uuid.FromString(resp.Id)
+	profiles, err := as.LNSGetProfiles()
 	if err != nil {
 		return err
 	}
-	s.deviceProfileID = dpID
+
+	s.deviceProfiles = profiles
 
 	return nil
 }
 
-func (s *simulation) tearDownDeviceProfile() error {
+func (s *LNSSimulation) tearDownDeviceProfile() error {
 	log.Info("simulator: tear-down device-profile")
 
-	_, err := as.DeviceProfile().Delete(context.Background(), &api.DeleteDeviceProfileRequest{
-		Id: s.deviceProfileID.String(),
-	})
+	if !config.C.ChirpStack.API.UseNewProfile {
+		return nil
+	}
+
+	err := as.LNSDeleteDeviceProfile(s.deviceProfileID.String())
 	if err != nil {
-		return errors.Wrap(err, "delete device-profile error")
+		log.Error(err)
+		return err
 	}
 
 	return nil
 }
 
-func (s *simulation) setupApplication() error {
+func (s *LNSSimulation) setupApplication() error {
 	log.Info("simulator: init application")
 
-	appName, err := uuid.NewV4()
+	apps, err := as.LNSGetApplications()
 	if err != nil {
 		return err
 	}
 
-	createAppResp, err := as.Application().Create(context.Background(), &api.CreateApplicationRequest{
-		Application: &api.Application{
-			Name:        appName.String(),
-			Description: appName.String(),
-			TenantId:    s.tenant.GetId(),
-		},
-	})
-	if err != nil {
-		return errors.Wrap(err, "create applicaiton error")
+	s.applications = apps
+
+	for _, app := range apps {
+		if app.Name == as.APPLICATION_NAME {
+			s.applicationID = app.ID
+			return nil
+		}
 	}
 
-	s.applicationID = createAppResp.Id
+	if config.C.ChirpStack.API.UseNewApp {
+		id, err := as.LNSCreateApplication()
+		if err != nil {
+			return errors.Wrap(err, "create applicaiton error")
+		}
+
+		s.applicationID = id
+
+		apps, err = as.LNSGetApplications()
+		if err != nil {
+			return err
+		}
+		s.applications = apps
+	}
+
 	return nil
 }
 
-func (s *simulation) tearDownApplication() error {
+func (s *LNSSimulation) tearDownApplication() error {
 	log.Info("simulator: tear-down application")
 
-	_, err := as.Application().Delete(context.Background(), &api.DeleteApplicationRequest{
-		Id: s.applicationID,
-	})
-	if err != nil {
-		return errors.Wrap(err, "delete application error")
+	if !config.C.ChirpStack.API.UseNewApp {
+		return nil
 	}
+
+	err := as.LNSDeleteApplication(s.applicationID)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
 	return nil
 }
 
-func (s *simulation) setupDevices() error {
+func generateRandomString() string {
+	randomBytes := make([]byte, 16)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return hex.EncodeToString(randomBytes)
+}
+
+type Device struct {
+	DevEUI        string `csv:"deveui"`
+	Name          string `csv:"name"`
+	Description   string `csv:"description"`
+	Application   string `csv:"application"`
+	DeviceProfile string `csv:"deviceprofile"`
+	PayloadCodec  string `csv:"payloadcodec"`
+	FPort         string `csv:"fport"`
+	AppKey        string `csv:"appkey"`
+	DevAddr       string `csv:"devaddr"`
+	NwkSKey       string `csv:"nwkskey"`
+	AppSKey       string `csv:"appskey"`
+}
+
+func generateDevices(num int) error {
+	srcFile, err := os.Open("config/base_devices_export.csv")
+	if err != nil {
+		return fmt.Errorf("打开源文件失败: %w", err)
+	}
+	defer srcFile.Close()
+
+	var baseDevices []Device
+	if err := gocsv.UnmarshalFile(srcFile, &baseDevices); err != nil {
+		return fmt.Errorf("解析源CSV文件失败: %w", err)
+	}
+	if len(baseDevices) == 0 {
+		return fmt.Errorf("基础设备模板为空")
+	}
+
+	baseDevice := baseDevices[0]
+	baseEUI, err := strconv.ParseUint(baseDevice.DevEUI, 16, 64)
+	if err != nil {
+		return fmt.Errorf("解析基础DevEUI失败: %w", err)
+	}
+
+	devices := make([]Device, num)
+	for i := 0; i < num; i++ {
+		newEUI := baseEUI + uint64(i+1)
+		newEUIStr := fmt.Sprintf("%016x", newEUI)
+		newName := fmt.Sprintf("%s-%d", baseDevice.PayloadCodec, i+1)
+
+		devices[i] = Device{
+			DevEUI:        newEUIStr,
+			Name:          newName,
+			Description:   newEUIStr,
+			Application:   baseDevice.Application,
+			DeviceProfile: baseDevice.DeviceProfile,
+			PayloadCodec:  baseDevice.PayloadCodec,
+			FPort:         baseDevice.FPort,
+			AppKey:        generateRandomString(),
+			DevAddr:       baseDevice.DevAddr,
+			NwkSKey:       baseDevice.NwkSKey,
+			AppSKey:       baseDevice.AppSKey,
+		}
+	}
+
+	dstFile, err := os.Create(DEVICES_IMPORT_FILE)
+	if err != nil {
+		return fmt.Errorf("创建目标文件失败: %w", err)
+	}
+	defer dstFile.Close()
+
+	if err := gocsv.MarshalFile(&devices, dstFile); err != nil {
+		return fmt.Errorf("写入CSV文件失败: %w", err)
+	}
+
+	return nil
+}
+
+func (s *LNSSimulation) setupDevices() error {
 	log.Info("simulator: init devices")
 
-	var wg sync.WaitGroup
-
-	for i := 0; i < s.deviceCount; i++ {
-		wg.Add(1)
-
-		go func() {
-			var devEUI lorawan.EUI64
-			var appKey lorawan.AES128Key
-
-			if _, err := rand.Read(devEUI[:]); err != nil {
-				log.Fatal(err)
-			}
-			if _, err := rand.Read(appKey[:]); err != nil {
-				log.Fatal(err)
-			}
-
-			_, err := as.Device().Create(context.Background(), &api.CreateDeviceRequest{
-				Device: &api.Device{
-					DevEui:          devEUI.String(),
-					Name:            devEUI.String(),
-					Description:     devEUI.String(),
-					ApplicationId:   s.applicationID,
-					DeviceProfileId: s.deviceProfileID.String(),
-				},
-			})
-			if err != nil {
-				log.Fatalf("create device error, error: %s", err)
-			}
-
-			_, err = as.Device().CreateKeys(context.Background(), &api.CreateDeviceKeysRequest{
-				DeviceKeys: &api.DeviceKeys{
-					DevEui: devEUI.String(),
-
-					// yes, this is correct for LoRaWAN 1.0.x!
-					// see the API documentation
-					NwkKey: appKey.String(),
-				},
-			})
-			if err != nil {
-				log.Fatalf("create device keys error, error: %s", err)
-			}
-
-			s.deviceAppKeysMutex.Lock()
-			s.deviceAppKeys[devEUI] = appKey
-			s.deviceAppKeysMutex.Unlock()
-			wg.Done()
-		}()
-
+	if err := generateDevices(s.deviceCount); err != nil {
+		panic(err)
 	}
 
-	wg.Wait()
+	ret, records := as.LoadLoRaWANDevCfg(DEVICES_IMPORT_FILE, 1)
+	if !ret {
+		return errors.Errorf("failed to setupDevices")
+	}
+
+	for _, ldcfg := range records {
+		profileID := ""
+		for _, p := range s.deviceProfiles {
+			if p.Name == ldcfg.DeviceProfile {
+				profileID = p.Profile.ProfileID
+				break
+			}
+		}
+
+		if profileID == "" {
+			return errors.Errorf("can not find device profile: %s", ldcfg.DeviceProfile)
+		}
+
+		applicationID := ""
+		for _, a := range s.applications {
+			if a.Name == ldcfg.Application {
+				applicationID = a.ID
+				break
+			}
+		}
+
+		if applicationID == "" {
+			return errors.Errorf("can not find application: %s", ldcfg.Application)
+		}
+
+		payloadCodecID := ""
+		var codec as.PayloadCodecItem
+		for _, c := range s.payloadCodecs {
+			if c.Name == ldcfg.PayloadCodec {
+				payloadCodecID = c.ID
+				codec = c
+				break
+			}
+		}
+
+		if payloadCodecID == "" {
+			return errors.Errorf("can not find payload codec: %s", ldcfg.PayloadCodec)
+		}
+
+		eui := ldcfg.DevEUI
+		appKey := ldcfg.AppKey
+		name := ldcfg.Name
+
+		err := as.LNSCreateDevices(eui, name, profileID, appKey, payloadCodecID, applicationID)
+
+		if err != nil {
+			log.Error(err)
+		}
+
+		var devEUI lorawan.EUI64
+		var appKeyAES lorawan.AES128Key
+
+		devEUI.UnmarshalText([]byte(eui))
+		appKeyAES.UnmarshalText([]byte(appKey))
+
+		s.deviceAppKeys[devEUI] = appKeyAES
+		s.euiCodecMap[devEUI] = codec
+	}
 
 	return nil
 }
 
-func (s *simulation) tearDownDevices() error {
+func (s *LNSSimulation) tearDownDevices() error {
 	log.Info("simulator: tear-down devices")
 
 	for k := range s.deviceAppKeys {
-		_, err := as.Device().Delete(context.Background(), &api.DeleteDeviceRequest{
-			DevEui: k.String(),
-		})
+		err := as.LNSDeleteDevices(k.String())
 		if err != nil {
-			return errors.Wrap(err, "delete device error")
+			log.Error(err)
+			return err
 		}
 	}
 
 	return nil
 }
 
-func (s *simulation) setupApplicationIntegration() error {
-	log.Info("simulator: setting up application integration")
+func (s *LNSSimulation) setupPayloadCodec() error {
+	log.Info("simulator: creating gateways")
 
-	token := as.MQTTClient().Subscribe(fmt.Sprintf("application/%s/device/+/event/up", s.applicationID), 0, func(client mqtt.Client, msg mqtt.Message) {
-		applicationUplinkCounter().Inc()
-	})
-	token.Wait()
-	if token.Error() != nil {
-		return errors.Wrap(token.Error(), "subscribe application integration error")
+	codecs, err := as.LNSGetPayloadCoedc()
+	if err != nil {
+		return nil
 	}
+
+	s.payloadCodecs = codecs
 
 	return nil
 }
 
-func (s *simulation) tearDownApplicationIntegration() error {
-	log.Info("simulator: tear-down application integration")
+func (s *LNSSimulation) setupBACnet() error {
+	log.Info("simulator: creating BACnet objects")
 
-	token := as.MQTTClient().Unsubscribe(fmt.Sprintf("application/%s/device/+/event/up", s.applicationID))
-	token.Wait()
-	if token.Error() != nil {
-		return errors.Wrap(token.Error(), "unsubscribe application integration error")
+	if config.C.ChirpStack.API.TestFeature != "bacnet" {
+		return nil
+	}
+
+	objects, err := as.GetAvailableBACnetObjects("", "asc", 0, 1)
+	if err != nil {
+		return err
+	}
+
+	// save objects to a json file BACNET_SPECIFIC_WRITE_JSON
+	jsonData, err := json.Marshal(objects)
+	if err != nil {
+		return err
+	}
+	os.WriteFile(BACNET_SPECIFIC_WRITE_JSON, jsonData, 0644)
+
+	log.Info("total count: ", objects.Total)
+
+	const MAX_ADD_DATUM = 20
+
+	for i := 0; i < int(objects.Total); i += MAX_ADD_DATUM {
+		log.Info("add from ", i, " to ", i+MAX_ADD_DATUM)
+		objects, err := as.GetAvailableBACnetObjects("", "asc", i, MAX_ADD_DATUM)
+		if err != nil {
+			return err
+		}
+
+		testDataFile, err := os.Open(device.TEST_DATA_PATH)
+		if err != nil {
+			return err
+		}
+		defer testDataFile.Close()
+
+		var testData map[string]interface{}
+		if err := json.NewDecoder(testDataFile).Decode(&testData); err != nil {
+			return err
+		}
+
+		// 创建一个 map 来存储测试数据的键，提高查找效率
+		testDataKeys := make(map[string]struct{})
+		for k := range testData {
+			testDataKeys[k] = struct{}{}
+		}
+
+		for i := range objects.Data {
+			newObjs := []as.BACnetObject{}
+			for _, obj := range objects.Data[i].Objects {
+				if _, exists := testDataKeys[obj.LoraName]; exists {
+					newObjs = append(newObjs, obj)
+				}
+			}
+			objects.Data[i].Objects = newObjs
+		}
+
+		err = as.AddBACnetObjects(objects.Data)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		log.Info("added ", len(objects.Data), " objects")
 	}
 
 	return nil

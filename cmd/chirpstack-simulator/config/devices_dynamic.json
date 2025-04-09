@@ -1,6 +1,6 @@
 {
     "devices": {
-        "deveui_range":"24E1247151234568-24E1247151234568",
+        "deveui_range":"all",
         "device_status": {
             "uplink_paused": false,
             "uplink_type": "UpUnc"
@@ -42,14 +42,14 @@
                 "skip_frag_session_status_ans": false,
                 "received_and_index": {
                     "frag_index": 0,
-                    "nb_frag_received": 1
+                    "nb_frag_received": 3
                 },
                 "missing_frag": 0,
                 "status": {
                     "not_enough_matrix_memory": false
                 },
                 "crc_check": {
-                    "use_crc_check": true,
+                    "use_crc_check": false,
                     "delay": 10,
                     "value": "12345678"
                 }
