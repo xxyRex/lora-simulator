@@ -36,11 +36,11 @@ const (
 )
 
 // Start starts the simulator.
-func LNSStart(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
+func Start(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 	for i, c := range c.Simulator {
 		log.WithFields(log.Fields{
 			"i": i,
-		}).Info("LNS simulator: starting LNSSimulation")
+		}).Info("simulator: starting Simulation")
 
 		wg.Add(1)
 
@@ -49,7 +49,7 @@ func LNSStart(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 			return errors.Wrap(err, "decode payload error")
 		}
 
-		sim := LNSSimulation{
+		sim := Simulation{
 			ctx:                  ctx,
 			wg:                   wg,
 			tenantID:             c.TenantID,
@@ -76,7 +76,7 @@ func LNSStart(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 	return nil
 }
 
-type LNSSimulation struct {
+type Simulation struct {
 	ctx             context.Context
 	wg              *sync.WaitGroup
 	tenantID        string
@@ -107,29 +107,29 @@ type LNSSimulation struct {
 	euiCodecMap map[lorawan.EUI64]as.PayloadCodecItem
 }
 
-func (s *LNSSimulation) start() {
+func (s *Simulation) start() {
 
 	if err := s.init(); err != nil {
-		log.WithError(err).Error("simulator: init LNSSimulation error")
+		log.WithError(err).Error("simulator: init Simulation error")
 	}
 
 	if err := s.runSimulation(); err != nil {
-		log.WithError(err).Error("simulator: LNSSimulation error")
+		log.WithError(err).Error("simulator: Simulation error")
 	}
 
-	log.Info("simulator: LNSSimulation completed")
+	log.Info("simulator: Simulation completed")
 
 	if err := s.tearDown(); err != nil {
-		log.WithError(err).Error("simulator: tear-down LNSSimulation error")
+		log.WithError(err).Error("simulator: tear-down Simulation error")
 	}
 
 	s.wg.Done()
 
-	log.Info("LNSSimulation: tear-down completed")
+	log.Info("Simulation: tear-down completed")
 }
 
-func (s *LNSSimulation) init() error {
-	log.Info("LNSSimulation: setting up")
+func (s *Simulation) init() error {
+	log.Info("Simulation: setting up")
 
 	if config.C.ChirpStack.API.RestartAs {
 		as.RestartAppServer()
@@ -166,8 +166,8 @@ func (s *LNSSimulation) init() error {
 	return nil
 }
 
-func (s *LNSSimulation) tearDown() error {
-	log.Info("LNSSimulation: cleaning up")
+func (s *Simulation) tearDown() error {
+	log.Info("Simulation: cleaning up")
 
 	if err := s.tearDownDevices(); err != nil {
 		return err
@@ -188,7 +188,7 @@ func (s *LNSSimulation) tearDown() error {
 	return nil
 }
 
-func (s *LNSSimulation) runSimulation() error {
+func (s *Simulation) runSimulation() error {
 	var gateways []*gateway.Gateway
 	var devices []*device.Device
 
@@ -284,7 +284,7 @@ func (s *LNSSimulation) runSimulation() error {
 	return nil
 }
 
-func (s *LNSSimulation) setupGateways() error {
+func (s *Simulation) setupGateways() error {
 	log.Info("simulator: creating gateways")
 
 	if config.C.ChirpStack.API.UseNewGateway {
@@ -316,7 +316,7 @@ func (s *LNSSimulation) setupGateways() error {
 	return nil
 }
 
-func (s *LNSSimulation) tearDownGateways() error {
+func (s *Simulation) tearDownGateways() error {
 	log.Info("simulator: tear-down gateways")
 	if !config.C.ChirpStack.API.UseNewGateway {
 		return nil
@@ -331,11 +331,11 @@ func (s *LNSSimulation) tearDownGateways() error {
 	return nil
 }
 
-func (s *LNSSimulation) setupDeviceProfile() error {
+func (s *Simulation) setupDeviceProfile() error {
 	log.Info("simulator: creating device-profile")
 
 	if config.C.ChirpStack.API.UseNewProfile {
-		profileId, err := as.LNSCreateDeviceProfile()
+		profileId, err := as.CreateDeviceProfile()
 		if err != nil {
 			return errors.Wrap(err, "create device-profile error")
 		}
@@ -359,7 +359,7 @@ func (s *LNSSimulation) setupDeviceProfile() error {
 	return nil
 }
 
-func (s *LNSSimulation) tearDownDeviceProfile() error {
+func (s *Simulation) tearDownDeviceProfile() error {
 	log.Info("simulator: tear-down device-profile")
 
 	if !config.C.ChirpStack.API.UseNewProfile {
@@ -375,7 +375,7 @@ func (s *LNSSimulation) tearDownDeviceProfile() error {
 	return nil
 }
 
-func (s *LNSSimulation) setupApplication() error {
+func (s *Simulation) setupApplication() error {
 	log.Info("simulator: init application")
 
 	apps, err := as.GetApplications()
@@ -410,7 +410,7 @@ func (s *LNSSimulation) setupApplication() error {
 	return nil
 }
 
-func (s *LNSSimulation) tearDownApplication() error {
+func (s *Simulation) tearDownApplication() error {
 	log.Info("simulator: tear-down application")
 
 	if !config.C.ChirpStack.API.UseNewApp {
@@ -504,7 +504,7 @@ func generateDevices(num int) error {
 	return nil
 }
 
-func (s *LNSSimulation) setupDevices() error {
+func (s *Simulation) setupDevices() error {
 	log.Info("simulator: init devices")
 
 	if err := generateDevices(s.deviceCount); err != nil {
@@ -578,7 +578,7 @@ func (s *LNSSimulation) setupDevices() error {
 	return nil
 }
 
-func (s *LNSSimulation) tearDownDevices() error {
+func (s *Simulation) tearDownDevices() error {
 	log.Info("simulator: tear-down devices")
 
 	for k := range s.deviceAppKeys {
@@ -592,7 +592,7 @@ func (s *LNSSimulation) tearDownDevices() error {
 	return nil
 }
 
-func (s *LNSSimulation) setupPayloadCodec() error {
+func (s *Simulation) setupPayloadCodec() error {
 	log.Info("simulator: creating gateways")
 
 	codecs, err := as.GetPayloadCoedc()
@@ -605,7 +605,7 @@ func (s *LNSSimulation) setupPayloadCodec() error {
 	return nil
 }
 
-func (s *LNSSimulation) setupBACnet() error {
+func (s *Simulation) setupBACnet() error {
 	log.Info("simulator: creating BACnet objects")
 
 	if config.C.ChirpStack.API.TestFeature != "bacnet" {

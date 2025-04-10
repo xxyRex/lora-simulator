@@ -351,7 +351,7 @@ func DeleteGateway(id string) error {
 	return nil
 }
 
-func LNSCreateDeviceProfile() (string, error) {
+func CreateDeviceProfile() (string, error) {
 	url := "/lns/api/v1/urprofiles"
 	if !config.C.ChirpStack.API.IsLNS {
 		url = "/api/urprofiles"
@@ -394,7 +394,7 @@ func LNSCreateDeviceProfile() (string, error) {
 
 	profileID, ok := jsonObj["profileID"].(string)
 	if !ok {
-		log.Error("LNSCreateDeviceProfile failed")
+		log.Error("CreateDeviceProfile failed")
 		return "", nil
 	}
 
@@ -861,6 +861,61 @@ func AddBACnetObjects(data []BACnetDatum) error {
 	ret := string(bytes)
 	if ret != `{"error":"","code":0}` {
 		return errors.New("failed to add BACnet objects: " + ret)
+	}
+
+	return nil
+}
+
+type FuotaTaskReq struct {
+	FuotaTask FuotaTask `json:"fuota_task"`
+}
+
+type FuotaTask struct {
+	Name               string       `json:"name"`
+	StartedAt          time.Time    `json:"startedAt"`
+	Description        string       `json:"description"`
+	Deveui             []string     `json:"deveui"`
+	FirmwareInfo       FirmwareInfo `json:"firmwareInfo"`
+	IsOfficialFirmware bool         `json:"isOfficialFirmware"`
+	FragmentInfo       FragmentInfo `json:"fragmentInfo"`
+	TmpMcInfo          TmpMcInfo    `json:"tmpMcInfo"`
+}
+
+type FirmwareInfo struct {
+	FileContent  string `json:"fileContent"`
+	FirmwareName string `json:"firmwareName"`
+}
+
+type FragmentInfo struct {
+	FragmentSize       int64 `json:"fragmentSize"`
+	FragmentInterval   int64 `json:"fragmentInterval"`
+	FragmentRedundancy int64 `json:"fragmentRedundancy"`
+}
+
+type TmpMcInfo struct {
+	DR        int64 `json:"dr"`
+	Frequency int64 `json:"frequency"`
+}
+
+func CreateFuotaTask(fuotaTaskReq FuotaTaskReq) error {
+	url := "/lns/api/v1/fuota/task"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/fuota/task"
+	}
+
+	requestJSON, err := json.Marshal(fuotaTaskReq)
+	if err != nil {
+		return err
+	}
+
+	bytes, err := post(url, string(requestJSON), jwtConn)
+	if err != nil {
+		return err
+	}
+
+	ret := string(bytes)
+	if !strings.Contains(ret, "id") {
+		return errors.New("failed to create fuota task: " + ret)
 	}
 
 	return nil

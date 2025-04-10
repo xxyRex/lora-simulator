@@ -106,7 +106,7 @@ func setupPrometheus(ctx context.Context, wg *sync.WaitGroup) error {
 }
 
 func startSimulator(ctx context.Context, wg *sync.WaitGroup) error {
-	if err := simulator.LNSStart(ctx, wg, config.C); err != nil {
+	if err := simulator.Start(ctx, wg, config.C); err != nil {
 		return errors.Wrap(err, "start simulator error")
 	}
 
