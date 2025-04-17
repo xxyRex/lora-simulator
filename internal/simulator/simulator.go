@@ -35,7 +35,7 @@ const (
 	BACNET_FEATURE             = "bacnet"
 	FUOTA_FEATURE              = "fuota"
 	DEVICES_IMPORT_FILE        = "config/devices_import.csv"
-	FUOTA_REQ_FILE             = "config/fuota_req.json"
+	FUOTA_REQ_FILE             = "api/fuota_req.json"
 )
 
 // Start starts the simulator.
