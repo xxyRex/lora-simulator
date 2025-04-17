@@ -10,27 +10,28 @@ var Version string
 // Config defines the configuration.
 type Config struct {
 	General struct {
-		LogLevel          int    `mapstructure:"log_level"`
-		ChannelPlan       string `mapstructure:"channel_plan"`
+		LogLevel    int    `mapstructure:"log_level"`
+		ChannelPlan string `mapstructure:"channel_plan"`
 	}
 
 	ChirpStack struct {
 		API struct {
-			APIKey          string `mapstructure:"api_key"`
-			Server          string `mapstructure:"server"`
-			LoginUrl        string `mapstructure:"login_url"`
-			Username        string `mapstructure:"username"`
-			Password        string `mapstructure:"password"`
-			IsLNS           bool   `mapstructure:"is_lns"`
-			UseNewGateway   bool   `mapstructure:"use_new_gateway"`
-			UseNewProfile   bool   `mapstructure:"use_new_profile"`
-			UseNewApp       bool   `mapstructure:"use_new_app"`
-			UseOldAuth      bool   `mapstructure:"use_old_auth"`
-			CleanBeforeTest bool   `mapstructure:"clean_before_test"`
-			TestFeature     string `mapstructure:"test_feature"`
-			Insecure        bool   `mapstructure:"insecure"`
-			SshPassword     string `mapstructure:"ssh_password"`
-			RestartAs       bool   `mapstructure:"restart_as"`
+			APIKey               string `mapstructure:"api_key"`
+			Server               string `mapstructure:"server"`
+			LoginUrl             string `mapstructure:"login_url"`
+			Username             string `mapstructure:"username"`
+			Password             string `mapstructure:"password"`
+			IsLNS                bool   `mapstructure:"is_lns"`
+			UseNewGateway        bool   `mapstructure:"use_new_gateway"`
+			UseNewProfile        bool   `mapstructure:"use_new_profile"`
+			UseNewApp            bool   `mapstructure:"use_new_app"`
+			UseOldAuth           bool   `mapstructure:"use_old_auth"`
+			CleanBeforeTest      bool   `mapstructure:"clean_before_test"`
+			TestFeature          string `mapstructure:"test_feature"`
+			Insecure             bool   `mapstructure:"insecure"`
+			SshPassword          string `mapstructure:"ssh_password"`
+			RestartAs            bool   `mapstructure:"restart_as"`
+			FuotaTaskDeviceCount int    `mapstructure:"fuota_task_device_count"`
 		} `mapstructure:"api"`
 
 		Integration struct {

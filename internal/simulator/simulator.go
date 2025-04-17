@@ -6,9 +6,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	mrand "math/rand"
 	"os"
 	"os/signal"
+	"sort"
 	"strconv"
 	"sync"
 	"syscall"
@@ -33,6 +35,7 @@ const (
 	BACNET_FEATURE             = "bacnet"
 	FUOTA_FEATURE              = "fuota"
 	DEVICES_IMPORT_FILE        = "config/devices_import.csv"
+	FUOTA_REQ_FILE             = "config/fuota_req.json"
 )
 
 // Start starts the simulator.
@@ -162,6 +165,8 @@ func (s *Simulation) init() error {
 	if err := s.setupBACnet(); err != nil {
 		return err
 	}
+
+	go s.setupFuota()
 
 	return nil
 }
@@ -593,7 +598,7 @@ func (s *Simulation) tearDownDevices() error {
 }
 
 func (s *Simulation) setupPayloadCodec() error {
-	log.Info("simulator: creating gateways")
+	log.Info("simulator: creating payload codecs")
 
 	codecs, err := as.GetPayloadCoedc()
 	if err != nil {
@@ -668,6 +673,78 @@ func (s *Simulation) setupBACnet() error {
 			continue
 		}
 		log.Info("added ", len(objects.Data), " objects")
+	}
+
+	return nil
+}
+
+func (s *Simulation) setupFuota() error {
+	log.Info("simulator: creating FUOTA task")
+
+	if config.C.ChirpStack.API.TestFeature != "fuota" || config.C.ChirpStack.API.FuotaTaskDeviceCount == 0 {
+		return nil
+	}
+	// 删除所有已存在的fuota任务
+	log.Info("setupFuota deleting all existing fuota tasks")
+	fuotaTasksRes, err := as.GetFuotaTask("", "asc", 0, math.MaxInt32)
+	if err != nil {
+		return err
+	}
+
+	deleteIDs := []int64{}
+	for _, task := range fuotaTasksRes.Tasks {
+		deleteIDs = append(deleteIDs, task.ID)
+	}
+
+	err = as.DeleteFuotaTask(deleteIDs)
+	if err != nil {
+		return err
+	}
+
+	// 等待所有节点入网后
+	for {
+		if device.GetJoinAcceptCount() == s.deviceCount {
+			break
+		}
+		log.Info("setupFuota waiting for all nodes to join")
+		time.Sleep(10 * time.Second)
+	}
+
+	jsonFile, err := os.Open(FUOTA_REQ_FILE)
+	if err != nil {
+		return err
+	}
+	defer jsonFile.Close()
+
+	var fuotaTaskReqTemplate as.FuotaTaskReq
+	if err := json.NewDecoder(jsonFile).Decode(&fuotaTaskReqTemplate); err != nil {
+		return err
+	}
+
+	taskCount := 0
+	allDeveuiList := []string{}
+	for deveui := range s.deviceAppKeys {
+		allDeveuiList = append(allDeveuiList, deveui.String())
+	}
+
+	sort.Strings(allDeveuiList)
+
+	deveuiList := []string{}
+	for _, deveui := range allDeveuiList {
+		deveuiList = append(deveuiList, deveui)
+		if len(deveuiList) == config.C.ChirpStack.API.FuotaTaskDeviceCount {
+			var fuotaTaskReq as.FuotaTaskReq = fuotaTaskReqTemplate
+			fuotaTaskReq.FuotaTask.Name = fuotaTaskReq.FuotaTask.Name + "-" + strconv.Itoa(taskCount)
+			fuotaTaskReq.FuotaTask.Deveui = deveuiList
+			err = as.CreateFuotaTask(fuotaTaskReq)
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+			taskCount++
+			log.Infof("setupFuota created fuota task: %s, deveuis: %v", fuotaTaskReq.FuotaTask.Name, deveuiList)
+			deveuiList = []string{}
+		}
 	}
 
 	return nil

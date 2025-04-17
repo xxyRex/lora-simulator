@@ -2,8 +2,9 @@
     "devices": {
         "deveui_range":"all",
         "device_status": {
-            "uplink_paused": false,
-            "uplink_type": "UpUnc"
+            "uplink_paused": true,
+            "uplink_type": "UpUnc",
+            "uplink_interval": 10
         },
         "object": {
             "temperature_control": {
@@ -39,7 +40,7 @@
                 }
             },
             "frag_session_status_ans": {
-                "skip_frag_session_status_ans": false,
+                "skip_frag_session_status_ans": true,
                 "received_and_index": {
                     "frag_index": 0,
                     "nb_frag_received": 3
@@ -51,7 +52,7 @@
                 "crc_check": {
                     "use_crc_check": false,
                     "delay": 10,
-                    "value": "12345678"
+                    "value": "C2A8FA9D"
                 }
             }
         }

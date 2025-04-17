@@ -11,6 +11,7 @@ import (
 
 	"github.com/brocaar/lorawan"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type DevicesDynamicConfig struct {
@@ -26,8 +27,9 @@ type Devices struct {
 }
 
 type DeviceStatus struct {
-	UplinkPaused bool   `json:"uplink_paused"`
-	UplinkType   string `json:"uplink_type"`
+	UplinkPaused   bool   `json:"uplink_paused"`
+	UplinkType     string `json:"uplink_type"`
+	UplinkInterval int64  `json:"uplink_interval"`
 }
 
 type FuotaDebug struct {
@@ -123,10 +125,10 @@ func (m *DynamicDevicesConfigManager) LoadFromFile() error {
 	}
 
 	// 处理DeveuiRange逻辑
-	m.allDeveui = false
 	if config.Devices.DeveuiRange == "all" {
 		m.allDeveui = true
 	} else {
+		m.allDeveui = false
 		deveuiList := strings.Split(config.Devices.DeveuiRange, "-")
 		if len(deveuiList) != 2 {
 			return errors.New("invalid deveui range")
@@ -188,6 +190,7 @@ func GetDynamicDevicesConfig(eui lorawan.EUI64) *DevicesDynamicConfig {
 	defer instance.mu.RUnlock()
 
 	if _, ok := instance.config.Devices.DeveuiMap[eui]; !ok && !instance.allDeveui {
+		log.Infof("ok: %v, instance.allDeveui: %v", ok, instance.allDeveui)
 		return nil
 	}
 	return &instance.config

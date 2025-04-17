@@ -52,6 +52,8 @@ teardown_after_test = false
 test_feature = "fuota"
 # 是否需要重启as
 restart_as = true
+# 每个fuota任务的设备数量
+fuota_task_device_count = 1
 
 # 是否使用TLS
 # Insecure.
@@ -116,10 +118,10 @@ activation_time = "10s"
 [simulator.device]
 
 # Number of devices to simulate.
-count = 10
+count = 1
 
 # Uplink interval.
-uplink_interval = "60s"
+uplink_interval = "10s"
 
 # FPort.
 f_port = 1

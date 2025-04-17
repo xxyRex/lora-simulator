@@ -1,0 +1,23 @@
+{
+    "fuota_task": {
+        "name": "test",
+        "startedAt": "2025-04-09T02:24:00.000Z",
+        "description": "test",
+        "deveui": [
+        ],
+        "firmwareInfo": {
+            "fileContent": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+            "firmwareName": "test.bin"
+        },
+        "isOfficialFirmware": false,
+        "fragmentInfo": {
+            "fragmentSize": 88,
+            "fragmentInterval": 5000,
+            "fragmentRedundancy": 30
+        },
+        "tmpMcInfo": {
+            "dr": 3,
+            "frequency": 505300000
+        }
+    }
+}

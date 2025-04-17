@@ -920,3 +920,105 @@ func CreateFuotaTask(fuotaTaskReq FuotaTaskReq) error {
 
 	return nil
 }
+
+type FuotaTaskRes struct {
+	Total int64  `json:"total"`
+	Tasks []Task `json:"tasks"`
+}
+
+type Task struct {
+	ID                   int64        `json:"id"`
+	Name                 string       `json:"name"`
+	Description          string       `json:"description"`
+	Status               int64        `json:"status"`
+	StartedAt            time.Time    `json:"startedAt"`
+	StoppedAt            string       `json:"stoppedAt"`
+	CreatedAt            time.Time    `json:"createdAt"`
+	UpdatedAt            time.Time    `json:"updatedAt"`
+	FirmwareName         string       `json:"firmwareName"`
+	DoneDevices          int64        `json:"doneDevices"`
+	TotalDevices         int64        `json:"totalDevices"`
+	Deveui               []string     `json:"deveui"`
+	FirmwareInfo         FirmwareInfo `json:"firmwareInfo"`
+	FragmentInfo         FragmentInfo `json:"fragmentInfo"`
+	TmpMcInfo            TmpMcInfo    `json:"tmpMcInfo"`
+	OfficialFirmwareInfo interface{}  `json:"officialFirmwareInfo"`
+	IsOfficialFirmware   bool         `json:"isOfficialFirmware"`
+}
+
+type FirmwareInfoRes struct {
+	FirmwareName           string `json:"firmwareName"`
+	Description            string `json:"description"`
+	FileContent            string `json:"fileContent"`
+	ProductModel           string `json:"productModel"`
+	FirmwareVersion        string `json:"firmwareVersion"`
+	SupportHardwareVersion string `json:"supportHardwareVersion"`
+	SupportFirmwareVersion string `json:"supportFirmwareVersion"`
+	OfficialFirmwareURL    string `json:"officialFirmwareUrl"`
+}
+
+type FragmentInfoRes struct {
+	FragmentSize       int64 `json:"fragmentSize"`
+	FragmentInterval   int64 `json:"fragmentInterval"`
+	FragmentRedundancy int64 `json:"fragmentRedundancy"`
+}
+
+type TmpMcInfoRes struct {
+	SessionTimeDelay int64 `json:"sessionTimeDelay"`
+	SessionTimeOut   int64 `json:"sessionTimeOut"`
+	Status           int64 `json:"status"`
+	GroupType        int64 `json:"groupType"`
+	DR               int64 `json:"dr"`
+	Frequency        int64 `json:"frequency"`
+}
+
+func GetFuotaTask(search string, order string, offset int, limit int) (FuotaTaskRes, error) {
+	url := "/lns/api/v1/fuota/task"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/fuota/task"
+	}
+
+	urlWithParams := fmt.Sprintf("%s?search=%s&order=%s&offset=%d&limit=%d", url, search, order, offset, limit)
+
+	var res FuotaTaskRes
+
+	bytes, err := get(urlWithParams, "", jwtConn)
+	if err != nil {
+		return res, err
+	}
+
+	err = json.Unmarshal(bytes, &res)
+	if err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+
+type DeleteFuotaTaskReq struct {
+	IDS []int64 `json:"ids"`
+}
+
+func DeleteFuotaTask(ids []int64) error {
+	url := "/lns/api/v1/fuota/task/delete"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/fuota/task/delete"
+	}
+
+	requestJSON, err := json.Marshal(DeleteFuotaTaskReq{IDS: ids})
+	if err != nil {
+		return err
+	}
+
+	bytes, err := post(url, string(requestJSON), jwtConn)
+	if err != nil {
+		return err
+	}
+
+	ret := string(bytes)
+	if ret != `{}` {
+		return errors.New("failed to delete fuota task: " + ret)
+	}
+
+	return nil
+}

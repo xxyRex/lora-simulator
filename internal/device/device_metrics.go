@@ -1,6 +1,8 @@
 package device
 
 import (
+	"sync"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -32,4 +34,19 @@ func deviceJoinRequestCounter() prometheus.Counter {
 
 func deviceJoinAcceptCounter() prometheus.Counter {
 	return djac
+}
+
+var joinedDevciceMap = make(map[string]bool)
+var joinAcceptMutex sync.Mutex
+
+func GetJoinAcceptCount() int {
+	joinAcceptMutex.Lock()
+	defer joinAcceptMutex.Unlock()
+	return len(joinedDevciceMap)
+}
+
+func SetJoinAcceptCount(deveui string) {
+	joinAcceptMutex.Lock()
+	defer joinAcceptMutex.Unlock()
+	joinedDevciceMap[deveui] = true
 }

@@ -309,17 +309,18 @@ func (d *Device) uplinkLoop() {
 			d.joinRequest()
 			time.Sleep(AFTER_JOIN_DELAY)
 		case deviceStateActivated:
-			d.getEncoderData()
 			config := GetDynamicDevicesConfig(d.devEUI)
 			paused := false
 			uplinkType := "UpUnc"
 			if config != nil {
 				paused = config.Devices.DeviceStatus.UplinkPaused
 				uplinkType = config.Devices.DeviceStatus.UplinkType
+				d.uplinkInterval = time.Duration(config.Devices.DeviceStatus.UplinkInterval) * time.Second
 			}
 			if paused {
 				continue
 			} else {
+				d.getEncoderData()
 				if uplinkType == "UpUnc" {
 					d.dataUp(lorawan.UnconfirmedDataUp, false)
 				} else {
@@ -382,10 +383,6 @@ func (d *Device) downlinkLoop() {
 
 // joinRequest sends the join-request.
 func (d *Device) joinRequest() {
-	if d.joinReqSent {
-		return
-	}
-
 	phy := lorawan.PHYPayload{
 		MHDR: lorawan.MHDR{
 			MType: lorawan.JoinRequest,
@@ -606,6 +603,7 @@ func (d *Device) joinAccept(phy lorawan.PHYPayload) error {
 	log.Info("deveui: ", d.devEUI.String(), " received join accept")
 	d.setState(deviceStateActivated)
 	deviceJoinAcceptCounter().Inc()
+	SetJoinAcceptCount(d.devEUI.String())
 
 	return nil
 }
@@ -664,6 +662,10 @@ func (d *Device) downlinkData(phy lorawan.PHYPayload) error {
 	macPL, ok := phy.MACPayload.(*lorawan.MACPayload)
 	if !ok {
 		return fmt.Errorf("expected *lorawan.MACPayload, got: %T", phy.MACPayload)
+	}
+
+	for _, opt := range macPL.FHDR.FOpts {
+		log.Infof("deveui: %v, opt: %v", d.devEUI, opt)
 	}
 
 	gap := uint32(uint16(macPL.FHDR.FCnt) - uint16(d.fCntDown%(1<<16)))
