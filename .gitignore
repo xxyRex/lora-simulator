@@ -9,3 +9,4 @@
 /build/
 cmd/chirpstack-simulator/simulator.log
 __debug_bin*
+cmd/chirpstack-simulator/main
