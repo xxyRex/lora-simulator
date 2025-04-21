@@ -20,10 +20,10 @@ import (
 
 	"sync/atomic"
 
-	"github.com/brocaar/chirpstack-simulator/internal/as"
-	"github.com/brocaar/chirpstack-simulator/internal/fragmentation"
-	"github.com/brocaar/chirpstack-simulator/internal/gateway"
-	"github.com/brocaar/chirpstack-simulator/internal/multicastsetup"
+	"github.com/brocaar/lora-simulator/internal/as"
+	"github.com/brocaar/lora-simulator/internal/fragmentation"
+	"github.com/brocaar/lora-simulator/internal/gateway"
+	"github.com/brocaar/lora-simulator/internal/multicastsetup"
 	"github.com/brocaar/lorawan"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )

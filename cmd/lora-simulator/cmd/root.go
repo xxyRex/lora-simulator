@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io/ioutil"
 
-	"github.com/brocaar/chirpstack-simulator/internal/config"
+	"github.com/brocaar/lora-simulator/internal/config"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -22,12 +22,10 @@ func Execute(v string) {
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "chirpstack-simulator",
-	Short: "ChirpStack Simulator",
-	Long: `ChirpStack Simulator simulates device uplinks
-	> documentation & support: https://www.chirpstack.io/
-	> source & copyright information: https://github.com/brocaar/chirpstack-simulator/`,
-	RunE: run,
+	Use:   "lora-simulator",
+	Short: "Lora Simulator",
+	Long:  `Lora Simulator simulates device uplinks`,
+	RunE:  run,
 }
 
 func init() {
@@ -60,10 +58,10 @@ func initConfig() {
 			log.WithError(err).WithField("config", cfgFile).Fatal("error loading config file")
 		}
 	} else {
-		viper.SetConfigName("chirpstack-simulator")
+		viper.SetConfigName("lora-simulator")
 		viper.AddConfigPath(".")
-		viper.AddConfigPath("$HOME/.config/chirpstack-simulator")
-		viper.AddConfigPath("/etc/chirpstack-simulator")
+		viper.AddConfigPath("$HOME/.config/lora-simulator")
+		viper.AddConfigPath("/etc/lora-simulator")
 		if err := viper.ReadInConfig(); err != nil {
 			switch err.(type) {
 			case viper.ConfigFileNotFoundError:

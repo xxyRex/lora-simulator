@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/brocaar/chirpstack-simulator/internal/config"
-	"github.com/brocaar/chirpstack-simulator/internal/utils"
+	"github.com/brocaar/lora-simulator/internal/config"
+	"github.com/brocaar/lora-simulator/internal/utils"
 	"github.com/brocaar/lorawan"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/pkg/errors"

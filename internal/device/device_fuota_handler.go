@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/brocaar/chirpstack-simulator/internal/fragmentation"
-	"github.com/brocaar/chirpstack-simulator/internal/multicastsetup"
+	"github.com/brocaar/lora-simulator/internal/fragmentation"
+	"github.com/brocaar/lora-simulator/internal/multicastsetup"
 	"github.com/brocaar/lorawan"
 	log "github.com/sirupsen/logrus"
 )

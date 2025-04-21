@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/brocaar/chirpstack-simulator/cmd/chirpstack-simulator/cmd"
+	"github.com/brocaar/lora-simulator/cmd/lora-simulator/cmd"
 	"github.com/sirupsen/logrus"
 )
 

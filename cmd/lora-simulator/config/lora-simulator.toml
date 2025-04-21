@@ -26,7 +26,7 @@ api_key = ""
 # Server.
 #
 # This must point to the ChirpStack API interface.
-server = "http://192.168.40.148"
+server = "http://192.168.40.147"
 
 # 网关as api登录url
 login_url = "/api/internal/login"
@@ -68,7 +68,7 @@ insecure = true
 [chirpstack.integration.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.148:1883"
+server = "tcp://192.168.40.147:1883"
 
 ssh_password = ""
 
@@ -83,7 +83,7 @@ password = "Urs@L1nk#Ms2020"
 [chirpstack.gateway.backend.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.148:1883"
+server = "tcp://192.168.40.147:1883"
 
 # Username.
 username = "lorawan"

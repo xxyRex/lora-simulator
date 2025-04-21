@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/chirpstack-simulator/internal/config"
+	"github.com/brocaar/lora-simulator/internal/config"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"

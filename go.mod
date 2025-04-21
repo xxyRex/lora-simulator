@@ -1,4 +1,4 @@
-module github.com/brocaar/chirpstack-simulator
+module github.com/brocaar/lora-simulator
 
 go 1.13
 
