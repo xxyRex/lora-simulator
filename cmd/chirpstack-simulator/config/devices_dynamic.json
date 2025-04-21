@@ -2,9 +2,9 @@
     "devices": {
         "deveui_range":"all",
         "device_status": {
-            "uplink_paused": true,
+            "uplink_paused": false,
             "uplink_type": "UpUnc",
-            "uplink_interval": 10
+            "uplink_interval": 300
         },
         "object": {
             "temperature_control": {

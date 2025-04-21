@@ -54,9 +54,12 @@ type Config struct {
 	} `mapstructure:"chirpstack"`
 
 	Simulator []struct {
-		TenantID       string        `mapstructure:"tenant_id"`
-		Duration       time.Duration `mapstructure:"duration"`
-		ActivationTime time.Duration `mapstructure:"activation_time"`
+		TenantID             string        `mapstructure:"tenant_id"`
+		Duration             time.Duration `mapstructure:"duration"`
+		SequenceJoin         bool          `mapstructure:"sequence_join"`
+		SequenceJoinInterval time.Duration `mapstructure:"sequence_join_interval"`
+		SequenceDeviceNumber int           `mapstructure:"sequence_device_number"`
+		ActivationTime       time.Duration `mapstructure:"activation_time"`
 
 		Device struct {
 			Count           int           `mapstructure:"count"`

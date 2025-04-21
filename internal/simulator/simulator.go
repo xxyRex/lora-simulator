@@ -58,6 +58,9 @@ func Start(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 			tenantID:             c.TenantID,
 			deviceCount:          c.Device.Count,
 			activationTime:       c.ActivationTime,
+			sequenceJoin:         c.SequenceJoin,
+			sequenceJoinInterval: c.SequenceJoinInterval,
+			sequenceDeviceNumber: c.SequenceDeviceNumber,
 			uplinkInterval:       c.Device.UplinkInterval,
 			fPort:                c.Device.FPort,
 			payload:              pl,
@@ -88,13 +91,16 @@ type Simulation struct {
 	gatewayMaxCount int
 	duration        time.Duration
 
-	fPort           uint8
-	payload         []byte
-	activationTime  time.Duration
-	uplinkInterval  time.Duration
-	frequency       int
-	bandwidth       int
-	spreadingFactor int
+	fPort                uint8
+	payload              []byte
+	sequenceJoin         bool
+	sequenceJoinInterval time.Duration
+	sequenceDeviceNumber int
+	activationTime       time.Duration
+	uplinkInterval       time.Duration
+	frequency            int
+	bandwidth            int
+	spreadingFactor      int
 
 	deviceProfileID      uuid.UUID
 	applicationID        string
@@ -217,6 +223,8 @@ func (s *Simulation) runSimulation() error {
 	}
 	defer cancel()
 
+	count := 0
+	batchCount := 0
 	for devEUI, appKey := range s.deviceAppKeys {
 		var gws []*gateway.Gateway
 		if config.C.ChirpStack.API.UseNewGateway {
@@ -236,9 +244,12 @@ func (s *Simulation) runSimulation() error {
 			gws = gateways
 		}
 
-		zeroDuration := time.Duration(0)
-		otaaDuration := time.Duration(0)
-		if s.activationTime != zeroDuration {
+		var otaaDuration time.Duration
+		if s.sequenceJoin {
+			otaaDuration = time.Duration(int64(s.sequenceJoinInterval/time.Second)*int64(batchCount)) * time.Second
+			count++
+			batchCount = count / s.sequenceDeviceNumber
+		} else {
 			otaaDuration = time.Duration(mrand.Int63n(int64(s.activationTime)))
 		}
 
@@ -631,7 +642,7 @@ func (s *Simulation) setupBACnet() error {
 
 	log.Info("total count: ", objects.Total)
 
-	const MAX_ADD_DATUM = 20
+	const MAX_ADD_DATUM = 30
 
 	for i := 0; i < int(objects.Total); i += MAX_ADD_DATUM {
 		log.Info("add from ", i, " to ", i+MAX_ADD_DATUM)

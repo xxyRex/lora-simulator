@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"strings"
 	"sync"
@@ -155,6 +156,10 @@ type Device struct {
 	fuotaProperties fuotaProperties
 
 	multicastKeys multicastKeys
+
+	lastJoinRequestTime time.Time
+
+	minJoinRequestInterval time.Duration
 }
 
 // WithAppKey sets the AppKey.
@@ -269,8 +274,10 @@ func NewDevice(ctx context.Context, wg *sync.WaitGroup, opts ...DeviceOption) (*
 		cancel: cancel,
 		wg:     wg,
 
-		downlinkFrames: make(chan *gw.DownlinkFrame, 100),
-		state:          deviceStateOTAA,
+		downlinkFrames:         make(chan *gw.DownlinkFrame, 100),
+		state:                  deviceStateOTAA,
+		lastJoinRequestTime:    time.Now(),
+		minJoinRequestInterval: time.Duration(rand.Intn(60)) * time.Second,
 	}
 
 	for _, o := range opts {
@@ -383,6 +390,11 @@ func (d *Device) downlinkLoop() {
 
 // joinRequest sends the join-request.
 func (d *Device) joinRequest() {
+	if time.Since(d.lastJoinRequestTime) < d.minJoinRequestInterval {
+		time.Sleep(time.Second * 5)
+		return
+	}
+
 	phy := lorawan.PHYPayload{
 		MHDR: lorawan.MHDR{
 			MType: lorawan.JoinRequest,
@@ -405,6 +417,9 @@ func (d *Device) joinRequest() {
 	d.joinReqSent = true
 	atomic.StoreInt32(&d.joinWindowFlag, 1)
 	deviceJoinRequestCounter().Inc()
+
+	d.lastJoinRequestTime = time.Now()
+	d.minJoinRequestInterval = time.Duration(rand.Intn(60)) * time.Second
 }
 
 // encodePayload 执行 JS 编码器并返回编码后的字节数组

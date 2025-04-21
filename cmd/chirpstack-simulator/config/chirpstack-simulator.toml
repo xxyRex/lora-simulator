@@ -4,7 +4,7 @@
 # debug=5, info=4, warning=3, error=2, fatal=1, panic=0
 log_level = 4
 
-channel_plan = "CN470"
+channel_plan = "EU868"
 
 # ChirpStack configuration.
 [chirpstack]
@@ -26,7 +26,7 @@ api_key = ""
 # Server.
 #
 # This must point to the ChirpStack API interface.
-server = "http://192.168.40.147"
+server = "http://192.168.40.148"
 
 # 网关as api登录url
 login_url = "/api/internal/login"
@@ -49,11 +49,11 @@ clean_before_test = true
 # 结束后是否删除所有数据
 teardown_after_test = false
 # 测试的功能，目前支持bacnet，fuota，normal
-test_feature = "fuota"
+test_feature = "bacnet"
 # 是否需要重启as
-restart_as = true
+restart_as = false
 # 每个fuota任务的设备数量
-fuota_task_device_count = 1
+fuota_task_device_count = 0
 
 # 是否使用TLS
 # Insecure.
@@ -68,7 +68,7 @@ insecure = true
 [chirpstack.integration.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.147:1883"
+server = "tcp://192.168.40.148:1883"
 
 ssh_password = ""
 
@@ -83,7 +83,7 @@ password = "Urs@L1nk#Ms2020"
 [chirpstack.gateway.backend.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.147:1883"
+server = "tcp://192.168.40.148:1883"
 
 # Username.
 username = "lorawan"
@@ -108,20 +108,27 @@ tenant_id = "f6f7d81d-647f-4c7f-8409-3e5218c0c523"
 # will run until terminated. This includes the activation time.
 duration = "0s"
 
+# 是否开启设备批量串行join，即设备一批一批join，而不是同时join，join的间隔为sequence_join_interval
+sequence_join = true
+# 串行join间隔
+sequence_join_interval = "5s"
+# 每批激活的设备数量
+sequence_device_number = 10
+
 # Activation time.
 #
 # This is the time that the simulator takes to activate the devices. This
 # value must be less than the simulator duration.
-activation_time = "10s"
+activation_time = "100s"
 
 # Device configuration.
 [simulator.device]
 
 # Number of devices to simulate.
-count = 1
+count = 1000
 
 # Uplink interval.
-uplink_interval = "10s"
+uplink_interval = "300s"
 
 # FPort.
 f_port = 1
@@ -130,7 +137,7 @@ f_port = 1
 payload = "010203"
 
 # Frequency (Hz).
-frequency = 471900000
+frequency = 868100000
 
 # Bandwidth (Hz).
 bandwidth = 125000
