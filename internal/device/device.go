@@ -160,6 +160,8 @@ type Device struct {
 	lastJoinRequestTime time.Time
 
 	minJoinRequestInterval time.Duration
+
+	joinRequestCount uint64
 }
 
 // WithAppKey sets the AppKey.
@@ -278,6 +280,7 @@ func NewDevice(ctx context.Context, wg *sync.WaitGroup, opts ...DeviceOption) (*
 		state:                  deviceStateOTAA,
 		lastJoinRequestTime:    time.Now(),
 		minJoinRequestInterval: time.Duration(rand.Intn(60)) * time.Second,
+		joinRequestCount:       0,
 	}
 
 	for _, o := range opts {
@@ -392,6 +395,10 @@ func (d *Device) downlinkLoop() {
 func (d *Device) joinRequest() {
 	if time.Since(d.lastJoinRequestTime) < d.minJoinRequestInterval {
 		time.Sleep(time.Second * 5)
+		return
+	}
+
+	if d.joinRequestCount >= 3 {
 		return
 	}
 

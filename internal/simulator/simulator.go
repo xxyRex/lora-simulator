@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -36,6 +37,7 @@ const (
 	FUOTA_FEATURE              = "fuota"
 	DEVICES_IMPORT_FILE        = "config/devices_import.csv"
 	FUOTA_REQ_FILE             = "api/fuota_req.json"
+	MODBUS_SERVER_CREATE_FILE  = "api/modbus_server_create.json"
 )
 
 // Start starts the simulator.
@@ -172,6 +174,10 @@ func (s *Simulation) init() error {
 		return err
 	}
 
+	if err := s.setupModbus(); err != nil {
+		return err
+	}
+
 	go s.setupFuota()
 
 	return nil
@@ -249,6 +255,7 @@ func (s *Simulation) runSimulation() error {
 			otaaDuration = time.Duration(int64(s.sequenceJoinInterval/time.Second)*int64(batchCount)) * time.Second
 			count++
 			batchCount = count / s.sequenceDeviceNumber
+			log.Infof("deveui: %v otaaDuration: %v", devEUI, otaaDuration)
 		} else {
 			otaaDuration = time.Duration(mrand.Int63n(int64(s.activationTime)))
 		}
@@ -624,7 +631,7 @@ func (s *Simulation) setupPayloadCodec() error {
 func (s *Simulation) setupBACnet() error {
 	log.Info("simulator: creating BACnet objects")
 
-	if config.C.ChirpStack.API.TestFeature != "bacnet" {
+	if !strings.Contains(config.C.ChirpStack.API.TestFeature, "bacnet") {
 		return nil
 	}
 
@@ -668,14 +675,14 @@ func (s *Simulation) setupBACnet() error {
 			testDataKeys[k] = struct{}{}
 		}
 
-		for i := range objects.Data {
+		for k := range objects.Data {
 			newObjs := []as.BACnetObject{}
-			for _, obj := range objects.Data[i].Objects {
+			for _, obj := range objects.Data[k].Objects {
 				if _, exists := testDataKeys[obj.LoraName]; exists {
 					newObjs = append(newObjs, obj)
 				}
 			}
-			objects.Data[i].Objects = newObjs
+			objects.Data[k].Objects = newObjs
 		}
 
 		err = as.AddBACnetObjects(objects.Data)
@@ -692,7 +699,7 @@ func (s *Simulation) setupBACnet() error {
 func (s *Simulation) setupFuota() error {
 	log.Info("simulator: creating FUOTA task")
 
-	if config.C.ChirpStack.API.TestFeature != "fuota" || config.C.ChirpStack.API.FuotaTaskDeviceCount == 0 {
+	if !strings.Contains(config.C.ChirpStack.API.TestFeature, "fuota") || config.C.ChirpStack.API.FuotaTaskDeviceCount == 0 {
 		return nil
 	}
 	// 删除所有已存在的fuota任务
@@ -756,6 +763,197 @@ func (s *Simulation) setupFuota() error {
 			log.Infof("setupFuota created fuota task: %s, deveuis: %v", fuotaTaskReq.FuotaTask.Name, deveuiList)
 			deveuiList = []string{}
 		}
+	}
+
+	return nil
+}
+
+func (s *Simulation) setupModbus() error {
+	log.Info("simulator: creating modbus servers")
+
+	if !strings.Contains(config.C.ChirpStack.API.TestFeature, "modbus") {
+		return nil
+	}
+
+	modbusServers, err := as.GetModbusServer(as.ModbusGetServerReq{
+		ID:       int64(1),
+		Execute:  int64(1),
+		Core:     "yruo_modbus_slave",
+		Function: "get",
+		Values: []as.ModbusGetServerReqValue{
+			{
+				Base:   "server",
+				Search: "",
+				Order:  "asc",
+				Offset: 0,
+				Limit:  math.MaxInt32,
+			},
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if len(modbusServers.Result) > 0 {
+		id := 0
+		for _, server := range modbusServers.Result[0].Servers {
+			ids := []string{}
+			ids = append(ids, server.ID)
+			err = as.DeleteModbusServer(as.ModbusServerDeleteReq{
+				ID:       int64(id),
+				Execute:  int64(1),
+				Core:     "yruo_modbus_slave",
+				Function: "del",
+				Values: []as.ModbusServerDeleteReqValue{
+					{
+						Base: "server",
+						IDS:  ids,
+					},
+				},
+			})
+
+			if err != nil {
+				log.Error("failed to delete modbus servers: ", err)
+				return err
+			}
+
+			log.Info("deleted modbus servers: ", ids)
+			id += 1
+		}
+	}
+
+	jsonFile, err := os.Open(MODBUS_SERVER_CREATE_FILE)
+	if err != nil {
+		return err
+	}
+	defer jsonFile.Close()
+
+	var originModbusServerCreateReq as.ModbusServerCreateReq
+	if err := json.NewDecoder(jsonFile).Decode(&originModbusServerCreateReq); err != nil {
+		return err
+	}
+
+	log.Infof("modbus server create req: %v", originModbusServerCreateReq)
+
+	for k := 0; k < 10; k++ {
+		modbusServerCreateReq := originModbusServerCreateReq
+		modbusServerCreateReq.Values[0].Servers[0].Port = 10000 + int64(k)
+		modbusServerCreateReq.Values[0].Servers[0].SlaveID = int64(k)
+		modbusServerCreateReq.Values[0].Servers[0].Name = "test" + strconv.Itoa(k)
+		modbusServerCreateReq.Values[0].Servers[0].Description = "test" + strconv.Itoa(k)
+		modbusServerCreateReq.Values[0].Servers[0].Interface = "eth 0"
+		modbusServerCreateReq.Values[0].Servers[0].ConnectType = "modbus_tcp"
+		modbusServerCreateReq.Values[0].Servers[0].Enable = 1
+
+		err = as.CreateModbusServer(modbusServerCreateReq)
+		if err != nil {
+			log.Error("failed to create modbus servers: ", err)
+			return err
+		}
+
+		log.Info("created modbus servers: ", modbusServerCreateReq.Values[0].Servers)
+	}
+
+	modbusServers, err = as.GetModbusServer(as.ModbusGetServerReq{
+		ID:       int64(1),
+		Execute:  int64(1),
+		Core:     "yruo_modbus_slave",
+		Function: "get",
+		Values: []as.ModbusGetServerReqValue{
+			{
+				Base:   "server",
+				Search: "",
+				Order:  "asc",
+				Offset: 0,
+				Limit:  math.MaxInt32,
+			},
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	log.Infof("modbus servers: %v", modbusServers)
+
+	serverIDs := []string{}
+	if len(modbusServers.Result) < 1 || len(modbusServers.Result[0].Servers) < 1 {
+		log.Error("no modbus server found")
+		return errors.New("no modbus server found")
+	}
+
+	for _, server := range modbusServers.Result[0].Servers {
+		serverIDs = append(serverIDs, server.ID)
+	}
+
+	log.Infof("modbus server ids: %v", serverIDs)
+
+	modbusObjects, err := as.GetAllAvaliableModbusObjects(as.GetAllAvaliableModbusObjectsDataReq{
+		ServerID: "0",
+		Limit:    math.MaxInt32,
+		Offset:   0,
+		Search:   "",
+	})
+
+	if err != nil {
+		log.Error("failed to get modbus objects: ", err)
+		return err
+	}
+
+	const MAX_ADD_DATUM = 30
+
+	for i := 0; i < int(modbusObjects.Total); i += MAX_ADD_DATUM {
+		log.Infof("add from %d to %d", i, i+MAX_ADD_DATUM)
+		modbusObjects, err := as.GetAllAvaliableModbusObjects(as.GetAllAvaliableModbusObjectsDataReq{
+			ServerID: "0",
+			Limit:    MAX_ADD_DATUM,
+			Offset:   0,
+			Search:   "",
+		})
+
+		if err != nil {
+			log.Error("failed to get modbus objects: ", err)
+			return err
+		}
+
+		testDataFile, err := os.Open(device.TEST_DATA_PATH)
+		if err != nil {
+			return err
+		}
+		defer testDataFile.Close()
+
+		var testData map[string]interface{}
+		if err := json.NewDecoder(testDataFile).Decode(&testData); err != nil {
+			return err
+		}
+
+		testDataKeys := make(map[string]struct{})
+		for k := range testData {
+			testDataKeys[k] = struct{}{}
+		}
+
+		for k := range modbusObjects.Data {
+			newObjs := []as.ModbusObject{}
+			for _, o := range modbusObjects.Data[k].Objects {
+				if _, exists := testDataKeys[o.LoraName]; exists {
+					newObjs = append(newObjs, o)
+				}
+			}
+			modbusObjects.Data[k].Objects = newObjs
+		}
+
+		err = as.AddModbusDatum(as.AddModbusDatumReq{
+			ServerID: serverIDs[i%len(serverIDs)],
+			Data:     modbusObjects.Data,
+		})
+
+		if err != nil {
+			log.Error("failed to add modbus datum: ", err)
+			return err
+		}
+
+		log.Infof("added %d modbus datum", len(modbusObjects.Data))
 	}
 
 	return nil

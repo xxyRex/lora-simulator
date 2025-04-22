@@ -26,7 +26,7 @@ api_key = ""
 # Server.
 #
 # This must point to the ChirpStack API interface.
-server = "http://192.168.40.147"
+server = "http://192.168.40.148"
 
 # 网关as api登录url
 login_url = "/api/internal/login"
@@ -48,8 +48,8 @@ use_old_auth = false
 clean_before_test = true
 # 结束后是否删除所有数据
 teardown_after_test = false
-# 测试的功能，目前支持bacnet，fuota，normal
-test_feature = "bacnet"
+# 测试的功能，目前支持bacnet，fuota，normal,modbus
+test_feature = "normal,bacnet,modbus"
 # 是否需要重启as
 restart_as = false
 # 每个fuota任务的设备数量
@@ -68,7 +68,7 @@ insecure = true
 [chirpstack.integration.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.147:1883"
+server = "tcp://192.168.40.148:1883"
 
 ssh_password = ""
 
@@ -83,7 +83,7 @@ password = "Urs@L1nk#Ms2020"
 [chirpstack.gateway.backend.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.147:1883"
+server = "tcp://192.168.40.148:1883"
 
 # Username.
 username = "lorawan"
@@ -111,9 +111,9 @@ duration = "0s"
 # 是否开启设备批量串行join，即设备一批一批join，而不是同时join，join的间隔为sequence_join_interval
 sequence_join = true
 # 串行join间隔
-sequence_join_interval = "5s"
+sequence_join_interval = "2s"
 # 每批激活的设备数量
-sequence_device_number = 10
+sequence_device_number = 1
 
 # Activation time.
 #

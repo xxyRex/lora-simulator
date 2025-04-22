@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
 	"strings"
 	"time"
 
@@ -19,12 +21,26 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// TransportWithHeaders 是一个自定义的http.RoundTripper，用于为每个请求添加固定的HTTP头
+type TransportWithHeaders struct {
+	underlying http.RoundTripper
+	headers    map[string]string
+}
+
+// RoundTrip 实现http.RoundTripper接口，为请求添加默认的HTTP头
+func (t *TransportWithHeaders) RoundTrip(req *http.Request) (*http.Response, error) {
+	for key, value := range t.headers {
+		req.Header.Set(key, value)
+	}
+	return t.underlying.RoundTrip(req)
+}
+
 const (
 	APPLICATION_NAME = "test"
 )
 
-var jwtConn string
 var mqttClient mqtt.Client
+var globalHttpClient *http.Client
 
 func sha256Hash(text string) string {
 	// 创建一个 SHA-256 的哈希对象
@@ -50,7 +66,7 @@ func parseJSON(data []byte) (map[string]interface{}, error) {
 	return jsonObj, nil
 }
 
-func post(url, data, jwt string) ([]byte, error) {
+func post(url, data string) ([]byte, error) {
 	url = config.C.ChirpStack.API.Server + url
 
 	var response []byte
@@ -59,11 +75,8 @@ func post(url, data, jwt string) ([]byte, error) {
 	if err != nil {
 		return response, err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+jwt)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := globalHttpClient.Do(req)
 	if err != nil {
 		return response, err
 	}
@@ -78,7 +91,7 @@ func post(url, data, jwt string) ([]byte, error) {
 	return bodyBytes, nil
 }
 
-func get(url, data, jwt string) ([]byte, error) {
+func get(url, data string) ([]byte, error) {
 	url = config.C.ChirpStack.API.Server + url
 
 	var response []byte
@@ -87,11 +100,8 @@ func get(url, data, jwt string) ([]byte, error) {
 	if err != nil {
 		return response, err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+jwt)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := globalHttpClient.Do(req)
 	if err != nil {
 		return response, err
 	}
@@ -106,7 +116,7 @@ func get(url, data, jwt string) ([]byte, error) {
 	return bodyBytes, nil
 }
 
-func delete(url, data, jwt string) ([]byte, error) {
+func delete(url, data string) ([]byte, error) {
 	url = config.C.ChirpStack.API.Server + url
 
 	var response []byte
@@ -115,11 +125,8 @@ func delete(url, data, jwt string) ([]byte, error) {
 	if err != nil {
 		return response, err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+jwt)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := globalHttpClient.Do(req)
 	if err != nil {
 		return response, err
 	}
@@ -142,14 +149,28 @@ func Setup(c config.Config) error {
 		"insecure": conf.API.Insecure,
 	}).Info("as: connecting api client")
 
-	jwt, err := LoginDeviceHub()
+	// 创建一个支持Cookie管理的CookieJar
+	jar, err := cookiejar.New(&cookiejar.Options{})
+	if err != nil {
+		return errors.Wrap(err, "创建cookie jar失败")
+	}
+
+	// 使用CookieJar初始化HTTP客户端
+	globalHttpClient = &http.Client{
+		Jar: jar,
+	}
+
+	err = ASLogin()
 	if err != nil {
 		log.Error(err)
 		return err
 	}
 
-	log.Info(jwt)
-	jwtConn = jwt
+	err = CGILogin()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
 
 	// connect MQTT
 	opts := mqtt.NewClientOptions()
@@ -171,7 +192,89 @@ func Setup(c config.Config) error {
 	return nil
 }
 
-func LoginDeviceHub() (string, error) {
+type CGILoginReq struct {
+	ID       string          `json:"id"`
+	Execute  int64           `json:"execute"`
+	Core     string          `json:"core"`
+	Function string          `json:"function"`
+	Values   []CGILoginValue `json:"values"`
+}
+
+type CGILoginValue struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func CGILogin() error {
+	url := config.C.ChirpStack.API.Server + "/cgi"
+
+	key := []byte("1111111111111111")
+	iv := []byte("2222222222222222")
+	password, err := utils.AesCBCEncrypt([]byte(config.C.ChirpStack.API.Password), key, iv)
+	if err != nil {
+		log.Error("AesCBCEncrypt error: ", err)
+		return err
+	}
+
+	data := CGILoginReq{
+		ID:       "1",
+		Execute:  1,
+		Core:     "user",
+		Function: "login",
+		Values: []CGILoginValue{
+			{
+				Username: config.C.ChirpStack.API.Username,
+				Password: password,
+			},
+		},
+	}
+
+	requestJSON, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", url, strings.NewReader(string(requestJSON)))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "*/*")
+
+	resp, err := globalHttpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	log.Infof("CGI login resp: %v", resp)
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("CGI login failed with status %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	jsonObj, err := parseJSON(bodyBytes)
+	if err != nil {
+		return err
+	}
+
+	log.WithFields(log.Fields{
+		"response": jsonObj,
+	}).Info("CGI login response")
+
+	CheckSavedCookies()
+
+	return nil
+}
+
+func ASLogin() error {
 	url := config.C.ChirpStack.API.LoginUrl
 
 	password := ""
@@ -183,7 +286,7 @@ func LoginDeviceHub() (string, error) {
 		ps, err := utils.AesCBCEncrypt([]byte(config.C.ChirpStack.API.Password), key, iv)
 		if err != nil {
 			log.Error("AesCBCEncrypt error: ", err)
-			return "", err
+			return err
 		}
 		password = ps
 	}
@@ -197,37 +300,78 @@ func LoginDeviceHub() (string, error) {
 		"password": "` + password + `"
 	}`
 
-	bytes, err := post(url, data, "")
+	// 直接使用http.Request而不是post函数，以确保Cookie能被获取到
+	req, err := http.NewRequest("POST", config.C.ChirpStack.API.Server+url, strings.NewReader(data))
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	jsonObj, err := parseJSON(bytes)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "*/*")
+
+	resp, err := globalHttpClient.Do(req)
 	if err != nil {
-		return "", err
+		return err
+	}
+	defer resp.Body.Close()
+
+	// 检查响应状态
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("AS login failed with status %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	jsonObj, err := parseJSON(bodyBytes)
+	if err != nil {
+		return err
 	}
 
 	jwt := ""
-
 	if config.C.ChirpStack.API.IsLNS {
 		dataMap, ok := jsonObj["data"].(map[string]interface{})
 		if !ok {
-			return "", fmt.Errorf("data field type assertion failed")
+			return fmt.Errorf("data field type assertion failed")
 		}
 		j, ok := dataMap["token"].(string)
 		if !ok {
-			return "", fmt.Errorf("token field type assertion failed")
+			return fmt.Errorf("token field type assertion failed")
 		}
 		jwt = j
 	} else {
 		j, ok := jsonObj["jwt"].(string)
 		if !ok {
-			return "", fmt.Errorf("token field type assertion failed")
+			return fmt.Errorf("token field type assertion failed")
 		}
 		jwt = j
 	}
 
-	return jwt, nil
+	// 仍然保持使用JWT认证
+	transport := &TransportWithHeaders{
+		underlying: http.DefaultTransport,
+		headers: map[string]string{
+			"Content-Type":  "application/json",
+			"Authorization": "Bearer " + jwt,
+			"Accept":        "*/*",
+		},
+	}
+
+	// 保存原始的CookieJar
+	jar := globalHttpClient.Jar
+
+	// 设置新的传输层
+	globalHttpClient.Transport = transport
+
+	// 恢复CookieJar
+	globalHttpClient.Jar = jar
+
+	log.Info("AS登录成功，已获取JWT和Cookie")
+
+	return nil
 }
 
 func CreateApplication() (string, error) {
@@ -253,7 +397,7 @@ func CreateApplication() (string, error) {
 		`
 	}
 
-	bytes, err := post(url, data, jwtConn)
+	bytes, err := post(url, data)
 	if err != nil {
 		log.Error("CreateApplication failed ", err)
 		return "", err
@@ -283,7 +427,7 @@ func DeleteApplication(applicationID string) error {
 	}
 	`
 
-	bytes, err := delete(url, data, jwtConn)
+	bytes, err := delete(url, data)
 	if err != nil {
 		return err
 	}
@@ -319,7 +463,7 @@ func CreateGateway(id string, name string) error {
 
 	log.Info(data)
 
-	bytes, err := post(url, data, jwtConn)
+	bytes, err := post(url, data)
 	if err != nil {
 		return err
 	}
@@ -338,7 +482,7 @@ func DeleteGateway(id string) error {
 		url = "/api/gateways/" + id
 	}
 
-	bytes, err := delete(url, "", jwtConn)
+	bytes, err := delete(url, "")
 	if err != nil {
 		return err
 	}
@@ -382,7 +526,7 @@ func CreateDeviceProfile() (string, error) {
 	}
 	`
 
-	bytes, err := post(url, data, jwtConn)
+	bytes, err := post(url, data)
 	if err != nil {
 		return "", err
 	}
@@ -407,7 +551,7 @@ func DeleteDeviceProfile(profileID string) error {
 		url = "/api/urprofiles/" + profileID
 	}
 
-	bytes, err := delete(url, "", jwtConn)
+	bytes, err := delete(url, "")
 	if err != nil {
 		return err
 	}
@@ -445,7 +589,7 @@ func CreateDevices(eui, name, profileId, appKey, payloadCodecID, applicationID s
 	}
 	`
 
-	bytes, err := post(url, data, jwtConn)
+	bytes, err := post(url, data)
 	if err != nil {
 		return err
 	}
@@ -464,7 +608,7 @@ func DeleteDevices(eui string) error {
 		url = "/api/urdevices/" + eui
 	}
 
-	bytes, err := delete(url, "", jwtConn)
+	bytes, err := delete(url, "")
 	if err != nil {
 		return err
 	}
@@ -502,7 +646,7 @@ func GetPayloadCoedc() ([]PayloadCodecItem, error) {
 		url = "/api/payloadcodecs?limit=9999&offset=0&type=default"
 	}
 
-	bytes, err := get(url, "", jwtConn)
+	bytes, err := get(url, "")
 	if err != nil {
 		return res, err
 	}
@@ -552,7 +696,7 @@ func GetGateway() ([]lorawan.EUI64, error) {
 		url = "/api/gateways?limit=9999&offset=0&organizationID=1"
 	}
 
-	bytes, err := get(url, "", jwtConn)
+	bytes, err := get(url, "")
 	if err != nil {
 		return res, err
 	}
@@ -625,7 +769,7 @@ func GetProfiles() ([]ProfileResultJson, error) {
 		url = "/api/urprofiles?limit=9999&offset=0&organizationID=1"
 	}
 
-	bytes, err := get(url, "", jwtConn)
+	bytes, err := get(url, "")
 	if err != nil {
 		return res, err
 	}
@@ -668,7 +812,7 @@ func GetApplications() ([]ApplicationJson, error) {
 		url = "/api/urapplications?limit=9999&offset=0&organizationID=1"
 	}
 
-	bytes, err := get(url, "", jwtConn)
+	bytes, err := get(url, "")
 	if err != nil {
 		return res, err
 	}
@@ -734,7 +878,7 @@ func DeleteAllDevices() error {
 		url = "/api/urdevicesall"
 	}
 
-	bytes, err := delete(url, "", jwtConn)
+	bytes, err := delete(url, "")
 	if err != nil {
 		return err
 	}
@@ -819,7 +963,7 @@ func GetAvailableBACnetObjects(search string, order string, offset int, limit in
 
 	var res AvailableBACnetObjects
 
-	bytes, err := post(url, data, jwtConn)
+	bytes, err := post(url, data)
 	if err != nil {
 		return res, err
 	}
@@ -853,11 +997,11 @@ func AddBACnetObjects(data []BACnetDatum) error {
 		return err
 	}
 
-	bytes, err := post(url, string(requestJSON), jwtConn)
+	bytes, err := post(url, string(requestJSON))
 	if err != nil {
 		return err
 	}
-	// {"error":"","code":0}
+
 	ret := string(bytes)
 	if ret != `{"error":"","code":0}` {
 		return errors.New("failed to add BACnet objects: " + ret)
@@ -908,7 +1052,7 @@ func CreateFuotaTask(fuotaTaskReq FuotaTaskReq) error {
 		return err
 	}
 
-	bytes, err := post(url, string(requestJSON), jwtConn)
+	bytes, err := post(url, string(requestJSON))
 	if err != nil {
 		return err
 	}
@@ -982,7 +1126,7 @@ func GetFuotaTask(search string, order string, offset int, limit int) (FuotaTask
 
 	var res FuotaTaskRes
 
-	bytes, err := get(urlWithParams, "", jwtConn)
+	bytes, err := get(urlWithParams, "")
 	if err != nil {
 		return res, err
 	}
@@ -1010,7 +1154,7 @@ func DeleteFuotaTask(ids []int64) error {
 		return err
 	}
 
-	bytes, err := post(url, string(requestJSON), jwtConn)
+	bytes, err := post(url, string(requestJSON))
 	if err != nil {
 		return err
 	}
@@ -1019,6 +1163,304 @@ func DeleteFuotaTask(ids []int64) error {
 	if ret != `{}` {
 		return errors.New("failed to delete fuota task: " + ret)
 	}
+
+	return nil
+}
+
+type ModbusServerCreateReq struct {
+	ID       int64                        `json:"id"`
+	Execute  int64                        `json:"execute"`
+	Core     string                       `json:"core"`
+	Function string                       `json:"function"`
+	Values   []ModbusServerCreateReqValue `json:"values"`
+}
+
+type ModbusServerCreateReqValue struct {
+	Base    string                        `json:"base"`
+	Servers []ModbusServerCreateReqServer `json:"servers"`
+}
+
+type ModbusServerCreateReqServer struct {
+	Enable      int64  `json:"enable"`
+	Interface   string `json:"interface"`
+	ConnectType string `json:"connect_type"`
+	Name        string `json:"name"`
+	Port        int64  `json:"port"`
+	SlaveID     int64  `json:"slave_id"`
+	Description string `json:"description"`
+}
+
+func CreateModbusServer(data ModbusServerCreateReq) error {
+	url := "/lns/cgi"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/cgi"
+	}
+
+	requestJSON, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	bytes, err := post(url, string(requestJSON))
+	if err != nil {
+		return err
+	}
+
+	ret := string(bytes)
+	log.Info("create modbus server: ", ret)
+
+	return nil
+}
+
+type ModbusGetServerReq struct {
+	ID       int64                     `json:"id"`
+	Execute  int64                     `json:"execute"`
+	Core     string                    `json:"core"`
+	Function string                    `json:"function"`
+	Values   []ModbusGetServerReqValue `json:"values"`
+}
+
+type ModbusGetServerReqValue struct {
+	Base   string `json:"base"`
+	Search string `json:"search"`
+	Order  string `json:"order"`
+	Offset int64  `json:"offset"`
+	Limit  int64  `json:"limit"`
+}
+
+type ModbusGetServerRes struct {
+	ID     int64                      `json:"id"`
+	Model  string                     `json:"model"`
+	Pn     string                     `json:"pn"`
+	OEM    string                     `json:"oem"`
+	Rtver  string                     `json:"rtver"`
+	Status int64                      `json:"status"`
+	Result []ModbusGetServerResResult `json:"result"`
+}
+
+type ModbusGetServerResResult struct {
+	Total   int64                      `json:"total"`
+	Servers []ModbusGetServerResServer `json:"servers"`
+}
+
+type ModbusGetServerResServer struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Port        int64  `json:"port"`
+	Enable      int64  `json:"enable"`
+	SlaveID     int64  `json:"slave_id"`
+	Interface   string `json:"interface"`
+	ConnectType string `json:"connect_type"`
+	Description string `json:"description"`
+	Ipaddr      string `json:"ipaddr"`
+	ObjectNum   int64  `json:"object_num"`
+}
+
+func GetModbusServer(data ModbusGetServerReq) (ModbusGetServerRes, error) {
+	url := "/lns/cgi"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/cgi"
+	}
+
+	requestJSON, err := json.Marshal(data)
+	if err != nil {
+		return ModbusGetServerRes{}, err
+	}
+
+	bytes, err := post(url, string(requestJSON))
+	if err != nil {
+		return ModbusGetServerRes{}, err
+	}
+
+	var res ModbusGetServerRes
+	err = json.Unmarshal(bytes, &res)
+	log.Infof("GetModbusServer bytes: %s", string(bytes))
+	if err != nil {
+		log.Error("failed to unmarshal modbus server: ", err)
+		return ModbusGetServerRes{}, nil
+	}
+
+	log.Infof("GetModbusServer: %v", res)
+
+	return res, nil
+}
+
+type ModbusServerDeleteReq struct {
+	ID       int64                        `json:"id"`
+	Execute  int64                        `json:"execute"`
+	Core     string                       `json:"core"`
+	Function string                       `json:"function"`
+	Values   []ModbusServerDeleteReqValue `json:"values"`
+}
+
+type ModbusServerDeleteReqValue struct {
+	Base string   `json:"base"`
+	IDS  []string `json:"ids"`
+}
+
+func DeleteModbusServer(data ModbusServerDeleteReq) error {
+	url := "/lns/cgi"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/cgi"
+	}
+
+	requestJSON, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	bytes, err := post(url, string(requestJSON))
+	if err != nil {
+		return err
+	}
+
+	ret := string(bytes)
+	log.Info("delete modbus server: ", ret)
+
+	return nil
+}
+
+func CheckSavedCookies() {
+	if globalHttpClient == nil || globalHttpClient.Jar == nil {
+		log.Error("HTTP客户端或Cookie管理器未初始化")
+		return
+	}
+
+	serverURL, err := url.Parse(config.C.ChirpStack.API.Server)
+	if err != nil {
+		log.Errorf("解析服务器URL失败: %v", err)
+		return
+	}
+
+	cookies := globalHttpClient.Jar.Cookies(serverURL)
+
+	if len(cookies) == 0 {
+		log.Info("HTTP客户端中没有存储任何Cookie")
+	} else {
+		log.Infof("HTTP客户端中存储了 %d 个Cookie:", len(cookies))
+		for i, cookie := range cookies {
+			log.Infof("Cookie %d: %s=%s, Domain=%s, Path=%s",
+				i+1, cookie.Name, cookie.Value, cookie.Domain, cookie.Path)
+		}
+	}
+}
+
+type GetAllAvaliableModbusObjectsRes struct {
+	Total int64         `json:"total"`
+	Data  []ModbusDatum `json:"data"`
+}
+
+type ModbusDatum struct {
+	ID         string         `json:"id"`
+	DeviceName string         `json:"device_name"`
+	DevEui     string         `json:"dev_eui"`
+	IDS        []interface{}  `json:"ids"`
+	Objects    []ModbusObject `json:"objects"`
+}
+
+type ModbusObject struct {
+	ID                   string             `json:"id"`
+	PayloadCodecObjectID int64              `json:"payload_codec_object_id"`
+	Name                 string             `json:"name"`
+	LoraName             string             `json:"lora_name"`
+	RegisterAddr         int64              `json:"register_addr"`
+	RegisterType         ModbusRegisterType `json:"register_type"`
+	RegisterNum          int64              `json:"register_num"`
+	DataType             ModbusDataType     `json:"data_type"`
+	Unit                 ModbusUnit         `json:"unit"`
+	Description          string             `json:"description"`
+	Value                string             `json:"value"`
+	UpdateTime           string             `json:"update_time"`
+	Reference            []string           `json:"reference"`
+}
+
+type ModbusDataType string
+
+const (
+	Flag        ModbusDataType = "flag"
+	Float32Dcba ModbusDataType = "float32_dcba"
+	Int16Ba     ModbusDataType = "int16_ba"
+	String      ModbusDataType = "string"
+	Uint16Ba    ModbusDataType = "uint16_ba"
+)
+
+type ModbusRegisterType string
+
+const (
+	Coil            ModbusRegisterType = "coil"
+	Discrete        ModbusRegisterType = "discrete"
+	HoldingRegister ModbusRegisterType = "holding_register"
+	InputRegister   ModbusRegisterType = "input_register"
+)
+
+type ModbusUnit string
+
+const (
+	C      ModbusUnit = "°C"
+	Empty  ModbusUnit = ""
+	Min    ModbusUnit = "min"
+	Minute ModbusUnit = "minute"
+	RH     ModbusUnit = "%r.h."
+	S      ModbusUnit = "s"
+)
+
+type GetAllAvaliableModbusObjectsDataReq struct {
+	Limit    int64  `json:"limit"`
+	Offset   int64  `json:"offset"`
+	Search   string `json:"search"`
+	ServerID string `json:"server_id"`
+	Order    string `json:"order"`
+	FetchAll int64  `json:"fetch_all"`
+}
+
+func GetAllAvaliableModbusObjects(data GetAllAvaliableModbusObjectsDataReq) (GetAllAvaliableModbusObjectsRes, error) {
+	url := "/lns/api/protocol/modbus_object/getall"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/protocol/modbus_object/getall"
+	}
+
+	requestJSON, err := json.Marshal(data)
+	if err != nil {
+		return GetAllAvaliableModbusObjectsRes{}, err
+	}
+
+	bytes, err := post(url, string(requestJSON))
+	if err != nil {
+		return GetAllAvaliableModbusObjectsRes{}, err
+	}
+
+	var res GetAllAvaliableModbusObjectsRes
+	err = json.Unmarshal(bytes, &res)
+	if err != nil {
+		return GetAllAvaliableModbusObjectsRes{}, err
+	}
+
+	return res, nil
+}
+
+type AddModbusDatumReq struct {
+	ServerID string        `json:"server_id"`
+	Data     []ModbusDatum `json:"data"`
+}
+
+func AddModbusDatum(data AddModbusDatumReq) error {
+	url := "/lns/api/protocol/modbus_object/add"
+	if !config.C.ChirpStack.API.IsLNS {
+		url = "/api/protocol/modbus_object/add"
+	}
+
+	requestJSON, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	bytes, err := post(url, string(requestJSON))
+	if err != nil {
+		return err
+	}
+
+	ret := string(bytes)
+	log.Info("add modbus datum: ", ret)
 
 	return nil
 }
