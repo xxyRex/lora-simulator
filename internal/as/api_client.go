@@ -16,7 +16,6 @@ import (
 
 	as_api "github.com/brocaar/lora-simulator/internal/as_api/client"
 	"github.com/brocaar/lora-simulator/internal/as_api/client/b_a_cnet_service"
-	"github.com/brocaar/lora-simulator/internal/as_api/client/device_profile_service"
 	"github.com/brocaar/lora-simulator/internal/as_api/client/fuota_service"
 	"github.com/brocaar/lora-simulator/internal/as_api/client/gateway"
 	"github.com/brocaar/lora-simulator/internal/as_api/client/internal_swagger"
@@ -24,6 +23,7 @@ import (
 	"github.com/brocaar/lora-simulator/internal/as_api/client/payload_codec"
 	"github.com/brocaar/lora-simulator/internal/as_api/client/ursalink_application"
 	"github.com/brocaar/lora-simulator/internal/as_api/client/ursalink_device"
+	"github.com/brocaar/lora-simulator/internal/as_api/client/ursalink_profiles_service"
 	"github.com/brocaar/lora-simulator/internal/as_api/models"
 	"github.com/brocaar/lora-simulator/internal/config"
 	"github.com/brocaar/lora-simulator/internal/utils"
@@ -90,7 +90,7 @@ func parseJSON(data []byte) (map[string]interface{}, error) {
 }
 
 func post(url, data string) ([]byte, error) {
-	url = config.C.ChirpStack.API.Server + url
+	url = "http://" + config.C.ChirpStack.API.Server + url
 
 	var response []byte
 
@@ -196,7 +196,7 @@ func CGILogin(username, password string) error {
 	cgiClient = &http.Client{
 		Jar: jar,
 	}
-	url := config.C.ChirpStack.API.Server + "/cgi"
+	url := "http://" + config.C.ChirpStack.API.Server + "/cgi"
 
 	data := CGILoginReq{
 		ID:       "1",
@@ -258,6 +258,7 @@ func CGILogin(username, password string) error {
 
 func ASLogin(username string, password string) error {
 	cfg := as_api.DefaultTransportConfig().WithHost(config.C.ChirpStack.API.Server)
+	cfg.Schemes = []string{"http"} // 强制使用 HTTP
 	asClient = as_api.NewHTTPClientWithConfig(strfmt.Default, cfg)
 
 	params := internal_swagger.NewPostAPIInternalLoginParams()
@@ -273,6 +274,7 @@ func ASLogin(username string, password string) error {
 
 	transport := httptransport.New(cfg.Host, cfg.BasePath, cfg.Schemes)
 	transport.DefaultAuthentication = httptransport.BearerToken(resp.Payload.Jwt)
+	asClient.SetTransport(transport)
 
 	return nil
 }
@@ -341,11 +343,11 @@ func DeleteGateway(id string) error {
 }
 
 func CreateDeviceProfile() (string, error) {
-	params := device_profile_service.NewPostAPIDeviceProfilesParams()
-	params.Body = &models.APICreateDeviceProfileRequest{
+	params := ursalink_profiles_service.NewPostAPIUrprofilesParams()
+	params.Body = &models.APICreateProfileRequest{
 		Name:           DEVICE_PROFILE_NAME,
 		OrganizationID: ORGANIZATION_ID,
-		DeviceProfile: &models.APIDeviceProfile{
+		Profile: &models.APIProfile{
 			FactoryPresetFreqs:   []int64{},
 			MacVersion:           "1.0.2",
 			MaxEIRP:              0,
@@ -366,19 +368,19 @@ func CreateDeviceProfile() (string, error) {
 		},
 	}
 
-	resp, err := asClient.DeviceProfileService.PostAPIDeviceProfiles(params)
+	resp, err := asClient.UrsalinkProfilesService.PostAPIUrprofiles(params)
 	if err != nil {
 		return "", err
 	}
 
-	return resp.Payload.DeviceProfileID, nil
+	return resp.Payload.ProfileID, nil
 }
 
 func DeleteDeviceProfile(profileID string) error {
-	params := device_profile_service.NewDeleteAPIDeviceProfilesByDeviceProfileIDParams()
-	params.DeviceProfileID = profileID
+	params := ursalink_profiles_service.NewDeleteAPIUrprofilesByProfileIDParams()
+	params.ProfileID = profileID
 
-	_, err := asClient.DeviceProfileService.DeleteAPIDeviceProfilesByDeviceProfileID(params)
+	_, err := asClient.UrsalinkProfilesService.DeleteAPIUrprofilesByProfileID(params)
 	if err != nil {
 		return err
 	}
@@ -495,8 +497,8 @@ func GetGateway() ([]lorawan.EUI64, error) {
 	return res, nil
 }
 
-func GetProfiles() ([]*models.APIDeviceProfileMeta, error) {
-	params := device_profile_service.NewGetAPIDeviceProfilesParams()
+func GetProfiles() ([]*models.APIProfileData, error) {
+	params := ursalink_profiles_service.NewGetAPIUrprofilesParams()
 	limitStr := strconv.Itoa(math.MaxInt16)
 	offsetStr := strconv.Itoa(0)
 	organizationIDStr := ORGANIZATION_ID
@@ -505,7 +507,7 @@ func GetProfiles() ([]*models.APIDeviceProfileMeta, error) {
 	params.Offset = &offsetStr
 	params.OrganizationID = &organizationIDStr
 
-	resp, err := asClient.DeviceProfileService.GetAPIDeviceProfiles(params)
+	resp, err := asClient.UrsalinkProfilesService.GetAPIUrprofiles(params)
 	if err != nil {
 		return nil, err
 	}
@@ -532,9 +534,7 @@ func GetApplications() ([]*models.APIAppListItem, error) {
 }
 
 func RestartAppServer() error {
-	server := strings.TrimPrefix(config.C.ChirpStack.API.Server, "http://")
-	server = strings.TrimPrefix(server, "https://")
-	server = strings.Split(server, ":")[0] // 移除端口号（如果有）
+	server := strings.Split(config.C.ChirpStack.API.Server, ":")[0] // 移除端口号（如果有）
 
 	sshConfig := &ssh.ClientConfig{
 		User: "root",
@@ -828,7 +828,7 @@ func CheckSavedCookies() {
 		return
 	}
 
-	serverURL, err := url.Parse(config.C.ChirpStack.API.Server)
+	serverURL, err := url.Parse("http://" + config.C.ChirpStack.API.Server)
 	if err != nil {
 		log.Errorf("解析服务器URL失败: %v", err)
 		return

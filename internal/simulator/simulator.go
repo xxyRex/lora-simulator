@@ -113,7 +113,7 @@ type Simulation struct {
 	eventTopicTemplate   string
 	commandTopicTemplate string
 
-	deviceProfiles []*models.APIDeviceProfileMeta
+	deviceProfiles []*models.APIProfileData
 	applications   []*models.APIAppListItem
 	payloadCodecs  []*models.APIPayloadCodecItem
 
@@ -570,7 +570,7 @@ func (s *Simulation) createDevices() error {
 		profileID := ""
 		for _, p := range s.deviceProfiles {
 			if p.Name == ldcfg.DeviceProfile {
-				profileID = p.DeviceProfileID
+				profileID = p.Profile.ProfileID
 				break
 			}
 		}
