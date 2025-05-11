@@ -56,28 +56,36 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	PutAPIGatewayProfilesGatewayProfileGatewayProfileID(params *PutAPIGatewayProfilesGatewayProfileGatewayProfileIDParams, opts ...ClientOption) (*PutAPIGatewayProfilesGatewayProfileGatewayProfileIDOK, error)
+	DeleteAPIGatewayProfilesByGatewayProfileID(params *DeleteAPIGatewayProfilesByGatewayProfileIDParams, opts ...ClientOption) (*DeleteAPIGatewayProfilesByGatewayProfileIDOK, error)
+
+	GetAPIGatewayProfiles(params *GetAPIGatewayProfilesParams, opts ...ClientOption) (*GetAPIGatewayProfilesOK, error)
+
+	GetAPIGatewayProfilesByGatewayProfileID(params *GetAPIGatewayProfilesByGatewayProfileIDParams, opts ...ClientOption) (*GetAPIGatewayProfilesByGatewayProfileIDOK, error)
+
+	PostAPIGatewayProfiles(params *PostAPIGatewayProfilesParams, opts ...ClientOption) (*PostAPIGatewayProfilesOK, error)
+
+	PutAPIGatewayProfilesByGatewayProfileGatewayProfileID(params *PutAPIGatewayProfilesByGatewayProfileGatewayProfileIDParams, opts ...ClientOption) (*PutAPIGatewayProfilesByGatewayProfileGatewayProfileIDOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-PutAPIGatewayProfilesGatewayProfileGatewayProfileID updates updates the given gateway profile
+DeleteAPIGatewayProfilesByGatewayProfileID deletes deletes the gateway profile matching the given id
 */
-func (a *Client) PutAPIGatewayProfilesGatewayProfileGatewayProfileID(params *PutAPIGatewayProfilesGatewayProfileGatewayProfileIDParams, opts ...ClientOption) (*PutAPIGatewayProfilesGatewayProfileGatewayProfileIDOK, error) {
+func (a *Client) DeleteAPIGatewayProfilesByGatewayProfileID(params *DeleteAPIGatewayProfilesByGatewayProfileIDParams, opts ...ClientOption) (*DeleteAPIGatewayProfilesByGatewayProfileIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewPutAPIGatewayProfilesGatewayProfileGatewayProfileIDParams()
+		params = NewDeleteAPIGatewayProfilesByGatewayProfileIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "PutAPIGatewayProfilesGatewayProfileGatewayProfileID",
-		Method:             "PUT",
-		PathPattern:        "/api/gateway-profiles/{gatewayProfile.gatewayProfileID}",
+		ID:                 "delete_api_gateway-profiles_by_gatewayProfileID",
+		Method:             "DELETE",
+		PathPattern:        "/api/gateway-profiles/{gatewayProfileID}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &PutAPIGatewayProfilesGatewayProfileGatewayProfileIDReader{formats: a.formats},
+		Reader:             &DeleteAPIGatewayProfilesByGatewayProfileIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -89,13 +97,165 @@ func (a *Client) PutAPIGatewayProfilesGatewayProfileGatewayProfileID(params *Put
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*PutAPIGatewayProfilesGatewayProfileGatewayProfileIDOK)
+	success, ok := result.(*DeleteAPIGatewayProfilesByGatewayProfileIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PutAPIGatewayProfilesGatewayProfileGatewayProfileID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_gateway-profiles_by_gatewayProfileID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIGatewayProfiles lists returns the existing gateway profiles
+*/
+func (a *Client) GetAPIGatewayProfiles(params *GetAPIGatewayProfilesParams, opts ...ClientOption) (*GetAPIGatewayProfilesOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIGatewayProfilesParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_gateway-profiles",
+		Method:             "GET",
+		PathPattern:        "/api/gateway-profiles",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIGatewayProfilesReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIGatewayProfilesOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_gateway-profiles: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIGatewayProfilesByGatewayProfileID gets returns the gateway profile matching the given id
+*/
+func (a *Client) GetAPIGatewayProfilesByGatewayProfileID(params *GetAPIGatewayProfilesByGatewayProfileIDParams, opts ...ClientOption) (*GetAPIGatewayProfilesByGatewayProfileIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIGatewayProfilesByGatewayProfileIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_gateway-profiles_by_gatewayProfileID",
+		Method:             "GET",
+		PathPattern:        "/api/gateway-profiles/{gatewayProfileID}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIGatewayProfilesByGatewayProfileIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIGatewayProfilesByGatewayProfileIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_gateway-profiles_by_gatewayProfileID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIGatewayProfiles creates creates the given gateway profile
+*/
+func (a *Client) PostAPIGatewayProfiles(params *PostAPIGatewayProfilesParams, opts ...ClientOption) (*PostAPIGatewayProfilesOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIGatewayProfilesParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_gateway-profiles",
+		Method:             "POST",
+		PathPattern:        "/api/gateway-profiles",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIGatewayProfilesReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIGatewayProfilesOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_gateway-profiles: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIGatewayProfilesByGatewayProfileGatewayProfileID updates updates the given gateway profile
+*/
+func (a *Client) PutAPIGatewayProfilesByGatewayProfileGatewayProfileID(params *PutAPIGatewayProfilesByGatewayProfileGatewayProfileIDParams, opts ...ClientOption) (*PutAPIGatewayProfilesByGatewayProfileGatewayProfileIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIGatewayProfilesByGatewayProfileGatewayProfileIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_gateway-profiles_by_gatewayProfile.gatewayProfileID",
+		Method:             "PUT",
+		PathPattern:        "/api/gateway-profiles/{gatewayProfile.gatewayProfileID}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PutAPIGatewayProfilesByGatewayProfileGatewayProfileIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PutAPIGatewayProfilesByGatewayProfileGatewayProfileIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for put_api_gateway-profiles_by_gatewayProfile.gatewayProfileID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

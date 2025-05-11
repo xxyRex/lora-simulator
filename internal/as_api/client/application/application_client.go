@@ -56,46 +56,54 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	CreateHTTPIntegration(params *CreateHTTPIntegrationParams, opts ...ClientOption) (*CreateHTTPIntegrationOK, error)
+	DeleteAPIApplicationsByID(params *DeleteAPIApplicationsByIDParams, opts ...ClientOption) (*DeleteAPIApplicationsByIDOK, error)
 
-	CreateInfluxDBIntegration(params *CreateInfluxDBIntegrationParams, opts ...ClientOption) (*CreateInfluxDBIntegrationOK, error)
+	DeleteAPIApplicationsIntegrationsHTTPByID(params *DeleteAPIApplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*DeleteAPIApplicationsIntegrationsHTTPByIDOK, error)
 
-	DeleteHTTPIntegration(params *DeleteHTTPIntegrationParams, opts ...ClientOption) (*DeleteHTTPIntegrationOK, error)
+	DeleteAPIApplicationsIntegrationsInfluxdbByApplicationID(params *DeleteAPIApplicationsIntegrationsInfluxdbByApplicationIDParams, opts ...ClientOption) (*DeleteAPIApplicationsIntegrationsInfluxdbByApplicationIDOK, error)
 
-	DeleteInfluxDBIntegration(params *DeleteInfluxDBIntegrationParams, opts ...ClientOption) (*DeleteInfluxDBIntegrationOK, error)
+	GetAPIApplications(params *GetAPIApplicationsParams, opts ...ClientOption) (*GetAPIApplicationsOK, error)
 
-	GetHTTPIntegration(params *GetHTTPIntegrationParams, opts ...ClientOption) (*GetHTTPIntegrationOK, error)
+	GetAPIApplicationsByID(params *GetAPIApplicationsByIDParams, opts ...ClientOption) (*GetAPIApplicationsByIDOK, error)
 
-	GetInfluxDBIntegration(params *GetInfluxDBIntegrationParams, opts ...ClientOption) (*GetInfluxDBIntegrationOK, error)
+	GetAPIApplicationsIntegrationsByID(params *GetAPIApplicationsIntegrationsByIDParams, opts ...ClientOption) (*GetAPIApplicationsIntegrationsByIDOK, error)
 
-	ListIntegrations(params *ListIntegrationsParams, opts ...ClientOption) (*ListIntegrationsOK, error)
+	GetAPIApplicationsIntegrationsHTTPByID(params *GetAPIApplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*GetAPIApplicationsIntegrationsHTTPByIDOK, error)
 
-	PutAPIApplicationsID(params *PutAPIApplicationsIDParams, opts ...ClientOption) (*PutAPIApplicationsIDOK, error)
+	GetAPIApplicationsIntegrationsInfluxdbByApplicationID(params *GetAPIApplicationsIntegrationsInfluxdbByApplicationIDParams, opts ...ClientOption) (*GetAPIApplicationsIntegrationsInfluxdbByApplicationIDOK, error)
 
-	UpdateHTTPIntegration(params *UpdateHTTPIntegrationParams, opts ...ClientOption) (*UpdateHTTPIntegrationOK, error)
+	PostAPIApplications(params *PostAPIApplicationsParams, opts ...ClientOption) (*PostAPIApplicationsOK, error)
 
-	UpdateInfluxDBIntegration(params *UpdateInfluxDBIntegrationParams, opts ...ClientOption) (*UpdateInfluxDBIntegrationOK, error)
+	PostAPIApplicationsIntegrationsHTTPByID(params *PostAPIApplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*PostAPIApplicationsIntegrationsHTTPByIDOK, error)
+
+	PostAPIApplicationsIntegrationsInfluxdbByApplicationID(params *PostAPIApplicationsIntegrationsInfluxdbByApplicationIDParams, opts ...ClientOption) (*PostAPIApplicationsIntegrationsInfluxdbByApplicationIDOK, error)
+
+	PutAPIApplicationsByID(params *PutAPIApplicationsByIDParams, opts ...ClientOption) (*PutAPIApplicationsByIDOK, error)
+
+	PutAPIApplicationsIntegrationsHTTPByID(params *PutAPIApplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*PutAPIApplicationsIntegrationsHTTPByIDOK, error)
+
+	PutAPIApplicationsIntegrationsInfluxdbByApplicationID(params *PutAPIApplicationsIntegrationsInfluxdbByApplicationIDParams, opts ...ClientOption) (*PutAPIApplicationsIntegrationsInfluxdbByApplicationIDOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-CreateHTTPIntegration creates HTTP integration creates a HTTP application integration
+DeleteAPIApplicationsByID deletes deletes the given application
 */
-func (a *Client) CreateHTTPIntegration(params *CreateHTTPIntegrationParams, opts ...ClientOption) (*CreateHTTPIntegrationOK, error) {
+func (a *Client) DeleteAPIApplicationsByID(params *DeleteAPIApplicationsByIDParams, opts ...ClientOption) (*DeleteAPIApplicationsByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewCreateHTTPIntegrationParams()
+		params = NewDeleteAPIApplicationsByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "CreateHTTPIntegration",
-		Method:             "POST",
-		PathPattern:        "/api/applications/{id}/integrations/http",
+		ID:                 "delete_api_applications_by_id",
+		Method:             "DELETE",
+		PathPattern:        "/api/applications/{id}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &CreateHTTPIntegrationReader{formats: a.formats},
+		Reader:             &DeleteAPIApplicationsByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -107,71 +115,33 @@ func (a *Client) CreateHTTPIntegration(params *CreateHTTPIntegrationParams, opts
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*CreateHTTPIntegrationOK)
+	success, ok := result.(*DeleteAPIApplicationsByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for CreateHTTPIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_applications_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-CreateInfluxDBIntegration creates influx d b integration create an influx d b application integration
+DeleteAPIApplicationsIntegrationsHTTPByID deletes integration deletes the HTTP application integration
 */
-func (a *Client) CreateInfluxDBIntegration(params *CreateInfluxDBIntegrationParams, opts ...ClientOption) (*CreateInfluxDBIntegrationOK, error) {
+func (a *Client) DeleteAPIApplicationsIntegrationsHTTPByID(params *DeleteAPIApplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*DeleteAPIApplicationsIntegrationsHTTPByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewCreateInfluxDBIntegrationParams()
+		params = NewDeleteAPIApplicationsIntegrationsHTTPByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "CreateInfluxDBIntegration",
-		Method:             "POST",
-		PathPattern:        "/api/applications/{application_id}/integrations/influxdb",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &CreateInfluxDBIntegrationReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*CreateInfluxDBIntegrationOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for CreateInfluxDBIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-DeleteHTTPIntegration deletes integration deletes the HTTP application integration
-*/
-func (a *Client) DeleteHTTPIntegration(params *DeleteHTTPIntegrationParams, opts ...ClientOption) (*DeleteHTTPIntegrationOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewDeleteHTTPIntegrationParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "DeleteHTTPIntegration",
+		ID:                 "delete_api_applications_integrations_http_by_id",
 		Method:             "DELETE",
 		PathPattern:        "/api/applications/{id}/integrations/http",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &DeleteHTTPIntegrationReader{formats: a.formats},
+		Reader:             &DeleteAPIApplicationsIntegrationsHTTPByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -183,33 +153,33 @@ func (a *Client) DeleteHTTPIntegration(params *DeleteHTTPIntegrationParams, opts
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*DeleteHTTPIntegrationOK)
+	success, ok := result.(*DeleteAPIApplicationsIntegrationsHTTPByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for DeleteHTTPIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_applications_integrations_http_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-DeleteInfluxDBIntegration deletes influx d b integration deletes the influx d b application integration
+DeleteAPIApplicationsIntegrationsInfluxdbByApplicationID deletes influx d b integration deletes the influx d b application integration
 */
-func (a *Client) DeleteInfluxDBIntegration(params *DeleteInfluxDBIntegrationParams, opts ...ClientOption) (*DeleteInfluxDBIntegrationOK, error) {
+func (a *Client) DeleteAPIApplicationsIntegrationsInfluxdbByApplicationID(params *DeleteAPIApplicationsIntegrationsInfluxdbByApplicationIDParams, opts ...ClientOption) (*DeleteAPIApplicationsIntegrationsInfluxdbByApplicationIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewDeleteInfluxDBIntegrationParams()
+		params = NewDeleteAPIApplicationsIntegrationsInfluxdbByApplicationIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "DeleteInfluxDBIntegration",
+		ID:                 "delete_api_applications_integrations_influxdb_by_application_id",
 		Method:             "DELETE",
 		PathPattern:        "/api/applications/{application_id}/integrations/influxdb",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &DeleteInfluxDBIntegrationReader{formats: a.formats},
+		Reader:             &DeleteAPIApplicationsIntegrationsInfluxdbByApplicationIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -221,33 +191,33 @@ func (a *Client) DeleteInfluxDBIntegration(params *DeleteInfluxDBIntegrationPara
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*DeleteInfluxDBIntegrationOK)
+	success, ok := result.(*DeleteAPIApplicationsIntegrationsInfluxdbByApplicationIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for DeleteInfluxDBIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_applications_integrations_influxdb_by_application_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetHTTPIntegration gets HTTP integration returns the HTTP application integration
+GetAPIApplications lists lists the available applications
 */
-func (a *Client) GetHTTPIntegration(params *GetHTTPIntegrationParams, opts ...ClientOption) (*GetHTTPIntegrationOK, error) {
+func (a *Client) GetAPIApplications(params *GetAPIApplicationsParams, opts ...ClientOption) (*GetAPIApplicationsOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetHTTPIntegrationParams()
+		params = NewGetAPIApplicationsParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetHTTPIntegration",
+		ID:                 "get_api_applications",
 		Method:             "GET",
-		PathPattern:        "/api/applications/{id}/integrations/http",
+		PathPattern:        "/api/applications",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetHTTPIntegrationReader{formats: a.formats},
+		Reader:             &GetAPIApplicationsReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -259,33 +229,33 @@ func (a *Client) GetHTTPIntegration(params *GetHTTPIntegrationParams, opts ...Cl
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetHTTPIntegrationOK)
+	success, ok := result.(*GetAPIApplicationsOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetHTTPIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_applications: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetInfluxDBIntegration gets influx d b integration returns the influx d b application integration
+GetAPIApplicationsByID gets returns the requested application
 */
-func (a *Client) GetInfluxDBIntegration(params *GetInfluxDBIntegrationParams, opts ...ClientOption) (*GetInfluxDBIntegrationOK, error) {
+func (a *Client) GetAPIApplicationsByID(params *GetAPIApplicationsByIDParams, opts ...ClientOption) (*GetAPIApplicationsByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetInfluxDBIntegrationParams()
+		params = NewGetAPIApplicationsByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetInfluxDBIntegration",
+		ID:                 "get_api_applications_by_id",
 		Method:             "GET",
-		PathPattern:        "/api/applications/{application_id}/integrations/influxdb",
+		PathPattern:        "/api/applications/{id}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetInfluxDBIntegrationReader{formats: a.formats},
+		Reader:             &GetAPIApplicationsByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -297,33 +267,33 @@ func (a *Client) GetInfluxDBIntegration(params *GetInfluxDBIntegrationParams, op
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetInfluxDBIntegrationOK)
+	success, ok := result.(*GetAPIApplicationsByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetInfluxDBIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_applications_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-ListIntegrations lists integrations lists all configured integrations
+GetAPIApplicationsIntegrationsByID lists integrations lists all configured integrations
 */
-func (a *Client) ListIntegrations(params *ListIntegrationsParams, opts ...ClientOption) (*ListIntegrationsOK, error) {
+func (a *Client) GetAPIApplicationsIntegrationsByID(params *GetAPIApplicationsIntegrationsByIDParams, opts ...ClientOption) (*GetAPIApplicationsIntegrationsByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewListIntegrationsParams()
+		params = NewGetAPIApplicationsIntegrationsByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "ListIntegrations",
+		ID:                 "get_api_applications_integrations_by_id",
 		Method:             "GET",
 		PathPattern:        "/api/applications/{id}/integrations",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &ListIntegrationsReader{formats: a.formats},
+		Reader:             &GetAPIApplicationsIntegrationsByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -335,33 +305,223 @@ func (a *Client) ListIntegrations(params *ListIntegrationsParams, opts ...Client
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*ListIntegrationsOK)
+	success, ok := result.(*GetAPIApplicationsIntegrationsByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for ListIntegrations: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_applications_integrations_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-PutAPIApplicationsID updates updates the given application
+GetAPIApplicationsIntegrationsHTTPByID gets HTTP integration returns the HTTP application integration
 */
-func (a *Client) PutAPIApplicationsID(params *PutAPIApplicationsIDParams, opts ...ClientOption) (*PutAPIApplicationsIDOK, error) {
+func (a *Client) GetAPIApplicationsIntegrationsHTTPByID(params *GetAPIApplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*GetAPIApplicationsIntegrationsHTTPByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewPutAPIApplicationsIDParams()
+		params = NewGetAPIApplicationsIntegrationsHTTPByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "PutAPIApplicationsID",
+		ID:                 "get_api_applications_integrations_http_by_id",
+		Method:             "GET",
+		PathPattern:        "/api/applications/{id}/integrations/http",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIApplicationsIntegrationsHTTPByIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIApplicationsIntegrationsHTTPByIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_applications_integrations_http_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIApplicationsIntegrationsInfluxdbByApplicationID gets influx d b integration returns the influx d b application integration
+*/
+func (a *Client) GetAPIApplicationsIntegrationsInfluxdbByApplicationID(params *GetAPIApplicationsIntegrationsInfluxdbByApplicationIDParams, opts ...ClientOption) (*GetAPIApplicationsIntegrationsInfluxdbByApplicationIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIApplicationsIntegrationsInfluxdbByApplicationIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_applications_integrations_influxdb_by_application_id",
+		Method:             "GET",
+		PathPattern:        "/api/applications/{application_id}/integrations/influxdb",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIApplicationsIntegrationsInfluxdbByApplicationIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIApplicationsIntegrationsInfluxdbByApplicationIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_applications_integrations_influxdb_by_application_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIApplications creates creates the given application
+*/
+func (a *Client) PostAPIApplications(params *PostAPIApplicationsParams, opts ...ClientOption) (*PostAPIApplicationsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIApplicationsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_applications",
+		Method:             "POST",
+		PathPattern:        "/api/applications",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIApplicationsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIApplicationsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_applications: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIApplicationsIntegrationsHTTPByID creates HTTP integration creates a HTTP application integration
+*/
+func (a *Client) PostAPIApplicationsIntegrationsHTTPByID(params *PostAPIApplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*PostAPIApplicationsIntegrationsHTTPByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIApplicationsIntegrationsHTTPByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_applications_integrations_http_by_id",
+		Method:             "POST",
+		PathPattern:        "/api/applications/{id}/integrations/http",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIApplicationsIntegrationsHTTPByIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIApplicationsIntegrationsHTTPByIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_applications_integrations_http_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIApplicationsIntegrationsInfluxdbByApplicationID creates influx d b integration create an influx d b application integration
+*/
+func (a *Client) PostAPIApplicationsIntegrationsInfluxdbByApplicationID(params *PostAPIApplicationsIntegrationsInfluxdbByApplicationIDParams, opts ...ClientOption) (*PostAPIApplicationsIntegrationsInfluxdbByApplicationIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIApplicationsIntegrationsInfluxdbByApplicationIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_applications_integrations_influxdb_by_application_id",
+		Method:             "POST",
+		PathPattern:        "/api/applications/{application_id}/integrations/influxdb",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIApplicationsIntegrationsInfluxdbByApplicationIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIApplicationsIntegrationsInfluxdbByApplicationIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_applications_integrations_influxdb_by_application_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIApplicationsByID updates updates the given application
+*/
+func (a *Client) PutAPIApplicationsByID(params *PutAPIApplicationsByIDParams, opts ...ClientOption) (*PutAPIApplicationsByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIApplicationsByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_applications_by_id",
 		Method:             "PUT",
 		PathPattern:        "/api/applications/{id}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &PutAPIApplicationsIDReader{formats: a.formats},
+		Reader:             &PutAPIApplicationsByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -373,33 +533,33 @@ func (a *Client) PutAPIApplicationsID(params *PutAPIApplicationsIDParams, opts .
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*PutAPIApplicationsIDOK)
+	success, ok := result.(*PutAPIApplicationsByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PutAPIApplicationsID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for put_api_applications_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-UpdateHTTPIntegration updates HTTP integration updates the HTTP application integration
+PutAPIApplicationsIntegrationsHTTPByID updates HTTP integration updates the HTTP application integration
 */
-func (a *Client) UpdateHTTPIntegration(params *UpdateHTTPIntegrationParams, opts ...ClientOption) (*UpdateHTTPIntegrationOK, error) {
+func (a *Client) PutAPIApplicationsIntegrationsHTTPByID(params *PutAPIApplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*PutAPIApplicationsIntegrationsHTTPByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewUpdateHTTPIntegrationParams()
+		params = NewPutAPIApplicationsIntegrationsHTTPByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "UpdateHTTPIntegration",
+		ID:                 "put_api_applications_integrations_http_by_id",
 		Method:             "PUT",
 		PathPattern:        "/api/applications/{id}/integrations/http",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &UpdateHTTPIntegrationReader{formats: a.formats},
+		Reader:             &PutAPIApplicationsIntegrationsHTTPByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -411,33 +571,33 @@ func (a *Client) UpdateHTTPIntegration(params *UpdateHTTPIntegrationParams, opts
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*UpdateHTTPIntegrationOK)
+	success, ok := result.(*PutAPIApplicationsIntegrationsHTTPByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for UpdateHTTPIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for put_api_applications_integrations_http_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-UpdateInfluxDBIntegration updates influx d b integration updates the influx d b application integration
+PutAPIApplicationsIntegrationsInfluxdbByApplicationID updates influx d b integration updates the influx d b application integration
 */
-func (a *Client) UpdateInfluxDBIntegration(params *UpdateInfluxDBIntegrationParams, opts ...ClientOption) (*UpdateInfluxDBIntegrationOK, error) {
+func (a *Client) PutAPIApplicationsIntegrationsInfluxdbByApplicationID(params *PutAPIApplicationsIntegrationsInfluxdbByApplicationIDParams, opts ...ClientOption) (*PutAPIApplicationsIntegrationsInfluxdbByApplicationIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewUpdateInfluxDBIntegrationParams()
+		params = NewPutAPIApplicationsIntegrationsInfluxdbByApplicationIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "UpdateInfluxDBIntegration",
+		ID:                 "put_api_applications_integrations_influxdb_by_application_id",
 		Method:             "PUT",
 		PathPattern:        "/api/applications/{application_id}/integrations/influxdb",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &UpdateInfluxDBIntegrationReader{formats: a.formats},
+		Reader:             &PutAPIApplicationsIntegrationsInfluxdbByApplicationIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -449,13 +609,13 @@ func (a *Client) UpdateInfluxDBIntegration(params *UpdateInfluxDBIntegrationPara
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*UpdateInfluxDBIntegrationOK)
+	success, ok := result.(*PutAPIApplicationsIntegrationsInfluxdbByApplicationIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for UpdateInfluxDBIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for put_api_applications_integrations_influxdb_by_application_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

@@ -56,30 +56,34 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	Flush(params *FlushParams, opts ...ClientOption) (*FlushOK, error)
+	DeleteAPIDevicesQueueByDevEUI(params *DeleteAPIDevicesQueueByDevEUIParams, opts ...ClientOption) (*DeleteAPIDevicesQueueByDevEUIOK, error)
 
-	GetTxPayloadLen(params *GetTxPayloadLenParams, opts ...ClientOption) (*GetTxPayloadLenOK, error)
+	GetAPIDevicesQueueByDevEUI(params *GetAPIDevicesQueueByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesQueueByDevEUIOK, error)
+
+	GetAPIDevicesQueuePayloadlenByDevEUI(params *GetAPIDevicesQueuePayloadlenByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesQueuePayloadlenByDevEUIOK, error)
+
+	PostAPIDevicesQueueByDevEUI(params *PostAPIDevicesQueueByDevEUIParams, opts ...ClientOption) (*PostAPIDevicesQueueByDevEUIOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-Flush flushes flushes the downlink device queue
+DeleteAPIDevicesQueueByDevEUI flushes flushes the downlink device queue
 */
-func (a *Client) Flush(params *FlushParams, opts ...ClientOption) (*FlushOK, error) {
+func (a *Client) DeleteAPIDevicesQueueByDevEUI(params *DeleteAPIDevicesQueueByDevEUIParams, opts ...ClientOption) (*DeleteAPIDevicesQueueByDevEUIOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewFlushParams()
+		params = NewDeleteAPIDevicesQueueByDevEUIParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "Flush",
+		ID:                 "delete_api_devices_queue_by_devEUI",
 		Method:             "DELETE",
 		PathPattern:        "/api/devices/{devEUI}/queue",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &FlushReader{formats: a.formats},
+		Reader:             &DeleteAPIDevicesQueueByDevEUIReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -91,33 +95,33 @@ func (a *Client) Flush(params *FlushParams, opts ...ClientOption) (*FlushOK, err
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*FlushOK)
+	success, ok := result.(*DeleteAPIDevicesQueueByDevEUIOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for Flush: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_devices_queue_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetTxPayloadLen get tx payload len API
+GetAPIDevicesQueueByDevEUI lists lists the items in the device queue
 */
-func (a *Client) GetTxPayloadLen(params *GetTxPayloadLenParams, opts ...ClientOption) (*GetTxPayloadLenOK, error) {
+func (a *Client) GetAPIDevicesQueueByDevEUI(params *GetAPIDevicesQueueByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesQueueByDevEUIOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetTxPayloadLenParams()
+		params = NewGetAPIDevicesQueueByDevEUIParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetTxPayloadLen",
+		ID:                 "get_api_devices_queue_by_devEUI",
 		Method:             "GET",
-		PathPattern:        "/api/devices/{devEUI}/queue/payloadlen",
+		PathPattern:        "/api/devices/{devEUI}/queue",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetTxPayloadLenReader{formats: a.formats},
+		Reader:             &GetAPIDevicesQueueByDevEUIReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -129,13 +133,89 @@ func (a *Client) GetTxPayloadLen(params *GetTxPayloadLenParams, opts ...ClientOp
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetTxPayloadLenOK)
+	success, ok := result.(*GetAPIDevicesQueueByDevEUIOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetTxPayloadLen: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_devices_queue_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIDevicesQueuePayloadlenByDevEUI get api devices queue payloadlen by dev e UI API
+*/
+func (a *Client) GetAPIDevicesQueuePayloadlenByDevEUI(params *GetAPIDevicesQueuePayloadlenByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesQueuePayloadlenByDevEUIOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIDevicesQueuePayloadlenByDevEUIParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_devices_queue_payloadlen_by_devEUI",
+		Method:             "GET",
+		PathPattern:        "/api/devices/{devEUI}/queue/payloadlen",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIDevicesQueuePayloadlenByDevEUIReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIDevicesQueuePayloadlenByDevEUIOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_devices_queue_payloadlen_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIDevicesQueueByDevEUI enqueues adds the given item to the device queue
+*/
+func (a *Client) PostAPIDevicesQueueByDevEUI(params *PostAPIDevicesQueueByDevEUIParams, opts ...ClientOption) (*PostAPIDevicesQueueByDevEUIOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIDevicesQueueByDevEUIParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_devices_queue_by_devEUI",
+		Method:             "POST",
+		PathPattern:        "/api/devices/{devEUI}/queue",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIDevicesQueueByDevEUIReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIDevicesQueueByDevEUIOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_devices_queue_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

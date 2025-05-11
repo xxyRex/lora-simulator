@@ -56,28 +56,28 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	UpdatePassword(params *UpdatePasswordParams, opts ...ClientOption) (*UpdatePasswordOK, error)
+	PutAPIUsersPasswordByUsername(params *PutAPIUsersPasswordByUsernameParams, opts ...ClientOption) (*PutAPIUsersPasswordByUsernameOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-UpdatePassword updates password updates a password
+PutAPIUsersPasswordByUsername updates password updates a password
 */
-func (a *Client) UpdatePassword(params *UpdatePasswordParams, opts ...ClientOption) (*UpdatePasswordOK, error) {
+func (a *Client) PutAPIUsersPasswordByUsername(params *PutAPIUsersPasswordByUsernameParams, opts ...ClientOption) (*PutAPIUsersPasswordByUsernameOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewUpdatePasswordParams()
+		params = NewPutAPIUsersPasswordByUsernameParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "UpdatePassword",
+		ID:                 "put_api_users_password_by_username",
 		Method:             "PUT",
 		PathPattern:        "/api/users/{username}/password",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &UpdatePasswordReader{formats: a.formats},
+		Reader:             &PutAPIUsersPasswordByUsernameReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -89,13 +89,13 @@ func (a *Client) UpdatePassword(params *UpdatePasswordParams, opts ...ClientOpti
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*UpdatePasswordOK)
+	success, ok := result.(*PutAPIUsersPasswordByUsernameOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for UpdatePassword: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for put_api_users_password_by_username: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

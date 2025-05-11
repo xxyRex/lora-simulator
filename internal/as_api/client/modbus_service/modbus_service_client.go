@@ -56,32 +56,32 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	Add(params *AddParams, opts ...ClientOption) (*AddOK, error)
-
-	GetAll(params *GetAllParams, opts ...ClientOption) (*GetAllOK, error)
+	PostAPIProtocolModbusObjectAdd(params *PostAPIProtocolModbusObjectAddParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectAddOK, error)
 
 	PostAPIProtocolModbusObjectGet(params *PostAPIProtocolModbusObjectGetParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectGetOK, error)
+
+	PostAPIProtocolModbusObjectGetall(params *PostAPIProtocolModbusObjectGetallParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectGetallOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-Add add API
+PostAPIProtocolModbusObjectAdd post api protocol modbus object add API
 */
-func (a *Client) Add(params *AddParams, opts ...ClientOption) (*AddOK, error) {
+func (a *Client) PostAPIProtocolModbusObjectAdd(params *PostAPIProtocolModbusObjectAddParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectAddOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewAddParams()
+		params = NewPostAPIProtocolModbusObjectAddParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "Add",
+		ID:                 "post_api_protocol_modbus_object_add",
 		Method:             "POST",
 		PathPattern:        "/api/protocol/modbus_object/add",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &AddReader{formats: a.formats},
+		Reader:             &PostAPIProtocolModbusObjectAddReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -93,56 +93,18 @@ func (a *Client) Add(params *AddParams, opts ...ClientOption) (*AddOK, error) {
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*AddOK)
+	success, ok := result.(*PostAPIProtocolModbusObjectAddOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for Add: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for post_api_protocol_modbus_object_add: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetAll get all API
-*/
-func (a *Client) GetAll(params *GetAllParams, opts ...ClientOption) (*GetAllOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetAllParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "GetAll",
-		Method:             "POST",
-		PathPattern:        "/api/protocol/modbus_object/getall",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetAllReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*GetAllOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetAll: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-PostAPIProtocolModbusObjectGet post API protocol modbus object get API
+PostAPIProtocolModbusObjectGet post api protocol modbus object get API
 */
 func (a *Client) PostAPIProtocolModbusObjectGet(params *PostAPIProtocolModbusObjectGetParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectGetOK, error) {
 	// TODO: Validate the params before sending
@@ -150,12 +112,12 @@ func (a *Client) PostAPIProtocolModbusObjectGet(params *PostAPIProtocolModbusObj
 		params = NewPostAPIProtocolModbusObjectGetParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "PostAPIProtocolModbusObjectGet",
+		ID:                 "post_api_protocol_modbus_object_get",
 		Method:             "POST",
 		PathPattern:        "/api/protocol/modbus_object/get",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
 		Reader:             &PostAPIProtocolModbusObjectGetReader{formats: a.formats},
 		Context:            params.Context,
@@ -175,7 +137,45 @@ func (a *Client) PostAPIProtocolModbusObjectGet(params *PostAPIProtocolModbusObj
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PostAPIProtocolModbusObjectGet: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for post_api_protocol_modbus_object_get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIProtocolModbusObjectGetall post api protocol modbus object getall API
+*/
+func (a *Client) PostAPIProtocolModbusObjectGetall(params *PostAPIProtocolModbusObjectGetallParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectGetallOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIProtocolModbusObjectGetallParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_protocol_modbus_object_getall",
+		Method:             "POST",
+		PathPattern:        "/api/protocol/modbus_object/getall",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIProtocolModbusObjectGetallReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIProtocolModbusObjectGetallOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_protocol_modbus_object_getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

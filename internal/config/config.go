@@ -16,22 +16,24 @@ type Config struct {
 
 	ChirpStack struct {
 		API struct {
-			APIKey               string `mapstructure:"api_key"`
-			Server               string `mapstructure:"server"`
-			LoginUrl             string `mapstructure:"login_url"`
-			Username             string `mapstructure:"username"`
-			Password             string `mapstructure:"password"`
-			IsLNS                bool   `mapstructure:"is_lns"`
-			UseNewGateway        bool   `mapstructure:"use_new_gateway"`
-			UseNewProfile        bool   `mapstructure:"use_new_profile"`
-			UseNewApp            bool   `mapstructure:"use_new_app"`
-			UseOldAuth           bool   `mapstructure:"use_old_auth"`
-			CleanBeforeTest      bool   `mapstructure:"clean_before_test"`
-			TestFeature          string `mapstructure:"test_feature"`
-			Insecure             bool   `mapstructure:"insecure"`
-			SshPassword          string `mapstructure:"ssh_password"`
-			RestartAs            bool   `mapstructure:"restart_as"`
-			FuotaTaskDeviceCount int    `mapstructure:"fuota_task_device_count"`
+			APIKey               string        `mapstructure:"api_key"`
+			Server               string        `mapstructure:"server"`
+			LoginUrl             string        `mapstructure:"login_url"`
+			Username             string        `mapstructure:"username"`
+			Password             string        `mapstructure:"password"`
+			IsLNS                bool          `mapstructure:"is_lns"`
+			UseNewGateway        bool          `mapstructure:"use_new_gateway"`
+			UseNewProfile        bool          `mapstructure:"use_new_profile"`
+			UseNewApp            bool          `mapstructure:"use_new_app"`
+			UseOldAuth           bool          `mapstructure:"use_old_auth"`
+			CleanBeforeTest      bool          `mapstructure:"clean_before_test"`
+			TestFeature          string        `mapstructure:"test_feature"`
+			Insecure             bool          `mapstructure:"insecure"`
+			SshPassword          string        `mapstructure:"ssh_password"`
+			RestartAs            bool          `mapstructure:"restart_as"`
+			FuotaTaskDeviceCount int           `mapstructure:"fuota_task_device_count"`
+			UseNewDevice         bool          `mapstructure:"use_new_device"`
+			WaitDeviceStableTime time.Duration `mapstructure:"wait_device_stable_time"`
 		} `mapstructure:"api"`
 
 		Integration struct {

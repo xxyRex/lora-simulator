@@ -31,7 +31,7 @@ func (o *PostAPIProtocolModbusObjectGetReader) ReadResponse(response runtime.Cli
 		}
 		return result, nil
 	default:
-		return nil, runtime.NewAPIError("[POST /api/protocol/modbus_object/get] PostAPIProtocolModbusObjectGet", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /api/protocol/modbus_object/get] post_api_protocol_modbus_object_get", response, response.Code())
 	}
 }
 
@@ -43,7 +43,7 @@ func NewPostAPIProtocolModbusObjectGetOK() *PostAPIProtocolModbusObjectGetOK {
 /*
 PostAPIProtocolModbusObjectGetOK describes a response with status code 200, with default header values.
 
-PostAPIProtocolModbusObjectGetOK post Api protocol modbus object get o k
+(empty)
 */
 type PostAPIProtocolModbusObjectGetOK struct {
 	Payload *models.APIGetModbusObjectResponse

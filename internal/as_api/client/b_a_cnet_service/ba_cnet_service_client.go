@@ -56,112 +56,36 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	AddDevicePCOs(params *AddDevicePCOsParams, opts ...ClientOption) (*AddDevicePCOsOK, error)
+	GetAPIBacnetServer(params *GetAPIBacnetServerParams, opts ...ClientOption) (*GetAPIBacnetServerOK, error)
 
-	GetAllDevicesPCOs(params *GetAllDevicesPCOsParams, opts ...ClientOption) (*GetAllDevicesPCOsOK, error)
+	PostAPIBacnetAdd(params *PostAPIBacnetAddParams, opts ...ClientOption) (*PostAPIBacnetAddOK, error)
 
-	GetBACnetServer(params *GetBACnetServerParams, opts ...ClientOption) (*GetBACnetServerOK, error)
+	PostAPIBacnetGet(params *PostAPIBacnetGetParams, opts ...ClientOption) (*PostAPIBacnetGetOK, error)
 
-	GetDevicesPCOs(params *GetDevicesPCOsParams, opts ...ClientOption) (*GetDevicesPCOsOK, error)
+	PostAPIBacnetGetAll(params *PostAPIBacnetGetAllParams, opts ...ClientOption) (*PostAPIBacnetGetAllOK, error)
 
-	UpdateBACnetServer(params *UpdateBACnetServerParams, opts ...ClientOption) (*UpdateBACnetServerOK, error)
+	PutAPIBacnetServer(params *PutAPIBacnetServerParams, opts ...ClientOption) (*PutAPIBacnetServerOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-AddDevicePCOs 添加设备的s p c os
+GetAPIBacnetServer 获取s b a cnet 服务器配置
 */
-func (a *Client) AddDevicePCOs(params *AddDevicePCOsParams, opts ...ClientOption) (*AddDevicePCOsOK, error) {
+func (a *Client) GetAPIBacnetServer(params *GetAPIBacnetServerParams, opts ...ClientOption) (*GetAPIBacnetServerOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewAddDevicePCOsParams()
+		params = NewGetAPIBacnetServerParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "AddDevicePCOs",
-		Method:             "POST",
-		PathPattern:        "/api/bacnet/add",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &AddDevicePCOsReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*AddDevicePCOsOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for AddDevicePCOs: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-GetAllDevicesPCOs 获取所有设备的s p c os payload codec objects
-*/
-func (a *Client) GetAllDevicesPCOs(params *GetAllDevicesPCOsParams, opts ...ClientOption) (*GetAllDevicesPCOsOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetAllDevicesPCOsParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "GetAllDevicesPCOs",
-		Method:             "POST",
-		PathPattern:        "/api/bacnet/getAll",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetAllDevicesPCOsReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*GetAllDevicesPCOsOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetAllDevicesPCOs: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-GetBACnetServer 获取s b a cnet 服务器配置
-*/
-func (a *Client) GetBACnetServer(params *GetBACnetServerParams, opts ...ClientOption) (*GetBACnetServerOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetBACnetServerParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "GetBACnetServer",
+		ID:                 "get_api_bacnet_server",
 		Method:             "GET",
 		PathPattern:        "/api/bacnet/server",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetBACnetServerReader{formats: a.formats},
+		Reader:             &GetAPIBacnetServerReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -173,33 +97,71 @@ func (a *Client) GetBACnetServer(params *GetBACnetServerParams, opts ...ClientOp
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetBACnetServerOK)
+	success, ok := result.(*GetAPIBacnetServerOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetBACnetServer: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_bacnet_server: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetDevicesPCOs 获取指定设备的s p c os
+PostAPIBacnetAdd 添加设备的s p c os
 */
-func (a *Client) GetDevicesPCOs(params *GetDevicesPCOsParams, opts ...ClientOption) (*GetDevicesPCOsOK, error) {
+func (a *Client) PostAPIBacnetAdd(params *PostAPIBacnetAddParams, opts ...ClientOption) (*PostAPIBacnetAddOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetDevicesPCOsParams()
+		params = NewPostAPIBacnetAddParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetDevicesPCOs",
+		ID:                 "post_api_bacnet_add",
+		Method:             "POST",
+		PathPattern:        "/api/bacnet/add",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIBacnetAddReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIBacnetAddOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_bacnet_add: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIBacnetGet 获取指定设备的s p c os
+*/
+func (a *Client) PostAPIBacnetGet(params *PostAPIBacnetGetParams, opts ...ClientOption) (*PostAPIBacnetGetOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIBacnetGetParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_bacnet_get",
 		Method:             "POST",
 		PathPattern:        "/api/bacnet/get",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetDevicesPCOsReader{formats: a.formats},
+		Reader:             &PostAPIBacnetGetReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -211,33 +173,33 @@ func (a *Client) GetDevicesPCOs(params *GetDevicesPCOsParams, opts ...ClientOpti
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetDevicesPCOsOK)
+	success, ok := result.(*PostAPIBacnetGetOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetDevicesPCOs: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for post_api_bacnet_get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-UpdateBACnetServer 更新s b a cnet 服务器配置
+PostAPIBacnetGetAll 获取所有设备的s p c os payload codec objects
 */
-func (a *Client) UpdateBACnetServer(params *UpdateBACnetServerParams, opts ...ClientOption) (*UpdateBACnetServerOK, error) {
+func (a *Client) PostAPIBacnetGetAll(params *PostAPIBacnetGetAllParams, opts ...ClientOption) (*PostAPIBacnetGetAllOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewUpdateBACnetServerParams()
+		params = NewPostAPIBacnetGetAllParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "UpdateBACnetServer",
-		Method:             "PUT",
-		PathPattern:        "/api/bacnet/server",
+		ID:                 "post_api_bacnet_getAll",
+		Method:             "POST",
+		PathPattern:        "/api/bacnet/getAll",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &UpdateBACnetServerReader{formats: a.formats},
+		Reader:             &PostAPIBacnetGetAllReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -249,13 +211,51 @@ func (a *Client) UpdateBACnetServer(params *UpdateBACnetServerParams, opts ...Cl
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*UpdateBACnetServerOK)
+	success, ok := result.(*PostAPIBacnetGetAllOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for UpdateBACnetServer: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for post_api_bacnet_getAll: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIBacnetServer 更新s b a cnet 服务器配置
+*/
+func (a *Client) PutAPIBacnetServer(params *PutAPIBacnetServerParams, opts ...ClientOption) (*PutAPIBacnetServerOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIBacnetServerParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_bacnet_server",
+		Method:             "PUT",
+		PathPattern:        "/api/bacnet/server",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PutAPIBacnetServerReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PutAPIBacnetServerOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for put_api_bacnet_server: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

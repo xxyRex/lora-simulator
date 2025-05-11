@@ -56,74 +56,36 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	Create(params *CreateParams, opts ...ClientOption) (*CreateOK, error)
+	DeleteAPIUrprofilesByProfileID(params *DeleteAPIUrprofilesByProfileIDParams, opts ...ClientOption) (*DeleteAPIUrprofilesByProfileIDOK, error)
 
-	Delete(params *DeleteParams, opts ...ClientOption) (*DeleteOK, error)
+	GetAPIUrprofiles(params *GetAPIUrprofilesParams, opts ...ClientOption) (*GetAPIUrprofilesOK, error)
 
-	GetProfilesByEUI(params *GetProfilesByEUIParams, opts ...ClientOption) (*GetProfilesByEUIOK, error)
+	PostAPIUrprofiles(params *PostAPIUrprofilesParams, opts ...ClientOption) (*PostAPIUrprofilesOK, error)
 
-	List(params *ListParams, opts ...ClientOption) (*ListOK, error)
+	PostAPIUrprofilesLns(params *PostAPIUrprofilesLnsParams, opts ...ClientOption) (*PostAPIUrprofilesLnsOK, error)
 
-	PutAPIUrprofilesProfileProfileID(params *PutAPIUrprofilesProfileProfileIDParams, opts ...ClientOption) (*PutAPIUrprofilesProfileProfileIDOK, error)
+	PutAPIUrprofilesByProfileProfileID(params *PutAPIUrprofilesByProfileProfileIDParams, opts ...ClientOption) (*PutAPIUrprofilesByProfileProfileIDOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-Create creates creates the given profile
+DeleteAPIUrprofilesByProfileID deletes deletes the profile matching the given id
 */
-func (a *Client) Create(params *CreateParams, opts ...ClientOption) (*CreateOK, error) {
+func (a *Client) DeleteAPIUrprofilesByProfileID(params *DeleteAPIUrprofilesByProfileIDParams, opts ...ClientOption) (*DeleteAPIUrprofilesByProfileIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewCreateParams()
+		params = NewDeleteAPIUrprofilesByProfileIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "Create",
-		Method:             "POST",
-		PathPattern:        "/api/urprofiles",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &CreateReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*CreateOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for Create: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-Delete deletes deletes the profile matching the given id
-*/
-func (a *Client) Delete(params *DeleteParams, opts ...ClientOption) (*DeleteOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewDeleteParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "Delete",
+		ID:                 "delete_api_urprofiles_by_profileID",
 		Method:             "DELETE",
 		PathPattern:        "/api/urprofiles/{profileID}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &DeleteReader{formats: a.formats},
+		Reader:             &DeleteAPIUrprofilesByProfileIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -135,71 +97,33 @@ func (a *Client) Delete(params *DeleteParams, opts ...ClientOption) (*DeleteOK, 
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*DeleteOK)
+	success, ok := result.(*DeleteAPIUrprofilesByProfileIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for Delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_urprofiles_by_profileID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetProfilesByEUI get profiles by e UI API
+GetAPIUrprofiles lists lists the available profiles
 */
-func (a *Client) GetProfilesByEUI(params *GetProfilesByEUIParams, opts ...ClientOption) (*GetProfilesByEUIOK, error) {
+func (a *Client) GetAPIUrprofiles(params *GetAPIUrprofilesParams, opts ...ClientOption) (*GetAPIUrprofilesOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetProfilesByEUIParams()
+		params = NewGetAPIUrprofilesParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetProfilesByEUI",
-		Method:             "POST",
-		PathPattern:        "/api/urprofiles/lns",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetProfilesByEUIReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*GetProfilesByEUIOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetProfilesByEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-List lists lists the available profiles
-*/
-func (a *Client) List(params *ListParams, opts ...ClientOption) (*ListOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewListParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "List",
+		ID:                 "get_api_urprofiles",
 		Method:             "GET",
 		PathPattern:        "/api/urprofiles",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &ListReader{formats: a.formats},
+		Reader:             &GetAPIUrprofilesReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -211,33 +135,33 @@ func (a *Client) List(params *ListParams, opts ...ClientOption) (*ListOK, error)
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*ListOK)
+	success, ok := result.(*GetAPIUrprofilesOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for List: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_urprofiles: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-PutAPIUrprofilesProfileProfileID updates updates the given profile
+PostAPIUrprofiles creates creates the given profile
 */
-func (a *Client) PutAPIUrprofilesProfileProfileID(params *PutAPIUrprofilesProfileProfileIDParams, opts ...ClientOption) (*PutAPIUrprofilesProfileProfileIDOK, error) {
+func (a *Client) PostAPIUrprofiles(params *PostAPIUrprofilesParams, opts ...ClientOption) (*PostAPIUrprofilesOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewPutAPIUrprofilesProfileProfileIDParams()
+		params = NewPostAPIUrprofilesParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "PutAPIUrprofilesProfileProfileID",
-		Method:             "PUT",
-		PathPattern:        "/api/urprofiles/{profile.profileID}",
+		ID:                 "post_api_urprofiles",
+		Method:             "POST",
+		PathPattern:        "/api/urprofiles",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &PutAPIUrprofilesProfileProfileIDReader{formats: a.formats},
+		Reader:             &PostAPIUrprofilesReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -249,13 +173,89 @@ func (a *Client) PutAPIUrprofilesProfileProfileID(params *PutAPIUrprofilesProfil
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*PutAPIUrprofilesProfileProfileIDOK)
+	success, ok := result.(*PostAPIUrprofilesOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PutAPIUrprofilesProfileProfileID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for post_api_urprofiles: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIUrprofilesLns post api urprofiles lns API
+*/
+func (a *Client) PostAPIUrprofilesLns(params *PostAPIUrprofilesLnsParams, opts ...ClientOption) (*PostAPIUrprofilesLnsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIUrprofilesLnsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_urprofiles_lns",
+		Method:             "POST",
+		PathPattern:        "/api/urprofiles/lns",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIUrprofilesLnsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIUrprofilesLnsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_urprofiles_lns: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIUrprofilesByProfileProfileID updates updates the given profile
+*/
+func (a *Client) PutAPIUrprofilesByProfileProfileID(params *PutAPIUrprofilesByProfileProfileIDParams, opts ...ClientOption) (*PutAPIUrprofilesByProfileProfileIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIUrprofilesByProfileProfileIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_urprofiles_by_profile.profileID",
+		Method:             "PUT",
+		PathPattern:        "/api/urprofiles/{profile.profileID}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PutAPIUrprofilesByProfileProfileIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PutAPIUrprofilesByProfileProfileIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for put_api_urprofiles_by_profile.profileID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

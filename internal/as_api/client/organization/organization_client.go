@@ -56,38 +56,46 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	AddUser(params *AddUserParams, opts ...ClientOption) (*AddUserOK, error)
+	DeleteAPIOrganizationsByID(params *DeleteAPIOrganizationsByIDParams, opts ...ClientOption) (*DeleteAPIOrganizationsByIDOK, error)
 
-	DeleteUser(params *DeleteUserParams, opts ...ClientOption) (*DeleteUserOK, error)
+	DeleteAPIOrganizationsUsersByIDUserID(params *DeleteAPIOrganizationsUsersByIDUserIDParams, opts ...ClientOption) (*DeleteAPIOrganizationsUsersByIDUserIDOK, error)
 
-	GetUser(params *GetUserParams, opts ...ClientOption) (*GetUserOK, error)
+	GetAPIOrganizations(params *GetAPIOrganizationsParams, opts ...ClientOption) (*GetAPIOrganizationsOK, error)
 
-	ListUsers(params *ListUsersParams, opts ...ClientOption) (*ListUsersOK, error)
+	GetAPIOrganizationsByID(params *GetAPIOrganizationsByIDParams, opts ...ClientOption) (*GetAPIOrganizationsByIDOK, error)
 
-	PutAPIOrganizationsID(params *PutAPIOrganizationsIDParams, opts ...ClientOption) (*PutAPIOrganizationsIDOK, error)
+	GetAPIOrganizationsUsersByID(params *GetAPIOrganizationsUsersByIDParams, opts ...ClientOption) (*GetAPIOrganizationsUsersByIDOK, error)
 
-	UpdateUser(params *UpdateUserParams, opts ...ClientOption) (*UpdateUserOK, error)
+	GetAPIOrganizationsUsersByIDUserID(params *GetAPIOrganizationsUsersByIDUserIDParams, opts ...ClientOption) (*GetAPIOrganizationsUsersByIDUserIDOK, error)
+
+	PostAPIOrganizations(params *PostAPIOrganizationsParams, opts ...ClientOption) (*PostAPIOrganizationsOK, error)
+
+	PostAPIOrganizationsUsersByID(params *PostAPIOrganizationsUsersByIDParams, opts ...ClientOption) (*PostAPIOrganizationsUsersByIDOK, error)
+
+	PutAPIOrganizationsByID(params *PutAPIOrganizationsByIDParams, opts ...ClientOption) (*PutAPIOrganizationsByIDOK, error)
+
+	PutAPIOrganizationsUsersByIDUserID(params *PutAPIOrganizationsUsersByIDUserIDParams, opts ...ClientOption) (*PutAPIOrganizationsUsersByIDUserIDOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-AddUser adds a new user to an organization
+DeleteAPIOrganizationsByID deletes an organization
 */
-func (a *Client) AddUser(params *AddUserParams, opts ...ClientOption) (*AddUserOK, error) {
+func (a *Client) DeleteAPIOrganizationsByID(params *DeleteAPIOrganizationsByIDParams, opts ...ClientOption) (*DeleteAPIOrganizationsByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewAddUserParams()
+		params = NewDeleteAPIOrganizationsByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "AddUser",
-		Method:             "POST",
-		PathPattern:        "/api/organizations/{id}/users",
+		ID:                 "delete_api_organizations_by_id",
+		Method:             "DELETE",
+		PathPattern:        "/api/organizations/{id}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &AddUserReader{formats: a.formats},
+		Reader:             &DeleteAPIOrganizationsByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -99,33 +107,33 @@ func (a *Client) AddUser(params *AddUserParams, opts ...ClientOption) (*AddUserO
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*AddUserOK)
+	success, ok := result.(*DeleteAPIOrganizationsByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for AddUser: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_organizations_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-DeleteUser deletes a user from an organization
+DeleteAPIOrganizationsUsersByIDUserID deletes a user from an organization
 */
-func (a *Client) DeleteUser(params *DeleteUserParams, opts ...ClientOption) (*DeleteUserOK, error) {
+func (a *Client) DeleteAPIOrganizationsUsersByIDUserID(params *DeleteAPIOrganizationsUsersByIDUserIDParams, opts ...ClientOption) (*DeleteAPIOrganizationsUsersByIDUserIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewDeleteUserParams()
+		params = NewDeleteAPIOrganizationsUsersByIDUserIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "DeleteUser",
+		ID:                 "delete_api_organizations_users_by_id_userID",
 		Method:             "DELETE",
 		PathPattern:        "/api/organizations/{id}/users/{userID}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &DeleteUserReader{formats: a.formats},
+		Reader:             &DeleteAPIOrganizationsUsersByIDUserIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -137,33 +145,33 @@ func (a *Client) DeleteUser(params *DeleteUserParams, opts ...ClientOption) (*De
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*DeleteUserOK)
+	success, ok := result.(*DeleteAPIOrganizationsUsersByIDUserIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for DeleteUser: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_organizations_users_by_id_userID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetUser gets data for a particular organization user
+GetAPIOrganizations gets organization list
 */
-func (a *Client) GetUser(params *GetUserParams, opts ...ClientOption) (*GetUserOK, error) {
+func (a *Client) GetAPIOrganizations(params *GetAPIOrganizationsParams, opts ...ClientOption) (*GetAPIOrganizationsOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetUserParams()
+		params = NewGetAPIOrganizationsParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetUser",
+		ID:                 "get_api_organizations",
 		Method:             "GET",
-		PathPattern:        "/api/organizations/{id}/users/{userID}",
+		PathPattern:        "/api/organizations",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetUserReader{formats: a.formats},
+		Reader:             &GetAPIOrganizationsReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -175,33 +183,71 @@ func (a *Client) GetUser(params *GetUserParams, opts ...ClientOption) (*GetUserO
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetUserOK)
+	success, ok := result.(*GetAPIOrganizationsOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetUser: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_organizations: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-ListUsers gets organization s user list
+GetAPIOrganizationsByID gets data for a particular organization
 */
-func (a *Client) ListUsers(params *ListUsersParams, opts ...ClientOption) (*ListUsersOK, error) {
+func (a *Client) GetAPIOrganizationsByID(params *GetAPIOrganizationsByIDParams, opts ...ClientOption) (*GetAPIOrganizationsByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewListUsersParams()
+		params = NewGetAPIOrganizationsByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "ListUsers",
+		ID:                 "get_api_organizations_by_id",
+		Method:             "GET",
+		PathPattern:        "/api/organizations/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIOrganizationsByIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIOrganizationsByIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_organizations_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIOrganizationsUsersByID gets organization s user list
+*/
+func (a *Client) GetAPIOrganizationsUsersByID(params *GetAPIOrganizationsUsersByIDParams, opts ...ClientOption) (*GetAPIOrganizationsUsersByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIOrganizationsUsersByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_organizations_users_by_id",
 		Method:             "GET",
 		PathPattern:        "/api/organizations/{id}/users",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &ListUsersReader{formats: a.formats},
+		Reader:             &GetAPIOrganizationsUsersByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -213,33 +259,147 @@ func (a *Client) ListUsers(params *ListUsersParams, opts ...ClientOption) (*List
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*ListUsersOK)
+	success, ok := result.(*GetAPIOrganizationsUsersByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for ListUsers: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_organizations_users_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-PutAPIOrganizationsID updates an existing organization
+GetAPIOrganizationsUsersByIDUserID gets data for a particular organization user
 */
-func (a *Client) PutAPIOrganizationsID(params *PutAPIOrganizationsIDParams, opts ...ClientOption) (*PutAPIOrganizationsIDOK, error) {
+func (a *Client) GetAPIOrganizationsUsersByIDUserID(params *GetAPIOrganizationsUsersByIDUserIDParams, opts ...ClientOption) (*GetAPIOrganizationsUsersByIDUserIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewPutAPIOrganizationsIDParams()
+		params = NewGetAPIOrganizationsUsersByIDUserIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "PutAPIOrganizationsID",
+		ID:                 "get_api_organizations_users_by_id_userID",
+		Method:             "GET",
+		PathPattern:        "/api/organizations/{id}/users/{userID}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIOrganizationsUsersByIDUserIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIOrganizationsUsersByIDUserIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_organizations_users_by_id_userID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIOrganizations creates a new organization
+*/
+func (a *Client) PostAPIOrganizations(params *PostAPIOrganizationsParams, opts ...ClientOption) (*PostAPIOrganizationsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIOrganizationsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_organizations",
+		Method:             "POST",
+		PathPattern:        "/api/organizations",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIOrganizationsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIOrganizationsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_organizations: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIOrganizationsUsersByID adds a new user to an organization
+*/
+func (a *Client) PostAPIOrganizationsUsersByID(params *PostAPIOrganizationsUsersByIDParams, opts ...ClientOption) (*PostAPIOrganizationsUsersByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIOrganizationsUsersByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_organizations_users_by_id",
+		Method:             "POST",
+		PathPattern:        "/api/organizations/{id}/users",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIOrganizationsUsersByIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIOrganizationsUsersByIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_organizations_users_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIOrganizationsByID updates an existing organization
+*/
+func (a *Client) PutAPIOrganizationsByID(params *PutAPIOrganizationsByIDParams, opts ...ClientOption) (*PutAPIOrganizationsByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIOrganizationsByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_organizations_by_id",
 		Method:             "PUT",
 		PathPattern:        "/api/organizations/{id}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &PutAPIOrganizationsIDReader{formats: a.formats},
+		Reader:             &PutAPIOrganizationsByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -251,33 +411,33 @@ func (a *Client) PutAPIOrganizationsID(params *PutAPIOrganizationsIDParams, opts
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*PutAPIOrganizationsIDOK)
+	success, ok := result.(*PutAPIOrganizationsByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PutAPIOrganizationsID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for put_api_organizations_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-UpdateUser updates a user in an organization
+PutAPIOrganizationsUsersByIDUserID updates a user in an organization
 */
-func (a *Client) UpdateUser(params *UpdateUserParams, opts ...ClientOption) (*UpdateUserOK, error) {
+func (a *Client) PutAPIOrganizationsUsersByIDUserID(params *PutAPIOrganizationsUsersByIDUserIDParams, opts ...ClientOption) (*PutAPIOrganizationsUsersByIDUserIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewUpdateUserParams()
+		params = NewPutAPIOrganizationsUsersByIDUserIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "UpdateUser",
+		ID:                 "put_api_organizations_users_by_id_userID",
 		Method:             "PUT",
 		PathPattern:        "/api/organizations/{id}/users/{userID}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &UpdateUserReader{formats: a.formats},
+		Reader:             &PutAPIOrganizationsUsersByIDUserIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -289,13 +449,13 @@ func (a *Client) UpdateUser(params *UpdateUserParams, opts ...ClientOption) (*Up
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*UpdateUserOK)
+	success, ok := result.(*PutAPIOrganizationsUsersByIDUserIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for UpdateUser: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for put_api_organizations_users_by_id_userID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

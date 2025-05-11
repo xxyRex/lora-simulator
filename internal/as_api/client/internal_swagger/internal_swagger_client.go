@@ -56,28 +56,28 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	Login(params *LoginParams, opts ...ClientOption) (*LoginOK, error)
+	PostAPIInternalLogin(params *PostAPIInternalLoginParams, opts ...ClientOption) (*PostAPIInternalLoginOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-Login updates password updates a password
+PostAPIInternalLogin updates password updates a password
 */
-func (a *Client) Login(params *LoginParams, opts ...ClientOption) (*LoginOK, error) {
+func (a *Client) PostAPIInternalLogin(params *PostAPIInternalLoginParams, opts ...ClientOption) (*PostAPIInternalLoginOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewLoginParams()
+		params = NewPostAPIInternalLoginParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "Login",
+		ID:                 "post_api_internal_login",
 		Method:             "POST",
 		PathPattern:        "/api/internal/login",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &LoginReader{formats: a.formats},
+		Reader:             &PostAPIInternalLoginReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -89,13 +89,13 @@ func (a *Client) Login(params *LoginParams, opts ...ClientOption) (*LoginOK, err
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*LoginOK)
+	success, ok := result.(*PostAPIInternalLoginOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for Login: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for post_api_internal_login: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

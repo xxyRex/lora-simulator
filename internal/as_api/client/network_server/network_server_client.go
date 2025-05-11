@@ -56,32 +56,78 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	GetGeneral(params *GetGeneralParams, opts ...ClientOption) (*GetGeneralOK, error)
+	DeleteAPINetworkServersByID(params *DeleteAPINetworkServersByIDParams, opts ...ClientOption) (*DeleteAPINetworkServersByIDOK, error)
 
-	PutAPINetworkServersID(params *PutAPINetworkServersIDParams, opts ...ClientOption) (*PutAPINetworkServersIDOK, error)
+	GetAPINetworkServerSettings(params *GetAPINetworkServerSettingsParams, opts ...ClientOption) (*GetAPINetworkServerSettingsOK, error)
 
-	SetGeneral(params *SetGeneralParams, opts ...ClientOption) (*SetGeneralOK, error)
+	GetAPINetworkServers(params *GetAPINetworkServersParams, opts ...ClientOption) (*GetAPINetworkServersOK, error)
+
+	GetAPINetworkServersByID(params *GetAPINetworkServersByIDParams, opts ...ClientOption) (*GetAPINetworkServersByIDOK, error)
+
+	PostAPINetworkServerSettings(params *PostAPINetworkServerSettingsParams, opts ...ClientOption) (*PostAPINetworkServerSettingsOK, error)
+
+	PostAPINetworkServers(params *PostAPINetworkServersParams, opts ...ClientOption) (*PostAPINetworkServersOK, error)
+
+	PutAPINetworkServersByID(params *PutAPINetworkServersByIDParams, opts ...ClientOption) (*PutAPINetworkServersByIDOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-GetGeneral gets general network servers general general
+DeleteAPINetworkServersByID deletes deletes the network server matching the given id
 */
-func (a *Client) GetGeneral(params *GetGeneralParams, opts ...ClientOption) (*GetGeneralOK, error) {
+func (a *Client) DeleteAPINetworkServersByID(params *DeleteAPINetworkServersByIDParams, opts ...ClientOption) (*DeleteAPINetworkServersByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetGeneralParams()
+		params = NewDeleteAPINetworkServersByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetGeneral",
+		ID:                 "delete_api_network-servers_by_id",
+		Method:             "DELETE",
+		PathPattern:        "/api/network-servers/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &DeleteAPINetworkServersByIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*DeleteAPINetworkServersByIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for delete_api_network-servers_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPINetworkServerSettings gets general network servers general general
+*/
+func (a *Client) GetAPINetworkServerSettings(params *GetAPINetworkServerSettingsParams, opts ...ClientOption) (*GetAPINetworkServerSettingsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPINetworkServerSettingsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_network-server_settings",
 		Method:             "GET",
 		PathPattern:        "/api/network-server/settings",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetGeneralReader{formats: a.formats},
+		Reader:             &GetAPINetworkServerSettingsReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -93,33 +139,71 @@ func (a *Client) GetGeneral(params *GetGeneralParams, opts ...ClientOption) (*Ge
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetGeneralOK)
+	success, ok := result.(*GetAPINetworkServerSettingsOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetGeneral: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_network-server_settings: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-PutAPINetworkServersID updates updates the given network server
+GetAPINetworkServers lists lists the available network servers
 */
-func (a *Client) PutAPINetworkServersID(params *PutAPINetworkServersIDParams, opts ...ClientOption) (*PutAPINetworkServersIDOK, error) {
+func (a *Client) GetAPINetworkServers(params *GetAPINetworkServersParams, opts ...ClientOption) (*GetAPINetworkServersOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewPutAPINetworkServersIDParams()
+		params = NewGetAPINetworkServersParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "PutAPINetworkServersID",
-		Method:             "PUT",
+		ID:                 "get_api_network-servers",
+		Method:             "GET",
+		PathPattern:        "/api/network-servers",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPINetworkServersReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPINetworkServersOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_network-servers: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPINetworkServersByID gets returns the network server matching the given id
+*/
+func (a *Client) GetAPINetworkServersByID(params *GetAPINetworkServersByIDParams, opts ...ClientOption) (*GetAPINetworkServersByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPINetworkServersByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_network-servers_by_id",
+		Method:             "GET",
 		PathPattern:        "/api/network-servers/{id}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &PutAPINetworkServersIDReader{formats: a.formats},
+		Reader:             &GetAPINetworkServersByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -131,33 +215,33 @@ func (a *Client) PutAPINetworkServersID(params *PutAPINetworkServersIDParams, op
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*PutAPINetworkServersIDOK)
+	success, ok := result.(*GetAPINetworkServersByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PutAPINetworkServersID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_network-servers_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-SetGeneral set general API
+PostAPINetworkServerSettings post api network server settings API
 */
-func (a *Client) SetGeneral(params *SetGeneralParams, opts ...ClientOption) (*SetGeneralOK, error) {
+func (a *Client) PostAPINetworkServerSettings(params *PostAPINetworkServerSettingsParams, opts ...ClientOption) (*PostAPINetworkServerSettingsOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewSetGeneralParams()
+		params = NewPostAPINetworkServerSettingsParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "SetGeneral",
+		ID:                 "post_api_network-server_settings",
 		Method:             "POST",
 		PathPattern:        "/api/network-server/settings",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &SetGeneralReader{formats: a.formats},
+		Reader:             &PostAPINetworkServerSettingsReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -169,13 +253,89 @@ func (a *Client) SetGeneral(params *SetGeneralParams, opts ...ClientOption) (*Se
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*SetGeneralOK)
+	success, ok := result.(*PostAPINetworkServerSettingsOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for SetGeneral: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for post_api_network-server_settings: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPINetworkServers creates creates the given network server
+*/
+func (a *Client) PostAPINetworkServers(params *PostAPINetworkServersParams, opts ...ClientOption) (*PostAPINetworkServersOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPINetworkServersParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_network-servers",
+		Method:             "POST",
+		PathPattern:        "/api/network-servers",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPINetworkServersReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPINetworkServersOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_network-servers: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPINetworkServersByID updates updates the given network server
+*/
+func (a *Client) PutAPINetworkServersByID(params *PutAPINetworkServersByIDParams, opts ...ClientOption) (*PutAPINetworkServersByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPINetworkServersByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_network-servers_by_id",
+		Method:             "PUT",
+		PathPattern:        "/api/network-servers/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PutAPINetworkServersByIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PutAPINetworkServersByIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for put_api_network-servers_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

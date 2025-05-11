@@ -56,160 +56,46 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	CreateFuotaTask(params *CreateFuotaTaskParams, opts ...ClientOption) (*CreateFuotaTaskOK, error)
+	GetAPIFuotaDevices(params *GetAPIFuotaDevicesParams, opts ...ClientOption) (*GetAPIFuotaDevicesOK, error)
 
-	DeleteFuotaTask(params *DeleteFuotaTaskParams, opts ...ClientOption) (*DeleteFuotaTaskOK, error)
+	GetAPIFuotaOfficialFirmware(params *GetAPIFuotaOfficialFirmwareParams, opts ...ClientOption) (*GetAPIFuotaOfficialFirmwareOK, error)
 
-	GetDevicesByFirmwareInfo(params *GetDevicesByFirmwareInfoParams, opts ...ClientOption) (*GetDevicesByFirmwareInfoOK, error)
+	GetAPIFuotaOfficialModels(params *GetAPIFuotaOfficialModelsParams, opts ...ClientOption) (*GetAPIFuotaOfficialModelsOK, error)
 
-	GetFuotaDevices(params *GetFuotaDevicesParams, opts ...ClientOption) (*GetFuotaDevicesOK, error)
+	GetAPIFuotaTask(params *GetAPIFuotaTaskParams, opts ...ClientOption) (*GetAPIFuotaTaskOK, error)
 
-	GetMaxPayloadSizeForDataRate(params *GetMaxPayloadSizeForDataRateParams, opts ...ClientOption) (*GetMaxPayloadSizeForDataRateOK, error)
+	GetAPIFuotaTaskPayloadsize(params *GetAPIFuotaTaskPayloadsizeParams, opts ...ClientOption) (*GetAPIFuotaTaskPayloadsizeOK, error)
 
-	GetOfficialFirmwareInfo(params *GetOfficialFirmwareInfoParams, opts ...ClientOption) (*GetOfficialFirmwareInfoOK, error)
+	PostAPIFuotaDevicesFirmware(params *PostAPIFuotaDevicesFirmwareParams, opts ...ClientOption) (*PostAPIFuotaDevicesFirmwareOK, error)
 
-	GetOfficialFirmwareModels(params *GetOfficialFirmwareModelsParams, opts ...ClientOption) (*GetOfficialFirmwareModelsOK, error)
+	PostAPIFuotaTask(params *PostAPIFuotaTaskParams, opts ...ClientOption) (*PostAPIFuotaTaskOK, error)
 
-	ListFuotaTasks(params *ListFuotaTasksParams, opts ...ClientOption) (*ListFuotaTasksOK, error)
+	PostAPIFuotaTaskDelete(params *PostAPIFuotaTaskDeleteParams, opts ...ClientOption) (*PostAPIFuotaTaskDeleteOK, error)
 
-	RetryFuotaTask(params *RetryFuotaTaskParams, opts ...ClientOption) (*RetryFuotaTaskOK, error)
+	PostAPIFuotaTaskRetry(params *PostAPIFuotaTaskRetryParams, opts ...ClientOption) (*PostAPIFuotaTaskRetryOK, error)
 
-	UpdateFuotaTask(params *UpdateFuotaTaskParams, opts ...ClientOption) (*UpdateFuotaTaskOK, error)
+	PutAPIFuotaTask(params *PutAPIFuotaTaskParams, opts ...ClientOption) (*PutAPIFuotaTaskOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-CreateFuotaTask create fuota task API
+GetAPIFuotaDevices get api fuota devices API
 */
-func (a *Client) CreateFuotaTask(params *CreateFuotaTaskParams, opts ...ClientOption) (*CreateFuotaTaskOK, error) {
+func (a *Client) GetAPIFuotaDevices(params *GetAPIFuotaDevicesParams, opts ...ClientOption) (*GetAPIFuotaDevicesOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewCreateFuotaTaskParams()
+		params = NewGetAPIFuotaDevicesParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "CreateFuotaTask",
-		Method:             "POST",
-		PathPattern:        "/api/fuota/task",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &CreateFuotaTaskReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*CreateFuotaTaskOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for CreateFuotaTask: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-DeleteFuotaTask delete fuota task API
-*/
-func (a *Client) DeleteFuotaTask(params *DeleteFuotaTaskParams, opts ...ClientOption) (*DeleteFuotaTaskOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewDeleteFuotaTaskParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "DeleteFuotaTask",
-		Method:             "POST",
-		PathPattern:        "/api/fuota/task/delete",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &DeleteFuotaTaskReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*DeleteFuotaTaskOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for DeleteFuotaTask: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-GetDevicesByFirmwareInfo get devices by firmware info API
-*/
-func (a *Client) GetDevicesByFirmwareInfo(params *GetDevicesByFirmwareInfoParams, opts ...ClientOption) (*GetDevicesByFirmwareInfoOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetDevicesByFirmwareInfoParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "GetDevicesByFirmwareInfo",
-		Method:             "POST",
-		PathPattern:        "/api/fuota/devices/firmware",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetDevicesByFirmwareInfoReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*GetDevicesByFirmwareInfoOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetDevicesByFirmwareInfo: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-GetFuotaDevices get fuota devices API
-*/
-func (a *Client) GetFuotaDevices(params *GetFuotaDevicesParams, opts ...ClientOption) (*GetFuotaDevicesOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetFuotaDevicesParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "GetFuotaDevices",
+		ID:                 "get_api_fuota_devices",
 		Method:             "GET",
 		PathPattern:        "/api/fuota/devices",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetFuotaDevicesReader{formats: a.formats},
+		Reader:             &GetAPIFuotaDevicesReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -221,71 +107,33 @@ func (a *Client) GetFuotaDevices(params *GetFuotaDevicesParams, opts ...ClientOp
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetFuotaDevicesOK)
+	success, ok := result.(*GetAPIFuotaDevicesOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetFuotaDevices: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_fuota_devices: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetMaxPayloadSizeForDataRate get max payload size for data rate API
+GetAPIFuotaOfficialFirmware get api fuota official firmware API
 */
-func (a *Client) GetMaxPayloadSizeForDataRate(params *GetMaxPayloadSizeForDataRateParams, opts ...ClientOption) (*GetMaxPayloadSizeForDataRateOK, error) {
+func (a *Client) GetAPIFuotaOfficialFirmware(params *GetAPIFuotaOfficialFirmwareParams, opts ...ClientOption) (*GetAPIFuotaOfficialFirmwareOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetMaxPayloadSizeForDataRateParams()
+		params = NewGetAPIFuotaOfficialFirmwareParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetMaxPayloadSizeForDataRate",
-		Method:             "GET",
-		PathPattern:        "/api/fuota/task/payloadsize",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetMaxPayloadSizeForDataRateReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*GetMaxPayloadSizeForDataRateOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetMaxPayloadSizeForDataRate: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-GetOfficialFirmwareInfo get official firmware info API
-*/
-func (a *Client) GetOfficialFirmwareInfo(params *GetOfficialFirmwareInfoParams, opts ...ClientOption) (*GetOfficialFirmwareInfoOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetOfficialFirmwareInfoParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "GetOfficialFirmwareInfo",
+		ID:                 "get_api_fuota_official_firmware",
 		Method:             "GET",
 		PathPattern:        "/api/fuota/official/firmware",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetOfficialFirmwareInfoReader{formats: a.formats},
+		Reader:             &GetAPIFuotaOfficialFirmwareReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -297,33 +145,33 @@ func (a *Client) GetOfficialFirmwareInfo(params *GetOfficialFirmwareInfoParams, 
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetOfficialFirmwareInfoOK)
+	success, ok := result.(*GetAPIFuotaOfficialFirmwareOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetOfficialFirmwareInfo: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_fuota_official_firmware: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetOfficialFirmwareModels get official firmware models API
+GetAPIFuotaOfficialModels get api fuota official models API
 */
-func (a *Client) GetOfficialFirmwareModels(params *GetOfficialFirmwareModelsParams, opts ...ClientOption) (*GetOfficialFirmwareModelsOK, error) {
+func (a *Client) GetAPIFuotaOfficialModels(params *GetAPIFuotaOfficialModelsParams, opts ...ClientOption) (*GetAPIFuotaOfficialModelsOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetOfficialFirmwareModelsParams()
+		params = NewGetAPIFuotaOfficialModelsParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetOfficialFirmwareModels",
+		ID:                 "get_api_fuota_official_models",
 		Method:             "GET",
 		PathPattern:        "/api/fuota/official/models",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetOfficialFirmwareModelsReader{formats: a.formats},
+		Reader:             &GetAPIFuotaOfficialModelsReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -335,33 +183,33 @@ func (a *Client) GetOfficialFirmwareModels(params *GetOfficialFirmwareModelsPara
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetOfficialFirmwareModelsOK)
+	success, ok := result.(*GetAPIFuotaOfficialModelsOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetOfficialFirmwareModels: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_fuota_official_models: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-ListFuotaTasks list fuota tasks API
+GetAPIFuotaTask get api fuota task API
 */
-func (a *Client) ListFuotaTasks(params *ListFuotaTasksParams, opts ...ClientOption) (*ListFuotaTasksOK, error) {
+func (a *Client) GetAPIFuotaTask(params *GetAPIFuotaTaskParams, opts ...ClientOption) (*GetAPIFuotaTaskOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewListFuotaTasksParams()
+		params = NewGetAPIFuotaTaskParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "ListFuotaTasks",
+		ID:                 "get_api_fuota_task",
 		Method:             "GET",
 		PathPattern:        "/api/fuota/task",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &ListFuotaTasksReader{formats: a.formats},
+		Reader:             &GetAPIFuotaTaskReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -373,33 +221,185 @@ func (a *Client) ListFuotaTasks(params *ListFuotaTasksParams, opts ...ClientOpti
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*ListFuotaTasksOK)
+	success, ok := result.(*GetAPIFuotaTaskOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for ListFuotaTasks: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_fuota_task: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-RetryFuotaTask retry fuota task API
+GetAPIFuotaTaskPayloadsize get api fuota task payloadsize API
 */
-func (a *Client) RetryFuotaTask(params *RetryFuotaTaskParams, opts ...ClientOption) (*RetryFuotaTaskOK, error) {
+func (a *Client) GetAPIFuotaTaskPayloadsize(params *GetAPIFuotaTaskPayloadsizeParams, opts ...ClientOption) (*GetAPIFuotaTaskPayloadsizeOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewRetryFuotaTaskParams()
+		params = NewGetAPIFuotaTaskPayloadsizeParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "RetryFuotaTask",
+		ID:                 "get_api_fuota_task_payloadsize",
+		Method:             "GET",
+		PathPattern:        "/api/fuota/task/payloadsize",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIFuotaTaskPayloadsizeReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIFuotaTaskPayloadsizeOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_fuota_task_payloadsize: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIFuotaDevicesFirmware post api fuota devices firmware API
+*/
+func (a *Client) PostAPIFuotaDevicesFirmware(params *PostAPIFuotaDevicesFirmwareParams, opts ...ClientOption) (*PostAPIFuotaDevicesFirmwareOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIFuotaDevicesFirmwareParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_fuota_devices_firmware",
+		Method:             "POST",
+		PathPattern:        "/api/fuota/devices/firmware",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIFuotaDevicesFirmwareReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIFuotaDevicesFirmwareOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_fuota_devices_firmware: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIFuotaTask post api fuota task API
+*/
+func (a *Client) PostAPIFuotaTask(params *PostAPIFuotaTaskParams, opts ...ClientOption) (*PostAPIFuotaTaskOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIFuotaTaskParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_fuota_task",
+		Method:             "POST",
+		PathPattern:        "/api/fuota/task",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIFuotaTaskReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIFuotaTaskOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_fuota_task: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIFuotaTaskDelete post api fuota task delete API
+*/
+func (a *Client) PostAPIFuotaTaskDelete(params *PostAPIFuotaTaskDeleteParams, opts ...ClientOption) (*PostAPIFuotaTaskDeleteOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIFuotaTaskDeleteParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_fuota_task_delete",
+		Method:             "POST",
+		PathPattern:        "/api/fuota/task/delete",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIFuotaTaskDeleteReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIFuotaTaskDeleteOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_fuota_task_delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIFuotaTaskRetry post api fuota task retry API
+*/
+func (a *Client) PostAPIFuotaTaskRetry(params *PostAPIFuotaTaskRetryParams, opts ...ClientOption) (*PostAPIFuotaTaskRetryOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIFuotaTaskRetryParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_fuota_task_retry",
 		Method:             "POST",
 		PathPattern:        "/api/fuota/task/retry",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &RetryFuotaTaskReader{formats: a.formats},
+		Reader:             &PostAPIFuotaTaskRetryReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -411,33 +411,33 @@ func (a *Client) RetryFuotaTask(params *RetryFuotaTaskParams, opts ...ClientOpti
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*RetryFuotaTaskOK)
+	success, ok := result.(*PostAPIFuotaTaskRetryOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for RetryFuotaTask: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for post_api_fuota_task_retry: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-UpdateFuotaTask update fuota task API
+PutAPIFuotaTask put api fuota task API
 */
-func (a *Client) UpdateFuotaTask(params *UpdateFuotaTaskParams, opts ...ClientOption) (*UpdateFuotaTaskOK, error) {
+func (a *Client) PutAPIFuotaTask(params *PutAPIFuotaTaskParams, opts ...ClientOption) (*PutAPIFuotaTaskOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewUpdateFuotaTaskParams()
+		params = NewPutAPIFuotaTaskParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "UpdateFuotaTask",
+		ID:                 "put_api_fuota_task",
 		Method:             "PUT",
 		PathPattern:        "/api/fuota/task",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &UpdateFuotaTaskReader{formats: a.formats},
+		Reader:             &PutAPIFuotaTaskReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -449,13 +449,13 @@ func (a *Client) UpdateFuotaTask(params *UpdateFuotaTaskParams, opts ...ClientOp
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*UpdateFuotaTaskOK)
+	success, ok := result.(*PutAPIFuotaTaskOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for UpdateFuotaTask: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for put_api_fuota_task: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

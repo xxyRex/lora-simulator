@@ -56,48 +56,54 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	CreateURBACnetIPIntegration(params *CreateURBACnetIPIntegrationParams, opts ...ClientOption) (*CreateURBACnetIPIntegrationOK, error)
+	DeleteAPIUrapplicationsByID(params *DeleteAPIUrapplicationsByIDParams, opts ...ClientOption) (*DeleteAPIUrapplicationsByIDOK, error)
 
-	CreateURHTTPIntegration(params *CreateURHTTPIntegrationParams, opts ...ClientOption) (*CreateURHTTPIntegrationOK, error)
+	DeleteAPIUrapplicationsIntegrationsBacnetipByID(params *DeleteAPIUrapplicationsIntegrationsBacnetipByIDParams, opts ...ClientOption) (*DeleteAPIUrapplicationsIntegrationsBacnetipByIDOK, error)
 
-	CreateURMQTTIntegration(params *CreateURMQTTIntegrationParams, opts ...ClientOption) (*CreateURMQTTIntegrationOK, error)
+	DeleteAPIUrapplicationsIntegrationsHTTPByID(params *DeleteAPIUrapplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*DeleteAPIUrapplicationsIntegrationsHTTPByIDOK, error)
 
-	DeleteURBACnetIPIntegration(params *DeleteURBACnetIPIntegrationParams, opts ...ClientOption) (*DeleteURBACnetIPIntegrationOK, error)
+	DeleteAPIUrapplicationsIntegrationsMqttByID(params *DeleteAPIUrapplicationsIntegrationsMqttByIDParams, opts ...ClientOption) (*DeleteAPIUrapplicationsIntegrationsMqttByIDOK, error)
 
-	DeleteURHTTPIntegration(params *DeleteURHTTPIntegrationParams, opts ...ClientOption) (*DeleteURHTTPIntegrationOK, error)
+	GetAPIUrapplications(params *GetAPIUrapplicationsParams, opts ...ClientOption) (*GetAPIUrapplicationsOK, error)
 
-	DeleteURMQTTIntegration(params *DeleteURMQTTIntegrationParams, opts ...ClientOption) (*DeleteURMQTTIntegrationOK, error)
+	GetAPIUrapplicationsIntegrationsHTTPByID(params *GetAPIUrapplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*GetAPIUrapplicationsIntegrationsHTTPByIDOK, error)
 
-	GetURHTTPIntegration(params *GetURHTTPIntegrationParams, opts ...ClientOption) (*GetURHTTPIntegrationOK, error)
+	GetAPIUrapplicationsIntegrationsMqttByID(params *GetAPIUrapplicationsIntegrationsMqttByIDParams, opts ...ClientOption) (*GetAPIUrapplicationsIntegrationsMqttByIDOK, error)
 
-	GetURMQTTIntergration(params *GetURMQTTIntergrationParams, opts ...ClientOption) (*GetURMQTTIntergrationOK, error)
+	PostAPIUrapplications(params *PostAPIUrapplicationsParams, opts ...ClientOption) (*PostAPIUrapplicationsOK, error)
 
-	PutAPIUrapplicationsID(params *PutAPIUrapplicationsIDParams, opts ...ClientOption) (*PutAPIUrapplicationsIDOK, error)
+	PostAPIUrapplicationsIntegrationsBacnetipByID(params *PostAPIUrapplicationsIntegrationsBacnetipByIDParams, opts ...ClientOption) (*PostAPIUrapplicationsIntegrationsBacnetipByIDOK, error)
 
-	UpdateURHTTPIntegration(params *UpdateURHTTPIntegrationParams, opts ...ClientOption) (*UpdateURHTTPIntegrationOK, error)
+	PostAPIUrapplicationsIntegrationsHTTPByID(params *PostAPIUrapplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*PostAPIUrapplicationsIntegrationsHTTPByIDOK, error)
 
-	UpdateURMQTTIntegration(params *UpdateURMQTTIntegrationParams, opts ...ClientOption) (*UpdateURMQTTIntegrationOK, error)
+	PostAPIUrapplicationsIntegrationsMqttByID(params *PostAPIUrapplicationsIntegrationsMqttByIDParams, opts ...ClientOption) (*PostAPIUrapplicationsIntegrationsMqttByIDOK, error)
+
+	PutAPIUrapplicationsByID(params *PutAPIUrapplicationsByIDParams, opts ...ClientOption) (*PutAPIUrapplicationsByIDOK, error)
+
+	PutAPIUrapplicationsIntegrationsHTTPByID(params *PutAPIUrapplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*PutAPIUrapplicationsIntegrationsHTTPByIDOK, error)
+
+	PutAPIUrapplicationsIntegrationsMqttByID(params *PutAPIUrapplicationsIntegrationsMqttByIDParams, opts ...ClientOption) (*PutAPIUrapplicationsIntegrationsMqttByIDOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-CreateURBACnetIPIntegration creates u r b a cnet IP integration creates a b a cnet IP application integration
+DeleteAPIUrapplicationsByID deletes deletes the given application
 */
-func (a *Client) CreateURBACnetIPIntegration(params *CreateURBACnetIPIntegrationParams, opts ...ClientOption) (*CreateURBACnetIPIntegrationOK, error) {
+func (a *Client) DeleteAPIUrapplicationsByID(params *DeleteAPIUrapplicationsByIDParams, opts ...ClientOption) (*DeleteAPIUrapplicationsByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewCreateURBACnetIPIntegrationParams()
+		params = NewDeleteAPIUrapplicationsByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "CreateURBACnetIPIntegration",
-		Method:             "POST",
-		PathPattern:        "/api/urapplications/{id}/integrations/bacnetip",
+		ID:                 "delete_api_urapplications_by_id",
+		Method:             "DELETE",
+		PathPattern:        "/api/urapplications/{id}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &CreateURBACnetIPIntegrationReader{formats: a.formats},
+		Reader:             &DeleteAPIUrapplicationsByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -109,109 +115,33 @@ func (a *Client) CreateURBACnetIPIntegration(params *CreateURBACnetIPIntegration
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*CreateURBACnetIPIntegrationOK)
+	success, ok := result.(*DeleteAPIUrapplicationsByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for CreateURBACnetIPIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_urapplications_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-CreateURHTTPIntegration creates u r HTTP integration creates a HTTP application integration
+DeleteAPIUrapplicationsIntegrationsBacnetipByID deletes u r b a cnet IP integration deletes the b a c n e t IP application integration
 */
-func (a *Client) CreateURHTTPIntegration(params *CreateURHTTPIntegrationParams, opts ...ClientOption) (*CreateURHTTPIntegrationOK, error) {
+func (a *Client) DeleteAPIUrapplicationsIntegrationsBacnetipByID(params *DeleteAPIUrapplicationsIntegrationsBacnetipByIDParams, opts ...ClientOption) (*DeleteAPIUrapplicationsIntegrationsBacnetipByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewCreateURHTTPIntegrationParams()
+		params = NewDeleteAPIUrapplicationsIntegrationsBacnetipByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "CreateURHTTPIntegration",
-		Method:             "POST",
-		PathPattern:        "/api/urapplications/{id}/integrations/http",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &CreateURHTTPIntegrationReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*CreateURHTTPIntegrationOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for CreateURHTTPIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-CreateURMQTTIntegration creates u r m q t t integration creates a m q t t application integration
-*/
-func (a *Client) CreateURMQTTIntegration(params *CreateURMQTTIntegrationParams, opts ...ClientOption) (*CreateURMQTTIntegrationOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewCreateURMQTTIntegrationParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "CreateURMQTTIntegration",
-		Method:             "POST",
-		PathPattern:        "/api/urapplications/{id}/integrations/mqtt",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &CreateURMQTTIntegrationReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*CreateURMQTTIntegrationOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for CreateURMQTTIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-DeleteURBACnetIPIntegration deletes u r b a cnet IP integration deletes the b a c n e t IP application integration
-*/
-func (a *Client) DeleteURBACnetIPIntegration(params *DeleteURBACnetIPIntegrationParams, opts ...ClientOption) (*DeleteURBACnetIPIntegrationOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewDeleteURBACnetIPIntegrationParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "DeleteURBACnetIPIntegration",
+		ID:                 "delete_api_urapplications_integrations_bacnetip_by_id",
 		Method:             "DELETE",
 		PathPattern:        "/api/urapplications/{id}/integrations/bacnetip",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &DeleteURBACnetIPIntegrationReader{formats: a.formats},
+		Reader:             &DeleteAPIUrapplicationsIntegrationsBacnetipByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -223,33 +153,33 @@ func (a *Client) DeleteURBACnetIPIntegration(params *DeleteURBACnetIPIntegration
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*DeleteURBACnetIPIntegrationOK)
+	success, ok := result.(*DeleteAPIUrapplicationsIntegrationsBacnetipByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for DeleteURBACnetIPIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_urapplications_integrations_bacnetip_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-DeleteURHTTPIntegration deletes u r HTTP integration deletes the HTTP application integration
+DeleteAPIUrapplicationsIntegrationsHTTPByID deletes u r HTTP integration deletes the HTTP application integration
 */
-func (a *Client) DeleteURHTTPIntegration(params *DeleteURHTTPIntegrationParams, opts ...ClientOption) (*DeleteURHTTPIntegrationOK, error) {
+func (a *Client) DeleteAPIUrapplicationsIntegrationsHTTPByID(params *DeleteAPIUrapplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*DeleteAPIUrapplicationsIntegrationsHTTPByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewDeleteURHTTPIntegrationParams()
+		params = NewDeleteAPIUrapplicationsIntegrationsHTTPByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "DeleteURHTTPIntegration",
+		ID:                 "delete_api_urapplications_integrations_http_by_id",
 		Method:             "DELETE",
 		PathPattern:        "/api/urapplications/{id}/integrations/http",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &DeleteURHTTPIntegrationReader{formats: a.formats},
+		Reader:             &DeleteAPIUrapplicationsIntegrationsHTTPByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -261,33 +191,33 @@ func (a *Client) DeleteURHTTPIntegration(params *DeleteURHTTPIntegrationParams, 
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*DeleteURHTTPIntegrationOK)
+	success, ok := result.(*DeleteAPIUrapplicationsIntegrationsHTTPByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for DeleteURHTTPIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_urapplications_integrations_http_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-DeleteURMQTTIntegration deletes u r m q t t integration deletes the m q t t application integration
+DeleteAPIUrapplicationsIntegrationsMqttByID deletes u r m q t t integration deletes the m q t t application integration
 */
-func (a *Client) DeleteURMQTTIntegration(params *DeleteURMQTTIntegrationParams, opts ...ClientOption) (*DeleteURMQTTIntegrationOK, error) {
+func (a *Client) DeleteAPIUrapplicationsIntegrationsMqttByID(params *DeleteAPIUrapplicationsIntegrationsMqttByIDParams, opts ...ClientOption) (*DeleteAPIUrapplicationsIntegrationsMqttByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewDeleteURMQTTIntegrationParams()
+		params = NewDeleteAPIUrapplicationsIntegrationsMqttByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "DeleteURMQTTIntegration",
+		ID:                 "delete_api_urapplications_integrations_mqtt_by_id",
 		Method:             "DELETE",
 		PathPattern:        "/api/urapplications/{id}/integrations/mqtt",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &DeleteURMQTTIntegrationReader{formats: a.formats},
+		Reader:             &DeleteAPIUrapplicationsIntegrationsMqttByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -299,33 +229,71 @@ func (a *Client) DeleteURMQTTIntegration(params *DeleteURMQTTIntegrationParams, 
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*DeleteURMQTTIntegrationOK)
+	success, ok := result.(*DeleteAPIUrapplicationsIntegrationsMqttByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for DeleteURMQTTIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_urapplications_integrations_mqtt_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetURHTTPIntegration gets u r HTTP integration returns the HTTP application integration
+GetAPIUrapplications lists lists the available applications
 */
-func (a *Client) GetURHTTPIntegration(params *GetURHTTPIntegrationParams, opts ...ClientOption) (*GetURHTTPIntegrationOK, error) {
+func (a *Client) GetAPIUrapplications(params *GetAPIUrapplicationsParams, opts ...ClientOption) (*GetAPIUrapplicationsOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetURHTTPIntegrationParams()
+		params = NewGetAPIUrapplicationsParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetURHTTPIntegration",
+		ID:                 "get_api_urapplications",
+		Method:             "GET",
+		PathPattern:        "/api/urapplications",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIUrapplicationsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIUrapplicationsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_urapplications: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIUrapplicationsIntegrationsHTTPByID gets u r HTTP integration returns the HTTP application integration
+*/
+func (a *Client) GetAPIUrapplicationsIntegrationsHTTPByID(params *GetAPIUrapplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*GetAPIUrapplicationsIntegrationsHTTPByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIUrapplicationsIntegrationsHTTPByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_urapplications_integrations_http_by_id",
 		Method:             "GET",
 		PathPattern:        "/api/urapplications/{id}/integrations/http",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetURHTTPIntegrationReader{formats: a.formats},
+		Reader:             &GetAPIUrapplicationsIntegrationsHTTPByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -337,33 +305,33 @@ func (a *Client) GetURHTTPIntegration(params *GetURHTTPIntegrationParams, opts .
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetURHTTPIntegrationOK)
+	success, ok := result.(*GetAPIUrapplicationsIntegrationsHTTPByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetURHTTPIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_urapplications_integrations_http_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetURMQTTIntergration gets u r m q t t intergration returns the m q t t application integration
+GetAPIUrapplicationsIntegrationsMqttByID gets u r m q t t intergration returns the m q t t application integration
 */
-func (a *Client) GetURMQTTIntergration(params *GetURMQTTIntergrationParams, opts ...ClientOption) (*GetURMQTTIntergrationOK, error) {
+func (a *Client) GetAPIUrapplicationsIntegrationsMqttByID(params *GetAPIUrapplicationsIntegrationsMqttByIDParams, opts ...ClientOption) (*GetAPIUrapplicationsIntegrationsMqttByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetURMQTTIntergrationParams()
+		params = NewGetAPIUrapplicationsIntegrationsMqttByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetURMQTTIntergration",
+		ID:                 "get_api_urapplications_integrations_mqtt_by_id",
 		Method:             "GET",
 		PathPattern:        "/api/urapplications/{id}/integrations/mqtt",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetURMQTTIntergrationReader{formats: a.formats},
+		Reader:             &GetAPIUrapplicationsIntegrationsMqttByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -375,33 +343,185 @@ func (a *Client) GetURMQTTIntergration(params *GetURMQTTIntergrationParams, opts
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetURMQTTIntergrationOK)
+	success, ok := result.(*GetAPIUrapplicationsIntegrationsMqttByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetURMQTTIntergration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_urapplications_integrations_mqtt_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-PutAPIUrapplicationsID updates updates the given application
+PostAPIUrapplications creates creates the given application
 */
-func (a *Client) PutAPIUrapplicationsID(params *PutAPIUrapplicationsIDParams, opts ...ClientOption) (*PutAPIUrapplicationsIDOK, error) {
+func (a *Client) PostAPIUrapplications(params *PostAPIUrapplicationsParams, opts ...ClientOption) (*PostAPIUrapplicationsOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewPutAPIUrapplicationsIDParams()
+		params = NewPostAPIUrapplicationsParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "PutAPIUrapplicationsID",
+		ID:                 "post_api_urapplications",
+		Method:             "POST",
+		PathPattern:        "/api/urapplications",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIUrapplicationsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIUrapplicationsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_urapplications: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIUrapplicationsIntegrationsBacnetipByID creates u r b a cnet IP integration creates a b a cnet IP application integration
+*/
+func (a *Client) PostAPIUrapplicationsIntegrationsBacnetipByID(params *PostAPIUrapplicationsIntegrationsBacnetipByIDParams, opts ...ClientOption) (*PostAPIUrapplicationsIntegrationsBacnetipByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIUrapplicationsIntegrationsBacnetipByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_urapplications_integrations_bacnetip_by_id",
+		Method:             "POST",
+		PathPattern:        "/api/urapplications/{id}/integrations/bacnetip",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIUrapplicationsIntegrationsBacnetipByIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIUrapplicationsIntegrationsBacnetipByIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_urapplications_integrations_bacnetip_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIUrapplicationsIntegrationsHTTPByID creates u r HTTP integration creates a HTTP application integration
+*/
+func (a *Client) PostAPIUrapplicationsIntegrationsHTTPByID(params *PostAPIUrapplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*PostAPIUrapplicationsIntegrationsHTTPByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIUrapplicationsIntegrationsHTTPByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_urapplications_integrations_http_by_id",
+		Method:             "POST",
+		PathPattern:        "/api/urapplications/{id}/integrations/http",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIUrapplicationsIntegrationsHTTPByIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIUrapplicationsIntegrationsHTTPByIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_urapplications_integrations_http_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIUrapplicationsIntegrationsMqttByID creates u r m q t t integration creates a m q t t application integration
+*/
+func (a *Client) PostAPIUrapplicationsIntegrationsMqttByID(params *PostAPIUrapplicationsIntegrationsMqttByIDParams, opts ...ClientOption) (*PostAPIUrapplicationsIntegrationsMqttByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIUrapplicationsIntegrationsMqttByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_urapplications_integrations_mqtt_by_id",
+		Method:             "POST",
+		PathPattern:        "/api/urapplications/{id}/integrations/mqtt",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIUrapplicationsIntegrationsMqttByIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIUrapplicationsIntegrationsMqttByIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_urapplications_integrations_mqtt_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIUrapplicationsByID updates updates the given application
+*/
+func (a *Client) PutAPIUrapplicationsByID(params *PutAPIUrapplicationsByIDParams, opts ...ClientOption) (*PutAPIUrapplicationsByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIUrapplicationsByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_urapplications_by_id",
 		Method:             "PUT",
 		PathPattern:        "/api/urapplications/{id}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &PutAPIUrapplicationsIDReader{formats: a.formats},
+		Reader:             &PutAPIUrapplicationsByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -413,33 +533,33 @@ func (a *Client) PutAPIUrapplicationsID(params *PutAPIUrapplicationsIDParams, op
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*PutAPIUrapplicationsIDOK)
+	success, ok := result.(*PutAPIUrapplicationsByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PutAPIUrapplicationsID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for put_api_urapplications_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-UpdateURHTTPIntegration updates u r HTTP integration updates the HTTP application integration
+PutAPIUrapplicationsIntegrationsHTTPByID updates u r HTTP integration updates the HTTP application integration
 */
-func (a *Client) UpdateURHTTPIntegration(params *UpdateURHTTPIntegrationParams, opts ...ClientOption) (*UpdateURHTTPIntegrationOK, error) {
+func (a *Client) PutAPIUrapplicationsIntegrationsHTTPByID(params *PutAPIUrapplicationsIntegrationsHTTPByIDParams, opts ...ClientOption) (*PutAPIUrapplicationsIntegrationsHTTPByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewUpdateURHTTPIntegrationParams()
+		params = NewPutAPIUrapplicationsIntegrationsHTTPByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "UpdateURHTTPIntegration",
+		ID:                 "put_api_urapplications_integrations_http_by_id",
 		Method:             "PUT",
 		PathPattern:        "/api/urapplications/{id}/integrations/http",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &UpdateURHTTPIntegrationReader{formats: a.formats},
+		Reader:             &PutAPIUrapplicationsIntegrationsHTTPByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -451,33 +571,33 @@ func (a *Client) UpdateURHTTPIntegration(params *UpdateURHTTPIntegrationParams, 
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*UpdateURHTTPIntegrationOK)
+	success, ok := result.(*PutAPIUrapplicationsIntegrationsHTTPByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for UpdateURHTTPIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for put_api_urapplications_integrations_http_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-UpdateURMQTTIntegration updates u r m q t t integration updates the m q t t application integration
+PutAPIUrapplicationsIntegrationsMqttByID updates u r m q t t integration updates the m q t t application integration
 */
-func (a *Client) UpdateURMQTTIntegration(params *UpdateURMQTTIntegrationParams, opts ...ClientOption) (*UpdateURMQTTIntegrationOK, error) {
+func (a *Client) PutAPIUrapplicationsIntegrationsMqttByID(params *PutAPIUrapplicationsIntegrationsMqttByIDParams, opts ...ClientOption) (*PutAPIUrapplicationsIntegrationsMqttByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewUpdateURMQTTIntegrationParams()
+		params = NewPutAPIUrapplicationsIntegrationsMqttByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "UpdateURMQTTIntegration",
+		ID:                 "put_api_urapplications_integrations_mqtt_by_id",
 		Method:             "PUT",
 		PathPattern:        "/api/urapplications/{id}/integrations/mqtt",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &UpdateURMQTTIntegrationReader{formats: a.formats},
+		Reader:             &PutAPIUrapplicationsIntegrationsMqttByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -489,13 +609,13 @@ func (a *Client) UpdateURMQTTIntegration(params *UpdateURMQTTIntegrationParams, 
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*UpdateURMQTTIntegrationOK)
+	success, ok := result.(*PutAPIUrapplicationsIntegrationsMqttByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for UpdateURMQTTIntegration: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for put_api_urapplications_integrations_mqtt_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

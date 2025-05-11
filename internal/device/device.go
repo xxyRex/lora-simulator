@@ -20,13 +20,31 @@ import (
 
 	"sync/atomic"
 
-	"github.com/brocaar/lora-simulator/internal/as"
+	"github.com/brocaar/lora-simulator/internal/as_api/models"
+	"github.com/brocaar/lora-simulator/internal/config"
 	"github.com/brocaar/lora-simulator/internal/fragmentation"
 	"github.com/brocaar/lora-simulator/internal/gateway"
 	"github.com/brocaar/lora-simulator/internal/multicastsetup"
 	"github.com/brocaar/lorawan"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
+
+var (
+	globalLastUplinkTime      = time.Now()
+	globalLastUplinkTimeMutex sync.Mutex
+)
+
+func allowUplink(devEUI lorawan.EUI64) bool {
+	config := GetDynamicDevicesConfig(devEUI)
+	globalLastUplinkTimeMutex.Lock()
+	allow := false
+	if time.Since(globalLastUplinkTime) > config.Devices.GlobalUplinkIntervalTime {
+		allow = true
+		globalLastUplinkTime = time.Now()
+	}
+	globalLastUplinkTimeMutex.Unlock()
+	return allow
+}
 
 // DeviceOption is the interface for a device option.
 type DeviceOption func(*Device) error
@@ -151,7 +169,7 @@ type Device struct {
 
 	joinReqSent bool
 
-	payloadCodec as.PayloadCodecItem
+	payloadCodec *models.APIPayloadCodecItem
 
 	fuotaProperties fuotaProperties
 
@@ -162,6 +180,42 @@ type Device struct {
 	minJoinRequestInterval time.Duration
 
 	joinRequestCount uint64
+}
+
+func WithDeviceStoredInfo(item *models.APIDeviceItem) DeviceOption {
+	return func(d *Device) error {
+		if item == nil {
+			return nil
+		}
+		d.devEUI.UnmarshalBinary([]byte(item.DevEUI))
+		appSKeyBytes, err := hex.DecodeString(item.AppSKey)
+		if err != nil {
+			log.Errorf("decode appSKey error: %v, item.AppsKey: %v", err, item.AppSKey)
+		}
+		err = d.appSKey.UnmarshalBinary(appSKeyBytes)
+		if err != nil {
+			log.Errorf("decode appSKey error: %v, item.AppsKey: %v", err, item.AppSKey)
+		}
+		nwkSKeyBytes, err := hex.DecodeString(item.NwkSKey)
+		if err != nil {
+			log.Errorf("decode nwkSKey error: %v, item.NwkSKey: %v", err, item.NwkSKey)
+		}
+		err = d.nwkSKey.UnmarshalBinary(nwkSKeyBytes)
+		if err != nil {
+			log.Errorf("decode nwkSKey error: %v, item.NwkSKey: %v", err, item.NwkSKey)
+		}
+		devAddrBytes, err := hex.DecodeString(item.DevAddr)
+		if err != nil {
+			log.Errorf("decode devAddr error: %v, item.DevAddr: %v", err, item.DevAddr)
+		}
+		err = d.devAddr.UnmarshalBinary(devAddrBytes)
+		if err != nil {
+			log.Errorf("decode devAddr error: %v, item.DevAddr: %v", err, item.DevAddr)
+		}
+		d.fCntUp = uint32(item.FCntUp)
+		d.fCntDown = uint32(item.FCntDown)
+		return nil
+	}
 }
 
 // WithAppKey sets the AppKey.
@@ -260,7 +314,7 @@ func WithDownlinkHandlerFunc(f func(confirmed, ack bool, fCntDown uint32, fPort 
 	}
 }
 
-func WithPayloadCodec(payloadCodec as.PayloadCodecItem) DeviceOption {
+func WithPayloadCodec(payloadCodec *models.APIPayloadCodecItem) DeviceOption {
 	return func(d *Device) error {
 		d.payloadCodec = payloadCodec
 		return nil
@@ -325,12 +379,17 @@ func (d *Device) uplinkLoop() {
 			if config != nil {
 				paused = config.Devices.DeviceStatus.UplinkPaused
 				uplinkType = config.Devices.DeviceStatus.UplinkType
-				d.uplinkInterval = time.Duration(config.Devices.DeviceStatus.UplinkInterval) * time.Second
+				d.uplinkInterval = config.Devices.DeviceStatus.UplinkIntervalTime
 			}
 			if paused {
 				continue
 			} else {
 				d.getEncoderData()
+				if !allowUplink(d.devEUI) {
+					time.Sleep(time.Second)
+					continue
+				}
+				log.Infof("deveui: %v, uplinkType: %v", d.devEUI, uplinkType)
 				if uplinkType == "UpUnc" {
 					d.dataUp(lorawan.UnconfirmedDataUp, false)
 				} else {
@@ -348,7 +407,6 @@ func (d *Device) uplinkLoop() {
 					}
 				}
 			}
-
 			time.Sleep(d.uplinkInterval)
 		}
 	}
@@ -393,6 +451,11 @@ func (d *Device) downlinkLoop() {
 
 // joinRequest sends the join-request.
 func (d *Device) joinRequest() {
+	if !config.C.ChirpStack.API.UseNewDevice {
+		d.setState(deviceStateActivated)
+		return
+	}
+
 	if time.Since(d.lastJoinRequestTime) < d.minJoinRequestInterval {
 		time.Sleep(time.Second * 5)
 		return
@@ -426,6 +489,7 @@ func (d *Device) joinRequest() {
 	deviceJoinRequestCounter().Inc()
 
 	d.lastJoinRequestTime = time.Now()
+	d.joinRequestCount++
 	d.minJoinRequestInterval = time.Duration(rand.Intn(60)) * time.Second
 }
 

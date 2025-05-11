@@ -31,7 +31,7 @@ func (o *PutAPIUrbridgeReader) ReadResponse(response runtime.ClientResponse, con
 		}
 		return result, nil
 	default:
-		return nil, runtime.NewAPIError("[PUT /api/urbridge] PutAPIUrbridge", response, response.Code())
+		return nil, runtime.NewAPIError("[PUT /api/urbridge] put_api_urbridge", response, response.Code())
 	}
 }
 
@@ -43,7 +43,7 @@ func NewPutAPIUrbridgeOK() *PutAPIUrbridgeOK {
 /*
 PutAPIUrbridgeOK describes a response with status code 200, with default header values.
 
-PutAPIUrbridgeOK put Api urbridge o k
+(empty)
 */
 type PutAPIUrbridgeOK struct {
 	Payload models.APIUpdateBridgeResponse

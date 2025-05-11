@@ -56,28 +56,32 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	Update(params *UpdateParams, opts ...ClientOption) (*UpdateOK, error)
+	DeleteAPIPacketForwarderNetworkServersBackupdata(params *DeleteAPIPacketForwarderNetworkServersBackupdataParams, opts ...ClientOption) (*DeleteAPIPacketForwarderNetworkServersBackupdataOK, error)
+
+	GetAPIPacketForwarderNetworkServers(params *GetAPIPacketForwarderNetworkServersParams, opts ...ClientOption) (*GetAPIPacketForwarderNetworkServersOK, error)
+
+	PostAPIPacketForwarderNetworkServers(params *PostAPIPacketForwarderNetworkServersParams, opts ...ClientOption) (*PostAPIPacketForwarderNetworkServersOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-Update update API
+DeleteAPIPacketForwarderNetworkServersBackupdata delete api packet forwarder network servers backupdata API
 */
-func (a *Client) Update(params *UpdateParams, opts ...ClientOption) (*UpdateOK, error) {
+func (a *Client) DeleteAPIPacketForwarderNetworkServersBackupdata(params *DeleteAPIPacketForwarderNetworkServersBackupdataParams, opts ...ClientOption) (*DeleteAPIPacketForwarderNetworkServersBackupdataOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewUpdateParams()
+		params = NewDeleteAPIPacketForwarderNetworkServersBackupdataParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "Update",
-		Method:             "POST",
-		PathPattern:        "/api/packet-forwarder/network-servers",
+		ID:                 "delete_api_packet-forwarder_network-servers_backupdata",
+		Method:             "DELETE",
+		PathPattern:        "/api/packet-forwarder/network-servers/backupdata",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &UpdateReader{formats: a.formats},
+		Reader:             &DeleteAPIPacketForwarderNetworkServersBackupdataReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -89,13 +93,89 @@ func (a *Client) Update(params *UpdateParams, opts ...ClientOption) (*UpdateOK, 
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*UpdateOK)
+	success, ok := result.(*DeleteAPIPacketForwarderNetworkServersBackupdataOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for Update: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_packet-forwarder_network-servers_backupdata: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIPacketForwarderNetworkServers get api packet forwarder network servers API
+*/
+func (a *Client) GetAPIPacketForwarderNetworkServers(params *GetAPIPacketForwarderNetworkServersParams, opts ...ClientOption) (*GetAPIPacketForwarderNetworkServersOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIPacketForwarderNetworkServersParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_packet-forwarder_network-servers",
+		Method:             "GET",
+		PathPattern:        "/api/packet-forwarder/network-servers",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIPacketForwarderNetworkServersReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIPacketForwarderNetworkServersOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_packet-forwarder_network-servers: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIPacketForwarderNetworkServers post api packet forwarder network servers API
+*/
+func (a *Client) PostAPIPacketForwarderNetworkServers(params *PostAPIPacketForwarderNetworkServersParams, opts ...ClientOption) (*PostAPIPacketForwarderNetworkServersOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIPacketForwarderNetworkServersParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_packet-forwarder_network-servers",
+		Method:             "POST",
+		PathPattern:        "/api/packet-forwarder/network-servers",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIPacketForwarderNetworkServersReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIPacketForwarderNetworkServersOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_packet-forwarder_network-servers: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

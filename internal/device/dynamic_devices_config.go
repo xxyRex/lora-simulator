@@ -19,17 +19,20 @@ type DevicesDynamicConfig struct {
 }
 
 type Devices struct {
-	DeveuiRange  string                        `json:"deveui_range"`
-	DeviceStatus DeviceStatus                  `json:"device_status"`
-	Object       Object                        `json:"object"`
-	FuotaDebug   FuotaDebug                    `json:"fuota_debug"`
-	DeveuiMap    map[lorawan.EUI64]interface{} `json:"-"`
+	DeveuiRange              string                        `json:"deveui_range"`
+	DeviceStatus             DeviceStatus                  `json:"device_status"`
+	Object                   Object                        `json:"object"`
+	FuotaDebug               FuotaDebug                    `json:"fuota_debug"`
+	DeveuiMap                map[lorawan.EUI64]interface{} `json:"-"`
+	GlobalUplinkInterval     int64                         `json:"global_uplink_interval"`
+	GlobalUplinkIntervalTime time.Duration                 `json:"-"`
 }
 
 type DeviceStatus struct {
-	UplinkPaused   bool   `json:"uplink_paused"`
-	UplinkType     string `json:"uplink_type"`
-	UplinkInterval int64  `json:"uplink_interval"`
+	UplinkPaused       bool          `json:"uplink_paused"`
+	UplinkType         string        `json:"uplink_type"`
+	UplinkInterval     int64         `json:"uplink_interval"`
+	UplinkIntervalTime time.Duration `json:"-"`
 }
 
 type FuotaDebug struct {
@@ -123,6 +126,9 @@ func (m *DynamicDevicesConfigManager) LoadFromFile() error {
 	if err := json.Unmarshal(data, &config); err != nil {
 		return errors.Wrap(err, "unmarshal config error")
 	}
+
+	config.Devices.GlobalUplinkIntervalTime = time.Duration(config.Devices.GlobalUplinkInterval) * time.Millisecond
+	config.Devices.DeviceStatus.UplinkIntervalTime = time.Duration(config.Devices.DeviceStatus.UplinkInterval) * time.Millisecond
 
 	// 处理DeveuiRange逻辑
 	if config.Devices.DeveuiRange == "all" {

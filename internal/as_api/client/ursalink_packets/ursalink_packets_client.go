@@ -56,28 +56,30 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	Get(params *GetParams, opts ...ClientOption) (*GetOK, error)
+	DeleteAPIUrpackets(params *DeleteAPIUrpacketsParams, opts ...ClientOption) (*DeleteAPIUrpacketsOK, error)
+
+	GetAPIUrpackets(params *GetAPIUrpacketsParams, opts ...ClientOption) (*GetAPIUrpacketsOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-Get gets returns a slice of packets
+DeleteAPIUrpackets deletes deletes all stored packets
 */
-func (a *Client) Get(params *GetParams, opts ...ClientOption) (*GetOK, error) {
+func (a *Client) DeleteAPIUrpackets(params *DeleteAPIUrpacketsParams, opts ...ClientOption) (*DeleteAPIUrpacketsOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetParams()
+		params = NewDeleteAPIUrpacketsParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "Get",
-		Method:             "GET",
+		ID:                 "delete_api_urpackets",
+		Method:             "DELETE",
 		PathPattern:        "/api/urpackets",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetReader{formats: a.formats},
+		Reader:             &DeleteAPIUrpacketsReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -89,13 +91,51 @@ func (a *Client) Get(params *GetParams, opts ...ClientOption) (*GetOK, error) {
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetOK)
+	success, ok := result.(*DeleteAPIUrpacketsOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for Get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_urpackets: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIUrpackets gets returns a slice of packets
+*/
+func (a *Client) GetAPIUrpackets(params *GetAPIUrpacketsParams, opts ...ClientOption) (*GetAPIUrpacketsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIUrpacketsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_urpackets",
+		Method:             "GET",
+		PathPattern:        "/api/urpackets",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIUrpacketsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIUrpacketsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_urpackets: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

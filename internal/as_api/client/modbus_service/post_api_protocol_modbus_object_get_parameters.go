@@ -57,7 +57,7 @@ func NewPostAPIProtocolModbusObjectGetParamsWithHTTPClient(client *http.Client) 
 /*
 PostAPIProtocolModbusObjectGetParams contains all the parameters to send to the API endpoint
 
-	for the post API protocol modbus object get operation.
+	for the post api protocol modbus object get operation.
 
 	Typically these are written to a http.Request.
 */
@@ -71,7 +71,7 @@ type PostAPIProtocolModbusObjectGetParams struct {
 	HTTPClient *http.Client
 }
 
-// WithDefaults hydrates default values in the post API protocol modbus object get params (not the query body).
+// WithDefaults hydrates default values in the post api protocol modbus object get params (not the query body).
 //
 // All values with no default are reset to their zero value.
 func (o *PostAPIProtocolModbusObjectGetParams) WithDefaults() *PostAPIProtocolModbusObjectGetParams {
@@ -79,53 +79,53 @@ func (o *PostAPIProtocolModbusObjectGetParams) WithDefaults() *PostAPIProtocolMo
 	return o
 }
 
-// SetDefaults hydrates default values in the post API protocol modbus object get params (not the query body).
+// SetDefaults hydrates default values in the post api protocol modbus object get params (not the query body).
 //
 // All values with no default are reset to their zero value.
 func (o *PostAPIProtocolModbusObjectGetParams) SetDefaults() {
 	// no default values defined for this parameter
 }
 
-// WithTimeout adds the timeout to the post API protocol modbus object get params
+// WithTimeout adds the timeout to the post api protocol modbus object get params
 func (o *PostAPIProtocolModbusObjectGetParams) WithTimeout(timeout time.Duration) *PostAPIProtocolModbusObjectGetParams {
 	o.SetTimeout(timeout)
 	return o
 }
 
-// SetTimeout adds the timeout to the post API protocol modbus object get params
+// SetTimeout adds the timeout to the post api protocol modbus object get params
 func (o *PostAPIProtocolModbusObjectGetParams) SetTimeout(timeout time.Duration) {
 	o.timeout = timeout
 }
 
-// WithContext adds the context to the post API protocol modbus object get params
+// WithContext adds the context to the post api protocol modbus object get params
 func (o *PostAPIProtocolModbusObjectGetParams) WithContext(ctx context.Context) *PostAPIProtocolModbusObjectGetParams {
 	o.SetContext(ctx)
 	return o
 }
 
-// SetContext adds the context to the post API protocol modbus object get params
+// SetContext adds the context to the post api protocol modbus object get params
 func (o *PostAPIProtocolModbusObjectGetParams) SetContext(ctx context.Context) {
 	o.Context = ctx
 }
 
-// WithHTTPClient adds the HTTPClient to the post API protocol modbus object get params
+// WithHTTPClient adds the HTTPClient to the post api protocol modbus object get params
 func (o *PostAPIProtocolModbusObjectGetParams) WithHTTPClient(client *http.Client) *PostAPIProtocolModbusObjectGetParams {
 	o.SetHTTPClient(client)
 	return o
 }
 
-// SetHTTPClient adds the HTTPClient to the post API protocol modbus object get params
+// SetHTTPClient adds the HTTPClient to the post api protocol modbus object get params
 func (o *PostAPIProtocolModbusObjectGetParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
-// WithBody adds the body to the post API protocol modbus object get params
+// WithBody adds the body to the post api protocol modbus object get params
 func (o *PostAPIProtocolModbusObjectGetParams) WithBody(body *models.APIGetModbusObjectRequest) *PostAPIProtocolModbusObjectGetParams {
 	o.SetBody(body)
 	return o
 }
 
-// SetBody adds the body to the post API protocol modbus object get params
+// SetBody adds the body to the post api protocol modbus object get params
 func (o *PostAPIProtocolModbusObjectGetParams) SetBody(body *models.APIGetModbusObjectRequest) {
 	o.Body = body
 }

@@ -57,7 +57,7 @@ func NewPutAPIUrbridgeParamsWithHTTPClient(client *http.Client) *PutAPIUrbridgeP
 /*
 PutAPIUrbridgeParams contains all the parameters to send to the API endpoint
 
-	for the put API urbridge operation.
+	for the put api urbridge operation.
 
 	Typically these are written to a http.Request.
 */
@@ -71,7 +71,7 @@ type PutAPIUrbridgeParams struct {
 	HTTPClient *http.Client
 }
 
-// WithDefaults hydrates default values in the put API urbridge params (not the query body).
+// WithDefaults hydrates default values in the put api urbridge params (not the query body).
 //
 // All values with no default are reset to their zero value.
 func (o *PutAPIUrbridgeParams) WithDefaults() *PutAPIUrbridgeParams {
@@ -79,53 +79,53 @@ func (o *PutAPIUrbridgeParams) WithDefaults() *PutAPIUrbridgeParams {
 	return o
 }
 
-// SetDefaults hydrates default values in the put API urbridge params (not the query body).
+// SetDefaults hydrates default values in the put api urbridge params (not the query body).
 //
 // All values with no default are reset to their zero value.
 func (o *PutAPIUrbridgeParams) SetDefaults() {
 	// no default values defined for this parameter
 }
 
-// WithTimeout adds the timeout to the put API urbridge params
+// WithTimeout adds the timeout to the put api urbridge params
 func (o *PutAPIUrbridgeParams) WithTimeout(timeout time.Duration) *PutAPIUrbridgeParams {
 	o.SetTimeout(timeout)
 	return o
 }
 
-// SetTimeout adds the timeout to the put API urbridge params
+// SetTimeout adds the timeout to the put api urbridge params
 func (o *PutAPIUrbridgeParams) SetTimeout(timeout time.Duration) {
 	o.timeout = timeout
 }
 
-// WithContext adds the context to the put API urbridge params
+// WithContext adds the context to the put api urbridge params
 func (o *PutAPIUrbridgeParams) WithContext(ctx context.Context) *PutAPIUrbridgeParams {
 	o.SetContext(ctx)
 	return o
 }
 
-// SetContext adds the context to the put API urbridge params
+// SetContext adds the context to the put api urbridge params
 func (o *PutAPIUrbridgeParams) SetContext(ctx context.Context) {
 	o.Context = ctx
 }
 
-// WithHTTPClient adds the HTTPClient to the put API urbridge params
+// WithHTTPClient adds the HTTPClient to the put api urbridge params
 func (o *PutAPIUrbridgeParams) WithHTTPClient(client *http.Client) *PutAPIUrbridgeParams {
 	o.SetHTTPClient(client)
 	return o
 }
 
-// SetHTTPClient adds the HTTPClient to the put API urbridge params
+// SetHTTPClient adds the HTTPClient to the put api urbridge params
 func (o *PutAPIUrbridgeParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
-// WithBody adds the body to the put API urbridge params
+// WithBody adds the body to the put api urbridge params
 func (o *PutAPIUrbridgeParams) WithBody(body *models.APIUpdateBridgeRequest) *PutAPIUrbridgeParams {
 	o.SetBody(body)
 	return o
 }
 
-// SetBody adds the body to the put API urbridge params
+// SetBody adds the body to the put api urbridge params
 func (o *PutAPIUrbridgeParams) SetBody(body *models.APIUpdateBridgeRequest) {
 	o.Body = body
 }

@@ -56,158 +56,52 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	AddDevice(params *AddDeviceParams, opts ...ClientOption) (*AddDeviceOK, error)
+	DeleteAPIMulticastGroupsByID(params *DeleteAPIMulticastGroupsByIDParams, opts ...ClientOption) (*DeleteAPIMulticastGroupsByIDOK, error)
 
-	AddMultiDevice(params *AddMultiDeviceParams, opts ...ClientOption) (*AddMultiDeviceOK, error)
+	DeleteAPIMulticastGroupsDeviceByMulticastGroupIDDevEUI(params *DeleteAPIMulticastGroupsDeviceByMulticastGroupIDDevEUIParams, opts ...ClientOption) (*DeleteAPIMulticastGroupsDeviceByMulticastGroupIDDevEUIOK, error)
 
-	Enqueue(params *EnqueueParams, opts ...ClientOption) (*EnqueueOK, error)
+	DeleteAPIMulticastGroupsQueueByMulticastGroupID(params *DeleteAPIMulticastGroupsQueueByMulticastGroupIDParams, opts ...ClientOption) (*DeleteAPIMulticastGroupsQueueByMulticastGroupIDOK, error)
 
-	FlushQueue(params *FlushQueueParams, opts ...ClientOption) (*FlushQueueOK, error)
+	GetAPIMulticastGroups(params *GetAPIMulticastGroupsParams, opts ...ClientOption) (*GetAPIMulticastGroupsOK, error)
 
-	GetMulticastDevice(params *GetMulticastDeviceParams, opts ...ClientOption) (*GetMulticastDeviceOK, error)
+	GetAPIMulticastGroupsByID(params *GetAPIMulticastGroupsByIDParams, opts ...ClientOption) (*GetAPIMulticastGroupsByIDOK, error)
 
-	ListQueue(params *ListQueueParams, opts ...ClientOption) (*ListQueueOK, error)
+	GetAPIMulticastGroupsDevicesByMulticastGroupID(params *GetAPIMulticastGroupsDevicesByMulticastGroupIDParams, opts ...ClientOption) (*GetAPIMulticastGroupsDevicesByMulticastGroupIDOK, error)
 
-	PutAPIMulticastGroupsMulticastGroupID(params *PutAPIMulticastGroupsMulticastGroupIDParams, opts ...ClientOption) (*PutAPIMulticastGroupsMulticastGroupIDOK, error)
+	GetAPIMulticastGroupsQueueByMulticastGroupID(params *GetAPIMulticastGroupsQueueByMulticastGroupIDParams, opts ...ClientOption) (*GetAPIMulticastGroupsQueueByMulticastGroupIDOK, error)
 
-	RemoveDevice(params *RemoveDeviceParams, opts ...ClientOption) (*RemoveDeviceOK, error)
+	PostAPIMulticastGroups(params *PostAPIMulticastGroupsParams, opts ...ClientOption) (*PostAPIMulticastGroupsOK, error)
 
-	RemoveMultiDevice(params *RemoveMultiDeviceParams, opts ...ClientOption) (*RemoveMultiDeviceOK, error)
+	PostAPIMulticastGroupsDeletedevicesByMulticastGroupID(params *PostAPIMulticastGroupsDeletedevicesByMulticastGroupIDParams, opts ...ClientOption) (*PostAPIMulticastGroupsDeletedevicesByMulticastGroupIDOK, error)
+
+	PostAPIMulticastGroupsDeviceByMulticastGroupID(params *PostAPIMulticastGroupsDeviceByMulticastGroupIDParams, opts ...ClientOption) (*PostAPIMulticastGroupsDeviceByMulticastGroupIDOK, error)
+
+	PostAPIMulticastGroupsDevicesByMulticastGroupID(params *PostAPIMulticastGroupsDevicesByMulticastGroupIDParams, opts ...ClientOption) (*PostAPIMulticastGroupsDevicesByMulticastGroupIDOK, error)
+
+	PostAPIMulticastGroupsQueueByMulticastQueueItemMulticastGroupID(params *PostAPIMulticastGroupsQueueByMulticastQueueItemMulticastGroupIDParams, opts ...ClientOption) (*PostAPIMulticastGroupsQueueByMulticastQueueItemMulticastGroupIDOK, error)
+
+	PutAPIMulticastGroupsByMulticastGroupID(params *PutAPIMulticastGroupsByMulticastGroupIDParams, opts ...ClientOption) (*PutAPIMulticastGroupsByMulticastGroupIDOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-AddDevice adds device adds the given device to the multicast group
+DeleteAPIMulticastGroupsByID deletes deletes a multicast group given an ID
 */
-func (a *Client) AddDevice(params *AddDeviceParams, opts ...ClientOption) (*AddDeviceOK, error) {
+func (a *Client) DeleteAPIMulticastGroupsByID(params *DeleteAPIMulticastGroupsByIDParams, opts ...ClientOption) (*DeleteAPIMulticastGroupsByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewAddDeviceParams()
+		params = NewDeleteAPIMulticastGroupsByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "AddDevice",
-		Method:             "POST",
-		PathPattern:        "/api/multicast-groups/{multicastGroupID}/device",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &AddDeviceReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*AddDeviceOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for AddDevice: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-AddMultiDevice adds multi device adds the given device to the multicast group
-*/
-func (a *Client) AddMultiDevice(params *AddMultiDeviceParams, opts ...ClientOption) (*AddMultiDeviceOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewAddMultiDeviceParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "AddMultiDevice",
-		Method:             "POST",
-		PathPattern:        "/api/multicast-groups/{multicastGroupID}/devices",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &AddMultiDeviceReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*AddMultiDeviceOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for AddMultiDevice: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-Enqueue enqueues adds the given item to the multicast queue
-*/
-func (a *Client) Enqueue(params *EnqueueParams, opts ...ClientOption) (*EnqueueOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewEnqueueParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "Enqueue",
-		Method:             "POST",
-		PathPattern:        "/api/multicast-groups/{multicastQueueItem.multicastGroupID}/queue",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &EnqueueReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*EnqueueOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for Enqueue: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-FlushQueue flushes queue flushes the multicast group queue
-*/
-func (a *Client) FlushQueue(params *FlushQueueParams, opts ...ClientOption) (*FlushQueueOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewFlushQueueParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "FlushQueue",
+		ID:                 "delete_api_multicast-groups_by_id",
 		Method:             "DELETE",
-		PathPattern:        "/api/multicast-groups/{multicastGroupID}/queue",
+		PathPattern:        "/api/multicast-groups/{id}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &FlushQueueReader{formats: a.formats},
+		Reader:             &DeleteAPIMulticastGroupsByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -219,147 +113,33 @@ func (a *Client) FlushQueue(params *FlushQueueParams, opts ...ClientOption) (*Fl
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*FlushQueueOK)
+	success, ok := result.(*DeleteAPIMulticastGroupsByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for FlushQueue: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_multicast-groups_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetMulticastDevice adds device adds the given device to the multicast group
+DeleteAPIMulticastGroupsDeviceByMulticastGroupIDDevEUI removes device removes the given device from the multicast group
 */
-func (a *Client) GetMulticastDevice(params *GetMulticastDeviceParams, opts ...ClientOption) (*GetMulticastDeviceOK, error) {
+func (a *Client) DeleteAPIMulticastGroupsDeviceByMulticastGroupIDDevEUI(params *DeleteAPIMulticastGroupsDeviceByMulticastGroupIDDevEUIParams, opts ...ClientOption) (*DeleteAPIMulticastGroupsDeviceByMulticastGroupIDDevEUIOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetMulticastDeviceParams()
+		params = NewDeleteAPIMulticastGroupsDeviceByMulticastGroupIDDevEUIParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetMulticastDevice",
-		Method:             "GET",
-		PathPattern:        "/api/multicast-groups/{multicastGroupID}/devices",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetMulticastDeviceReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*GetMulticastDeviceOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetMulticastDevice: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-ListQueue lists queue lists the items in the multicast group queue
-*/
-func (a *Client) ListQueue(params *ListQueueParams, opts ...ClientOption) (*ListQueueOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewListQueueParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "ListQueue",
-		Method:             "GET",
-		PathPattern:        "/api/multicast-groups/{multicastGroupID}/queue",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &ListQueueReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*ListQueueOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for ListQueue: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-PutAPIMulticastGroupsMulticastGroupID updates updates the given multicast group
-*/
-func (a *Client) PutAPIMulticastGroupsMulticastGroupID(params *PutAPIMulticastGroupsMulticastGroupIDParams, opts ...ClientOption) (*PutAPIMulticastGroupsMulticastGroupIDOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewPutAPIMulticastGroupsMulticastGroupIDParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "PutAPIMulticastGroupsMulticastGroupID",
-		Method:             "PUT",
-		PathPattern:        "/api/multicast-groups/{multicastGroup.id}",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &PutAPIMulticastGroupsMulticastGroupIDReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*PutAPIMulticastGroupsMulticastGroupIDOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PutAPIMulticastGroupsMulticastGroupID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-RemoveDevice removes device removes the given device from the multicast group
-*/
-func (a *Client) RemoveDevice(params *RemoveDeviceParams, opts ...ClientOption) (*RemoveDeviceOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewRemoveDeviceParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "RemoveDevice",
+		ID:                 "delete_api_multicast-groups_device_by_multicastGroupID_devEUI",
 		Method:             "DELETE",
 		PathPattern:        "/api/multicast-groups/{multicastGroupID}/device/{devEUI}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &RemoveDeviceReader{formats: a.formats},
+		Reader:             &DeleteAPIMulticastGroupsDeviceByMulticastGroupIDDevEUIReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -371,33 +151,33 @@ func (a *Client) RemoveDevice(params *RemoveDeviceParams, opts ...ClientOption) 
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*RemoveDeviceOK)
+	success, ok := result.(*DeleteAPIMulticastGroupsDeviceByMulticastGroupIDDevEUIOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for RemoveDevice: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_multicast-groups_device_by_multicastGroupID_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-RemoveMultiDevice removes device removes the given device from the multicast group
+DeleteAPIMulticastGroupsQueueByMulticastGroupID flushes queue flushes the multicast group queue
 */
-func (a *Client) RemoveMultiDevice(params *RemoveMultiDeviceParams, opts ...ClientOption) (*RemoveMultiDeviceOK, error) {
+func (a *Client) DeleteAPIMulticastGroupsQueueByMulticastGroupID(params *DeleteAPIMulticastGroupsQueueByMulticastGroupIDParams, opts ...ClientOption) (*DeleteAPIMulticastGroupsQueueByMulticastGroupIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewRemoveMultiDeviceParams()
+		params = NewDeleteAPIMulticastGroupsQueueByMulticastGroupIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "RemoveMultiDevice",
-		Method:             "POST",
-		PathPattern:        "/api/multicast-groups/{multicastGroupID}/deletedevices",
+		ID:                 "delete_api_multicast-groups_queue_by_multicastGroupID",
+		Method:             "DELETE",
+		PathPattern:        "/api/multicast-groups/{multicastGroupID}/queue",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &RemoveMultiDeviceReader{formats: a.formats},
+		Reader:             &DeleteAPIMulticastGroupsQueueByMulticastGroupIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -409,13 +189,393 @@ func (a *Client) RemoveMultiDevice(params *RemoveMultiDeviceParams, opts ...Clie
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*RemoveMultiDeviceOK)
+	success, ok := result.(*DeleteAPIMulticastGroupsQueueByMulticastGroupIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for RemoveMultiDevice: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_multicast-groups_queue_by_multicastGroupID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIMulticastGroups lists lists the available multicast groups
+*/
+func (a *Client) GetAPIMulticastGroups(params *GetAPIMulticastGroupsParams, opts ...ClientOption) (*GetAPIMulticastGroupsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIMulticastGroupsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_multicast-groups",
+		Method:             "GET",
+		PathPattern:        "/api/multicast-groups",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIMulticastGroupsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIMulticastGroupsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_multicast-groups: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIMulticastGroupsByID gets returns a multicast group given an ID
+*/
+func (a *Client) GetAPIMulticastGroupsByID(params *GetAPIMulticastGroupsByIDParams, opts ...ClientOption) (*GetAPIMulticastGroupsByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIMulticastGroupsByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_multicast-groups_by_id",
+		Method:             "GET",
+		PathPattern:        "/api/multicast-groups/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIMulticastGroupsByIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIMulticastGroupsByIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_multicast-groups_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIMulticastGroupsDevicesByMulticastGroupID adds device adds the given device to the multicast group
+*/
+func (a *Client) GetAPIMulticastGroupsDevicesByMulticastGroupID(params *GetAPIMulticastGroupsDevicesByMulticastGroupIDParams, opts ...ClientOption) (*GetAPIMulticastGroupsDevicesByMulticastGroupIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIMulticastGroupsDevicesByMulticastGroupIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_multicast-groups_devices_by_multicastGroupID",
+		Method:             "GET",
+		PathPattern:        "/api/multicast-groups/{multicastGroupID}/devices",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIMulticastGroupsDevicesByMulticastGroupIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIMulticastGroupsDevicesByMulticastGroupIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_multicast-groups_devices_by_multicastGroupID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIMulticastGroupsQueueByMulticastGroupID lists queue lists the items in the multicast group queue
+*/
+func (a *Client) GetAPIMulticastGroupsQueueByMulticastGroupID(params *GetAPIMulticastGroupsQueueByMulticastGroupIDParams, opts ...ClientOption) (*GetAPIMulticastGroupsQueueByMulticastGroupIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIMulticastGroupsQueueByMulticastGroupIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_multicast-groups_queue_by_multicastGroupID",
+		Method:             "GET",
+		PathPattern:        "/api/multicast-groups/{multicastGroupID}/queue",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIMulticastGroupsQueueByMulticastGroupIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIMulticastGroupsQueueByMulticastGroupIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_multicast-groups_queue_by_multicastGroupID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIMulticastGroups creates creates the given multicast group
+*/
+func (a *Client) PostAPIMulticastGroups(params *PostAPIMulticastGroupsParams, opts ...ClientOption) (*PostAPIMulticastGroupsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIMulticastGroupsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_multicast-groups",
+		Method:             "POST",
+		PathPattern:        "/api/multicast-groups",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIMulticastGroupsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIMulticastGroupsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_multicast-groups: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIMulticastGroupsDeletedevicesByMulticastGroupID removes device removes the given device from the multicast group
+*/
+func (a *Client) PostAPIMulticastGroupsDeletedevicesByMulticastGroupID(params *PostAPIMulticastGroupsDeletedevicesByMulticastGroupIDParams, opts ...ClientOption) (*PostAPIMulticastGroupsDeletedevicesByMulticastGroupIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIMulticastGroupsDeletedevicesByMulticastGroupIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_multicast-groups_deletedevices_by_multicastGroupID",
+		Method:             "POST",
+		PathPattern:        "/api/multicast-groups/{multicastGroupID}/deletedevices",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIMulticastGroupsDeletedevicesByMulticastGroupIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIMulticastGroupsDeletedevicesByMulticastGroupIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_multicast-groups_deletedevices_by_multicastGroupID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIMulticastGroupsDeviceByMulticastGroupID adds device adds the given device to the multicast group
+*/
+func (a *Client) PostAPIMulticastGroupsDeviceByMulticastGroupID(params *PostAPIMulticastGroupsDeviceByMulticastGroupIDParams, opts ...ClientOption) (*PostAPIMulticastGroupsDeviceByMulticastGroupIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIMulticastGroupsDeviceByMulticastGroupIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_multicast-groups_device_by_multicastGroupID",
+		Method:             "POST",
+		PathPattern:        "/api/multicast-groups/{multicastGroupID}/device",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIMulticastGroupsDeviceByMulticastGroupIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIMulticastGroupsDeviceByMulticastGroupIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_multicast-groups_device_by_multicastGroupID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIMulticastGroupsDevicesByMulticastGroupID adds multi device adds the given device to the multicast group
+*/
+func (a *Client) PostAPIMulticastGroupsDevicesByMulticastGroupID(params *PostAPIMulticastGroupsDevicesByMulticastGroupIDParams, opts ...ClientOption) (*PostAPIMulticastGroupsDevicesByMulticastGroupIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIMulticastGroupsDevicesByMulticastGroupIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_multicast-groups_devices_by_multicastGroupID",
+		Method:             "POST",
+		PathPattern:        "/api/multicast-groups/{multicastGroupID}/devices",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIMulticastGroupsDevicesByMulticastGroupIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIMulticastGroupsDevicesByMulticastGroupIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_multicast-groups_devices_by_multicastGroupID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIMulticastGroupsQueueByMulticastQueueItemMulticastGroupID enqueues adds the given item to the multicast queue
+*/
+func (a *Client) PostAPIMulticastGroupsQueueByMulticastQueueItemMulticastGroupID(params *PostAPIMulticastGroupsQueueByMulticastQueueItemMulticastGroupIDParams, opts ...ClientOption) (*PostAPIMulticastGroupsQueueByMulticastQueueItemMulticastGroupIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIMulticastGroupsQueueByMulticastQueueItemMulticastGroupIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_multicast-groups_queue_by_multicastQueueItem.multicastGroupID",
+		Method:             "POST",
+		PathPattern:        "/api/multicast-groups/{multicastQueueItem.multicastGroupID}/queue",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIMulticastGroupsQueueByMulticastQueueItemMulticastGroupIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIMulticastGroupsQueueByMulticastQueueItemMulticastGroupIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_multicast-groups_queue_by_multicastQueueItem.multicastGroupID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIMulticastGroupsByMulticastGroupID updates updates the given multicast group
+*/
+func (a *Client) PutAPIMulticastGroupsByMulticastGroupID(params *PutAPIMulticastGroupsByMulticastGroupIDParams, opts ...ClientOption) (*PutAPIMulticastGroupsByMulticastGroupIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIMulticastGroupsByMulticastGroupIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_multicast-groups_by_multicastGroup.id",
+		Method:             "PUT",
+		PathPattern:        "/api/multicast-groups/{multicastGroup.id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PutAPIMulticastGroupsByMulticastGroupIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PutAPIMulticastGroupsByMulticastGroupIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for put_api_multicast-groups_by_multicastGroup.id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

@@ -56,28 +56,28 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	MAInfo(params *MAInfoParams, opts ...ClientOption) (*MAInfoOK, error)
+	GetAPIMsactility(params *GetAPIMsactilityParams, opts ...ClientOption) (*GetAPIMsactilityOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-MAInfo m a info API
+GetAPIMsactility get api msactility API
 */
-func (a *Client) MAInfo(params *MAInfoParams, opts ...ClientOption) (*MAInfoOK, error) {
+func (a *Client) GetAPIMsactility(params *GetAPIMsactilityParams, opts ...ClientOption) (*GetAPIMsactilityOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewMAInfoParams()
+		params = NewGetAPIMsactilityParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "MAInfo",
+		ID:                 "get_api_msactility",
 		Method:             "GET",
 		PathPattern:        "/api/msactility",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &MAInfoReader{formats: a.formats},
+		Reader:             &GetAPIMsactilityReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -89,13 +89,13 @@ func (a *Client) MAInfo(params *MAInfoParams, opts ...ClientOption) (*MAInfoOK, 
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*MAInfoOK)
+	success, ok := result.(*GetAPIMsactilityOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for MAInfo: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_msactility: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

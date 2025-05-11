@@ -56,9 +56,129 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
+	DeleteAPIUrbridge(params *DeleteAPIUrbridgeParams, opts ...ClientOption) (*DeleteAPIUrbridgeOK, error)
+
+	GetAPIUrbridge(params *GetAPIUrbridgeParams, opts ...ClientOption) (*GetAPIUrbridgeOK, error)
+
+	PostAPIUrbridge(params *PostAPIUrbridgeParams, opts ...ClientOption) (*PostAPIUrbridgeOK, error)
+
 	PutAPIUrbridge(params *PutAPIUrbridgeParams, opts ...ClientOption) (*PutAPIUrbridgeOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
+}
+
+/*
+DeleteAPIUrbridge deletes deletes the bridge matching the given id
+*/
+func (a *Client) DeleteAPIUrbridge(params *DeleteAPIUrbridgeParams, opts ...ClientOption) (*DeleteAPIUrbridgeOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewDeleteAPIUrbridgeParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "delete_api_urbridge",
+		Method:             "DELETE",
+		PathPattern:        "/api/urbridge",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &DeleteAPIUrbridgeReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*DeleteAPIUrbridgeOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for delete_api_urbridge: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIUrbridge lists lists the available profiles
+*/
+func (a *Client) GetAPIUrbridge(params *GetAPIUrbridgeParams, opts ...ClientOption) (*GetAPIUrbridgeOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIUrbridgeParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_urbridge",
+		Method:             "GET",
+		PathPattern:        "/api/urbridge",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIUrbridgeReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIUrbridgeOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_urbridge: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIUrbridge creates creates the given bridge
+*/
+func (a *Client) PostAPIUrbridge(params *PostAPIUrbridgeParams, opts ...ClientOption) (*PostAPIUrbridgeOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIUrbridgeParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_urbridge",
+		Method:             "POST",
+		PathPattern:        "/api/urbridge",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIUrbridgeReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIUrbridgeOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_urbridge: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
@@ -70,12 +190,12 @@ func (a *Client) PutAPIUrbridge(params *PutAPIUrbridgeParams, opts ...ClientOpti
 		params = NewPutAPIUrbridgeParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "PutAPIUrbridge",
+		ID:                 "put_api_urbridge",
 		Method:             "PUT",
 		PathPattern:        "/api/urbridge",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
 		Reader:             &PutAPIUrbridgeReader{formats: a.formats},
 		Context:            params.Context,
@@ -95,7 +215,7 @@ func (a *Client) PutAPIUrbridge(params *PutAPIUrbridgeParams, opts ...ClientOpti
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PutAPIUrbridge: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for put_api_urbridge: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

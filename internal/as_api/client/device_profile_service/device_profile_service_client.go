@@ -56,28 +56,36 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	PutAPIDeviceProfilesDeviceProfileDeviceProfileID(params *PutAPIDeviceProfilesDeviceProfileDeviceProfileIDParams, opts ...ClientOption) (*PutAPIDeviceProfilesDeviceProfileDeviceProfileIDOK, error)
+	DeleteAPIDeviceProfilesByDeviceProfileID(params *DeleteAPIDeviceProfilesByDeviceProfileIDParams, opts ...ClientOption) (*DeleteAPIDeviceProfilesByDeviceProfileIDOK, error)
+
+	GetAPIDeviceProfiles(params *GetAPIDeviceProfilesParams, opts ...ClientOption) (*GetAPIDeviceProfilesOK, error)
+
+	GetAPIDeviceProfilesByDeviceProfileID(params *GetAPIDeviceProfilesByDeviceProfileIDParams, opts ...ClientOption) (*GetAPIDeviceProfilesByDeviceProfileIDOK, error)
+
+	PostAPIDeviceProfiles(params *PostAPIDeviceProfilesParams, opts ...ClientOption) (*PostAPIDeviceProfilesOK, error)
+
+	PutAPIDeviceProfilesByDeviceProfileDeviceProfileID(params *PutAPIDeviceProfilesByDeviceProfileDeviceProfileIDParams, opts ...ClientOption) (*PutAPIDeviceProfilesByDeviceProfileDeviceProfileIDOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-PutAPIDeviceProfilesDeviceProfileDeviceProfileID updates updates the given device profile
+DeleteAPIDeviceProfilesByDeviceProfileID deletes deletes the device profile matching the given id
 */
-func (a *Client) PutAPIDeviceProfilesDeviceProfileDeviceProfileID(params *PutAPIDeviceProfilesDeviceProfileDeviceProfileIDParams, opts ...ClientOption) (*PutAPIDeviceProfilesDeviceProfileDeviceProfileIDOK, error) {
+func (a *Client) DeleteAPIDeviceProfilesByDeviceProfileID(params *DeleteAPIDeviceProfilesByDeviceProfileIDParams, opts ...ClientOption) (*DeleteAPIDeviceProfilesByDeviceProfileIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewPutAPIDeviceProfilesDeviceProfileDeviceProfileIDParams()
+		params = NewDeleteAPIDeviceProfilesByDeviceProfileIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "PutAPIDeviceProfilesDeviceProfileDeviceProfileID",
-		Method:             "PUT",
-		PathPattern:        "/api/device-profiles/{deviceProfile.deviceProfileID}",
+		ID:                 "delete_api_device-profiles_by_deviceProfileID",
+		Method:             "DELETE",
+		PathPattern:        "/api/device-profiles/{deviceProfileID}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &PutAPIDeviceProfilesDeviceProfileDeviceProfileIDReader{formats: a.formats},
+		Reader:             &DeleteAPIDeviceProfilesByDeviceProfileIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -89,13 +97,165 @@ func (a *Client) PutAPIDeviceProfilesDeviceProfileDeviceProfileID(params *PutAPI
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*PutAPIDeviceProfilesDeviceProfileDeviceProfileIDOK)
+	success, ok := result.(*DeleteAPIDeviceProfilesByDeviceProfileIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PutAPIDeviceProfilesDeviceProfileDeviceProfileID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_device-profiles_by_deviceProfileID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIDeviceProfiles lists lists the available device profiles
+*/
+func (a *Client) GetAPIDeviceProfiles(params *GetAPIDeviceProfilesParams, opts ...ClientOption) (*GetAPIDeviceProfilesOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIDeviceProfilesParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_device-profiles",
+		Method:             "GET",
+		PathPattern:        "/api/device-profiles",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIDeviceProfilesReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIDeviceProfilesOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_device-profiles: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIDeviceProfilesByDeviceProfileID gets returns the device profile matching the given id
+*/
+func (a *Client) GetAPIDeviceProfilesByDeviceProfileID(params *GetAPIDeviceProfilesByDeviceProfileIDParams, opts ...ClientOption) (*GetAPIDeviceProfilesByDeviceProfileIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIDeviceProfilesByDeviceProfileIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_device-profiles_by_deviceProfileID",
+		Method:             "GET",
+		PathPattern:        "/api/device-profiles/{deviceProfileID}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIDeviceProfilesByDeviceProfileIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIDeviceProfilesByDeviceProfileIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_device-profiles_by_deviceProfileID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIDeviceProfiles creates creates the given device profile
+*/
+func (a *Client) PostAPIDeviceProfiles(params *PostAPIDeviceProfilesParams, opts ...ClientOption) (*PostAPIDeviceProfilesOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIDeviceProfilesParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_device-profiles",
+		Method:             "POST",
+		PathPattern:        "/api/device-profiles",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIDeviceProfilesReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIDeviceProfilesOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_device-profiles: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIDeviceProfilesByDeviceProfileDeviceProfileID updates updates the given device profile
+*/
+func (a *Client) PutAPIDeviceProfilesByDeviceProfileDeviceProfileID(params *PutAPIDeviceProfilesByDeviceProfileDeviceProfileIDParams, opts ...ClientOption) (*PutAPIDeviceProfilesByDeviceProfileDeviceProfileIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIDeviceProfilesByDeviceProfileDeviceProfileIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_device-profiles_by_deviceProfile.deviceProfileID",
+		Method:             "PUT",
+		PathPattern:        "/api/device-profiles/{deviceProfile.deviceProfileID}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PutAPIDeviceProfilesByDeviceProfileDeviceProfileIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PutAPIDeviceProfilesByDeviceProfileDeviceProfileIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for put_api_device-profiles_by_deviceProfile.deviceProfileID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

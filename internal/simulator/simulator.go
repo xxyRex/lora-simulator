@@ -22,6 +22,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/brocaar/lora-simulator/internal/as"
+	"github.com/brocaar/lora-simulator/internal/as_api/models"
 	"github.com/brocaar/lora-simulator/internal/config"
 	device "github.com/brocaar/lora-simulator/internal/device"
 	"github.com/brocaar/lora-simulator/internal/gateway"
@@ -38,6 +39,7 @@ const (
 	DEVICES_IMPORT_FILE        = "config/devices_import.csv"
 	FUOTA_REQ_FILE             = "api/fuota_req.json"
 	MODBUS_SERVER_CREATE_FILE  = "api/modbus_server_create.json"
+	DEVICE_STORED_INFO_FILE    = "temp/device_stored_info.json"
 )
 
 // Start starts the simulator.
@@ -75,7 +77,7 @@ func Start(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 			deviceAppKeys:        make(map[lorawan.EUI64]lorawan.AES128Key),
 			eventTopicTemplate:   c.Gateway.EventTopicTemplate,
 			commandTopicTemplate: c.Gateway.CommandTopicTemplate,
-			euiCodecMap:          make(map[lorawan.EUI64]as.PayloadCodecItem),
+			euiCodecMap:          make(map[lorawan.EUI64]*models.APIPayloadCodecItem),
 		}
 
 		go sim.start()
@@ -111,11 +113,11 @@ type Simulation struct {
 	eventTopicTemplate   string
 	commandTopicTemplate string
 
-	deviceProfiles []as.ProfileResultJson
-	applications   []as.ApplicationJson
-	payloadCodecs  []as.PayloadCodecItem
+	deviceProfiles []*models.APIDeviceProfileMeta
+	applications   []*models.APIAppListItem
+	payloadCodecs  []*models.APIPayloadCodecItem
 
-	euiCodecMap map[lorawan.EUI64]as.PayloadCodecItem
+	euiCodecMap map[lorawan.EUI64]*models.APIPayloadCodecItem
 }
 
 func (s *Simulation) start() {
@@ -146,10 +148,6 @@ func (s *Simulation) init() error {
 		as.RestartAppServer()
 	}
 
-	if err := as.DeleteAllDevices(); err != nil {
-		return err
-	}
-
 	if err := s.setupGateways(); err != nil {
 		return err
 	}
@@ -166,19 +164,29 @@ func (s *Simulation) init() error {
 		return err
 	}
 
+	if config.C.ChirpStack.API.UseNewDevice {
+		if err := as.DeleteAllDevices(); err != nil {
+			return err
+		}
+
+		if err := s.createDevices(); err != nil {
+			return err
+		}
+
+		if err := s.setupBACnet(); err != nil {
+			return err
+		}
+
+		if err := s.setupModbus(); err != nil {
+			return err
+		}
+
+		go s.setupFuota()
+	}
+
 	if err := s.setupDevices(); err != nil {
 		return err
 	}
-
-	if err := s.setupBACnet(); err != nil {
-		return err
-	}
-
-	if err := s.setupModbus(); err != nil {
-		return err
-	}
-
-	go s.setupFuota()
 
 	return nil
 }
@@ -206,6 +214,11 @@ func (s *Simulation) tearDown() error {
 }
 
 func (s *Simulation) runSimulation() error {
+	if config.C.ChirpStack.API.WaitDeviceStableTime != 0 {
+		log.Infof("wait device stable time: %v", config.C.ChirpStack.API.WaitDeviceStableTime)
+		time.Sleep(config.C.ChirpStack.API.WaitDeviceStableTime)
+	}
+
 	var gateways []*gateway.Gateway
 	var devices []*device.Device
 
@@ -260,6 +273,21 @@ func (s *Simulation) runSimulation() error {
 			otaaDuration = time.Duration(mrand.Int63n(int64(s.activationTime)))
 		}
 
+		deviceResult := []*models.APIDeviceItem{}
+		if !config.C.ChirpStack.API.UseNewDevice {
+			for i := 0; i < s.deviceCount; i += 25 {
+				ret, err := as.GetDevices(i, 25)
+				if err != nil {
+					return errors.Wrap(err, "get devices error")
+				}
+				deviceResult = append(deviceResult, ret...)
+			}
+		}
+		devRetMap := make(map[string]*models.APIDeviceItem)
+		for i := range deviceResult {
+			devRetMap[strings.ToLower(deviceResult[i].DevEUI)] = deviceResult[i]
+		}
+
 		d, err := device.NewDevice(ctx, &wg,
 			device.WithDevEUI(devEUI),
 			device.WithAppKey(appKey),
@@ -280,6 +308,7 @@ func (s *Simulation) runSimulation() error {
 				},
 			}),
 			device.WithPayloadCodec(s.euiCodecMap[devEUI]),
+			device.WithDeviceStoredInfo(devRetMap[strings.ToLower(devEUI.String())]),
 		)
 		if err != nil {
 			return errors.Wrap(err, "new device error")
@@ -527,9 +556,7 @@ func generateDevices(num int) error {
 	return nil
 }
 
-func (s *Simulation) setupDevices() error {
-	log.Info("simulator: init devices")
-
+func (s *Simulation) createDevices() error {
 	if err := generateDevices(s.deviceCount); err != nil {
 		panic(err)
 	}
@@ -543,7 +570,7 @@ func (s *Simulation) setupDevices() error {
 		profileID := ""
 		for _, p := range s.deviceProfiles {
 			if p.Name == ldcfg.DeviceProfile {
-				profileID = p.Profile.ProfileID
+				profileID = p.DeviceProfileID
 				break
 			}
 		}
@@ -565,11 +592,9 @@ func (s *Simulation) setupDevices() error {
 		}
 
 		payloadCodecID := ""
-		var codec as.PayloadCodecItem
 		for _, c := range s.payloadCodecs {
 			if c.Name == ldcfg.PayloadCodec {
 				payloadCodecID = c.ID
-				codec = c
 				break
 			}
 		}
@@ -578,18 +603,39 @@ func (s *Simulation) setupDevices() error {
 			return errors.Errorf("can not find payload codec: %s", ldcfg.PayloadCodec)
 		}
 
-		eui := ldcfg.DevEUI
-		appKey := ldcfg.AppKey
-		name := ldcfg.Name
-
-		err := as.CreateDevices(eui, name, profileID, appKey, payloadCodecID, applicationID)
+		err := as.CreateDevices(ldcfg.DevEUI, ldcfg.Name, profileID, ldcfg.AppKey, payloadCodecID, applicationID)
 
 		if err != nil {
 			log.Error(err)
 		}
+	}
+
+	return nil
+}
+
+func (s *Simulation) setupDevices() error {
+	log.Info("simulator: init devices")
+
+	ret, records := as.LoadLoRaWANDevCfg(DEVICES_IMPORT_FILE, 1)
+	if !ret {
+		return errors.Errorf("failed to setupDevices")
+	}
+
+	for _, ldcfg := range records {
+
+		eui := ldcfg.DevEUI
+		appKey := ldcfg.AppKey
 
 		var devEUI lorawan.EUI64
 		var appKeyAES lorawan.AES128Key
+
+		var codec *models.APIPayloadCodecItem
+		for _, c := range s.payloadCodecs {
+			if c.Name == ldcfg.PayloadCodec {
+				codec = c
+				break
+			}
+		}
 
 		devEUI.UnmarshalText([]byte(eui))
 		appKeyAES.UnmarshalText([]byte(appKey))
@@ -676,7 +722,7 @@ func (s *Simulation) setupBACnet() error {
 		}
 
 		for k := range objects.Data {
-			newObjs := []as.BACnetObject{}
+			newObjs := []*models.APIPCO{}
 			for _, obj := range objects.Data[k].Objects {
 				if _, exists := testDataKeys[obj.LoraName]; exists {
 					newObjs = append(newObjs, obj)
@@ -709,7 +755,7 @@ func (s *Simulation) setupFuota() error {
 		return err
 	}
 
-	deleteIDs := []int64{}
+	deleteIDs := []int32{}
 	for _, task := range fuotaTasksRes.Tasks {
 		deleteIDs = append(deleteIDs, task.ID)
 	}
@@ -734,7 +780,7 @@ func (s *Simulation) setupFuota() error {
 	}
 	defer jsonFile.Close()
 
-	var fuotaTaskReqTemplate as.FuotaTaskReq
+	var fuotaTaskReqTemplate *models.APIFuotaTask
 	if err := json.NewDecoder(jsonFile).Decode(&fuotaTaskReqTemplate); err != nil {
 		return err
 	}
@@ -751,16 +797,16 @@ func (s *Simulation) setupFuota() error {
 	for _, deveui := range allDeveuiList {
 		deveuiList = append(deveuiList, deveui)
 		if len(deveuiList) == config.C.ChirpStack.API.FuotaTaskDeviceCount {
-			var fuotaTaskReq as.FuotaTaskReq = fuotaTaskReqTemplate
-			fuotaTaskReq.FuotaTask.Name = fuotaTaskReq.FuotaTask.Name + "-" + strconv.Itoa(taskCount)
-			fuotaTaskReq.FuotaTask.Deveui = deveuiList
+			var fuotaTaskReq *models.APIFuotaTask = fuotaTaskReqTemplate
+			fuotaTaskReq.Name = fuotaTaskReq.Name + "-" + strconv.Itoa(taskCount)
+			fuotaTaskReq.Deveui = deveuiList
 			err = as.CreateFuotaTask(fuotaTaskReq)
 			if err != nil {
 				log.Error(err)
 				return err
 			}
 			taskCount++
-			log.Infof("setupFuota created fuota task: %s, deveuis: %v", fuotaTaskReq.FuotaTask.Name, deveuiList)
+			log.Infof("setupFuota created fuota task: %s, deveuis: %v", fuotaTaskReq.Name, deveuiList)
 			deveuiList = []string{}
 		}
 	}
@@ -823,28 +869,29 @@ func (s *Simulation) setupModbus() error {
 		}
 	}
 
-	jsonFile, err := os.Open(MODBUS_SERVER_CREATE_FILE)
-	if err != nil {
-		return err
-	}
-	defer jsonFile.Close()
-
-	var originModbusServerCreateReq as.ModbusServerCreateReq
-	if err := json.NewDecoder(jsonFile).Decode(&originModbusServerCreateReq); err != nil {
-		return err
-	}
-
-	log.Infof("modbus server create req: %v", originModbusServerCreateReq)
-
 	for k := 0; k < 10; k++ {
-		modbusServerCreateReq := originModbusServerCreateReq
-		modbusServerCreateReq.Values[0].Servers[0].Port = 10000 + int64(k)
-		modbusServerCreateReq.Values[0].Servers[0].SlaveID = int64(k)
-		modbusServerCreateReq.Values[0].Servers[0].Name = "test" + strconv.Itoa(k)
-		modbusServerCreateReq.Values[0].Servers[0].Description = "test" + strconv.Itoa(k)
-		modbusServerCreateReq.Values[0].Servers[0].Interface = "eth 0"
-		modbusServerCreateReq.Values[0].Servers[0].ConnectType = "modbus_tcp"
-		modbusServerCreateReq.Values[0].Servers[0].Enable = 1
+		modbusServerCreateReq := as.ModbusServerCreateReq{
+			ID:       int64(k + 1),
+			Execute:  int64(1),
+			Core:     "yruo_modbus_slave",
+			Function: "add",
+			Values: []as.ModbusServerCreateReqValue{
+				{
+					Base: "server",
+					Servers: []as.ModbusServerCreateReqServer{
+						{
+							Enable:      1,
+							Interface:   "eth 0",
+							ConnectType: "modbus_tcp",
+							Name:        "test" + strconv.Itoa(k),
+							Port:        10000 + int64(k),
+							SlaveID:     int64(k),
+							Description: "test" + strconv.Itoa(k),
+						},
+					},
+				},
+			},
+		}
 
 		err = as.CreateModbusServer(modbusServerCreateReq)
 		if err != nil {
@@ -889,9 +936,9 @@ func (s *Simulation) setupModbus() error {
 
 	log.Infof("modbus server ids: %v", serverIDs)
 
-	modbusObjects, err := as.GetAllAvaliableModbusObjects(as.GetAllAvaliableModbusObjectsDataReq{
+	modbusObjects, err := as.GetAllAvaliableModbusObjects(&models.APIGetModbusObjectRequest{
 		ServerID: "0",
-		Limit:    math.MaxInt32,
+		Limit:    int32(1),
 		Offset:   0,
 		Search:   "",
 	})
@@ -903,12 +950,13 @@ func (s *Simulation) setupModbus() error {
 
 	const MAX_ADD_DATUM = 30
 
+	serverIdIndex := 0
 	for i := 0; i < int(modbusObjects.Total); i += MAX_ADD_DATUM {
 		log.Infof("add from %d to %d", i, i+MAX_ADD_DATUM)
-		modbusObjects, err := as.GetAllAvaliableModbusObjects(as.GetAllAvaliableModbusObjectsDataReq{
-			ServerID: "0",
-			Limit:    MAX_ADD_DATUM,
-			Offset:   0,
+		modbusObjects, err := as.GetAllAvaliableModbusObjects(&models.APIGetModbusObjectRequest{
+			ServerID: serverIDs[serverIdIndex],
+			Limit:    int32(MAX_ADD_DATUM),
+			Offset:   int32(i),
 			Search:   "",
 		})
 
@@ -934,7 +982,7 @@ func (s *Simulation) setupModbus() error {
 		}
 
 		for k := range modbusObjects.Data {
-			newObjs := []as.ModbusObject{}
+			newObjs := []*models.APIObject{}
 			for _, o := range modbusObjects.Data[k].Objects {
 				if _, exists := testDataKeys[o.LoraName]; exists {
 					newObjs = append(newObjs, o)
@@ -943,8 +991,8 @@ func (s *Simulation) setupModbus() error {
 			modbusObjects.Data[k].Objects = newObjs
 		}
 
-		err = as.AddModbusDatum(as.AddModbusDatumReq{
-			ServerID: serverIDs[i%len(serverIDs)],
+		err = as.AddModbusDatum(&models.APIAddModbusObjectRequest{
+			ServerID: serverIDs[serverIdIndex],
 			Data:     modbusObjects.Data,
 		})
 
@@ -954,6 +1002,8 @@ func (s *Simulation) setupModbus() error {
 		}
 
 		log.Infof("added %d modbus datum", len(modbusObjects.Data))
+		serverIdIndex++
+		serverIdIndex = serverIdIndex % len(serverIDs)
 	}
 
 	return nil

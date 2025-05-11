@@ -56,34 +56,32 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	GetApp(params *GetAppParams, opts ...ClientOption) (*GetAppOK, error)
+	GetAPIApplicationsByName(params *GetAPIApplicationsByNameParams, opts ...ClientOption) (*GetAPIApplicationsByNameOK, error)
 
-	ListAllApps(params *ListAllAppsParams, opts ...ClientOption) (*ListAllAppsOK, error)
+	GetAPIDevicesByDevName(params *GetAPIDevicesByDevNameParams, opts ...ClientOption) (*GetAPIDevicesByDevNameOK, error)
 
-	ListAllDev(params *ListAllDevParams, opts ...ClientOption) (*ListAllDevOK, error)
-
-	StreamDeviceData(params *StreamDeviceDataParams, opts ...ClientOption) (*StreamDeviceDataOK, error)
+	GetAPIDevicesDataByDevEUI(params *GetAPIDevicesDataByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesDataByDevEUIOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-GetApp gets app returns the requested application
+GetAPIApplicationsByName gets app returns the requested application
 */
-func (a *Client) GetApp(params *GetAppParams, opts ...ClientOption) (*GetAppOK, error) {
+func (a *Client) GetAPIApplicationsByName(params *GetAPIApplicationsByNameParams, opts ...ClientOption) (*GetAPIApplicationsByNameOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetAppParams()
+		params = NewGetAPIApplicationsByNameParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetApp",
+		ID:                 "get_api_applications_by_name",
 		Method:             "GET",
 		PathPattern:        "/api/applications/{name}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetAppReader{formats: a.formats},
+		Reader:             &GetAPIApplicationsByNameReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -95,33 +93,33 @@ func (a *Client) GetApp(params *GetAppParams, opts ...ClientOption) (*GetAppOK, 
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetAppOK)
+	success, ok := result.(*GetAPIApplicationsByNameOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetApp: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_applications_by_name: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-ListAllApps lists all apps lists the available applications
+GetAPIDevicesByDevName gets device returns the device matching the given dev name
 */
-func (a *Client) ListAllApps(params *ListAllAppsParams, opts ...ClientOption) (*ListAllAppsOK, error) {
+func (a *Client) GetAPIDevicesByDevName(params *GetAPIDevicesByDevNameParams, opts ...ClientOption) (*GetAPIDevicesByDevNameOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewListAllAppsParams()
+		params = NewGetAPIDevicesByDevNameParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "ListAllApps",
+		ID:                 "get_api_devices_by_devName",
 		Method:             "GET",
-		PathPattern:        "/api/applications",
+		PathPattern:        "/api/devices/{devName}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &ListAllAppsReader{formats: a.formats},
+		Reader:             &GetAPIDevicesByDevNameReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -133,71 +131,33 @@ func (a *Client) ListAllApps(params *ListAllAppsParams, opts ...ClientOption) (*
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*ListAllAppsOK)
+	success, ok := result.(*GetAPIDevicesByDevNameOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for ListAllApps: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_devices_by_devName: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-ListAllDev lists all dev lists the available devices
+GetAPIDevicesDataByDevEUI streams device data stream the device data uplink payloads a c ks joins errors
 */
-func (a *Client) ListAllDev(params *ListAllDevParams, opts ...ClientOption) (*ListAllDevOK, error) {
+func (a *Client) GetAPIDevicesDataByDevEUI(params *GetAPIDevicesDataByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesDataByDevEUIOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewListAllDevParams()
+		params = NewGetAPIDevicesDataByDevEUIParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "ListAllDev",
-		Method:             "GET",
-		PathPattern:        "/api/devices",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &ListAllDevReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*ListAllDevOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for ListAllDev: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-StreamDeviceData streams device data stream the device data uplink payloads a c ks joins errors
-*/
-func (a *Client) StreamDeviceData(params *StreamDeviceDataParams, opts ...ClientOption) (*StreamDeviceDataOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewStreamDeviceDataParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "StreamDeviceData",
+		ID:                 "get_api_devices_data_by_devEUI",
 		Method:             "GET",
 		PathPattern:        "/api/devices/{devEUI}/data",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &StreamDeviceDataReader{formats: a.formats},
+		Reader:             &GetAPIDevicesDataByDevEUIReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -209,13 +169,13 @@ func (a *Client) StreamDeviceData(params *StreamDeviceDataParams, opts ...Client
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*StreamDeviceDataOK)
+	success, ok := result.(*GetAPIDevicesDataByDevEUIOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for StreamDeviceData: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_devices_data_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

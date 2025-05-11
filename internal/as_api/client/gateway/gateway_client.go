@@ -56,110 +56,42 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	GetLastPing(params *GetLastPingParams, opts ...ClientOption) (*GetLastPingOK, error)
+	DeleteAPIGatewaysByMac(params *DeleteAPIGatewaysByMacParams, opts ...ClientOption) (*DeleteAPIGatewaysByMacOK, error)
 
-	GetStats(params *GetStatsParams, opts ...ClientOption) (*GetStatsOK, error)
+	GetAPIGateways(params *GetAPIGatewaysParams, opts ...ClientOption) (*GetAPIGatewaysOK, error)
 
-	PutAPIGatewaysMac(params *PutAPIGatewaysMacParams, opts ...ClientOption) (*PutAPIGatewaysMacOK, error)
+	GetAPIGatewaysByMac(params *GetAPIGatewaysByMacParams, opts ...ClientOption) (*GetAPIGatewaysByMacOK, error)
 
-	StreamFrameLogs(params *StreamFrameLogsParams, opts ...ClientOption) (*StreamFrameLogsOK, error)
+	GetAPIGatewaysFramesByMac(params *GetAPIGatewaysFramesByMacParams, opts ...ClientOption) (*GetAPIGatewaysFramesByMacOK, error)
+
+	GetAPIGatewaysPingsLastByMac(params *GetAPIGatewaysPingsLastByMacParams, opts ...ClientOption) (*GetAPIGatewaysPingsLastByMacOK, error)
+
+	GetAPIGatewaysStatsByMac(params *GetAPIGatewaysStatsByMacParams, opts ...ClientOption) (*GetAPIGatewaysStatsByMacOK, error)
+
+	PostAPIGateways(params *PostAPIGatewaysParams, opts ...ClientOption) (*PostAPIGatewaysOK, error)
+
+	PutAPIGatewaysByMac(params *PutAPIGatewaysByMacParams, opts ...ClientOption) (*PutAPIGatewaysByMacOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-GetLastPing gets last ping returns the last emitted ping and gateways receiving this ping
+DeleteAPIGatewaysByMac deletes deletes the gateway matching the given mac address
 */
-func (a *Client) GetLastPing(params *GetLastPingParams, opts ...ClientOption) (*GetLastPingOK, error) {
+func (a *Client) DeleteAPIGatewaysByMac(params *DeleteAPIGatewaysByMacParams, opts ...ClientOption) (*DeleteAPIGatewaysByMacOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetLastPingParams()
+		params = NewDeleteAPIGatewaysByMacParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetLastPing",
-		Method:             "GET",
-		PathPattern:        "/api/gateways/{mac}/pings/last",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetLastPingReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*GetLastPingOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetLastPing: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-GetStats gets stats lists the gateway stats given the query parameters
-*/
-func (a *Client) GetStats(params *GetStatsParams, opts ...ClientOption) (*GetStatsOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetStatsParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "GetStats",
-		Method:             "GET",
-		PathPattern:        "/api/gateways/{mac}/stats",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetStatsReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*GetStatsOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetStats: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-PutAPIGatewaysMac updates updates the gateway matching the given mac address
-*/
-func (a *Client) PutAPIGatewaysMac(params *PutAPIGatewaysMacParams, opts ...ClientOption) (*PutAPIGatewaysMacOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewPutAPIGatewaysMacParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "PutAPIGatewaysMac",
-		Method:             "PUT",
+		ID:                 "delete_api_gateways_by_mac",
+		Method:             "DELETE",
 		PathPattern:        "/api/gateways/{mac}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &PutAPIGatewaysMacReader{formats: a.formats},
+		Reader:             &DeleteAPIGatewaysByMacReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -171,33 +103,109 @@ func (a *Client) PutAPIGatewaysMac(params *PutAPIGatewaysMacParams, opts ...Clie
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*PutAPIGatewaysMacOK)
+	success, ok := result.(*DeleteAPIGatewaysByMacOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PutAPIGatewaysMac: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_gateways_by_mac: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-StreamFrameLogs streams frame logs streams the uplink and downlink frame logs for the given mac note these are the raw lo ra w a n frames and this endpoint is intended for debugging
+GetAPIGateways lists lists the gateways
 */
-func (a *Client) StreamFrameLogs(params *StreamFrameLogsParams, opts ...ClientOption) (*StreamFrameLogsOK, error) {
+func (a *Client) GetAPIGateways(params *GetAPIGatewaysParams, opts ...ClientOption) (*GetAPIGatewaysOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewStreamFrameLogsParams()
+		params = NewGetAPIGatewaysParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "StreamFrameLogs",
+		ID:                 "get_api_gateways",
+		Method:             "GET",
+		PathPattern:        "/api/gateways",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIGatewaysReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIGatewaysOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_gateways: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIGatewaysByMac gets returns the gateway for the requested mac address
+*/
+func (a *Client) GetAPIGatewaysByMac(params *GetAPIGatewaysByMacParams, opts ...ClientOption) (*GetAPIGatewaysByMacOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIGatewaysByMacParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_gateways_by_mac",
+		Method:             "GET",
+		PathPattern:        "/api/gateways/{mac}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIGatewaysByMacReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIGatewaysByMacOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_gateways_by_mac: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIGatewaysFramesByMac streams frame logs streams the uplink and downlink frame logs for the given mac note these are the raw lo ra w a n frames and this endpoint is intended for debugging
+*/
+func (a *Client) GetAPIGatewaysFramesByMac(params *GetAPIGatewaysFramesByMacParams, opts ...ClientOption) (*GetAPIGatewaysFramesByMacOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIGatewaysFramesByMacParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_gateways_frames_by_mac",
 		Method:             "GET",
 		PathPattern:        "/api/gateways/{mac}/frames",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &StreamFrameLogsReader{formats: a.formats},
+		Reader:             &GetAPIGatewaysFramesByMacReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -209,13 +217,165 @@ func (a *Client) StreamFrameLogs(params *StreamFrameLogsParams, opts ...ClientOp
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*StreamFrameLogsOK)
+	success, ok := result.(*GetAPIGatewaysFramesByMacOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for StreamFrameLogs: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_gateways_frames_by_mac: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIGatewaysPingsLastByMac gets last ping returns the last emitted ping and gateways receiving this ping
+*/
+func (a *Client) GetAPIGatewaysPingsLastByMac(params *GetAPIGatewaysPingsLastByMacParams, opts ...ClientOption) (*GetAPIGatewaysPingsLastByMacOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIGatewaysPingsLastByMacParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_gateways_pings_last_by_mac",
+		Method:             "GET",
+		PathPattern:        "/api/gateways/{mac}/pings/last",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIGatewaysPingsLastByMacReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIGatewaysPingsLastByMacOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_gateways_pings_last_by_mac: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIGatewaysStatsByMac gets stats lists the gateway stats given the query parameters
+*/
+func (a *Client) GetAPIGatewaysStatsByMac(params *GetAPIGatewaysStatsByMacParams, opts ...ClientOption) (*GetAPIGatewaysStatsByMacOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIGatewaysStatsByMacParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_gateways_stats_by_mac",
+		Method:             "GET",
+		PathPattern:        "/api/gateways/{mac}/stats",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIGatewaysStatsByMacReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIGatewaysStatsByMacOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_gateways_stats_by_mac: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIGateways creates creates the given gateway
+*/
+func (a *Client) PostAPIGateways(params *PostAPIGatewaysParams, opts ...ClientOption) (*PostAPIGatewaysOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIGatewaysParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_gateways",
+		Method:             "POST",
+		PathPattern:        "/api/gateways",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIGatewaysReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIGatewaysOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_gateways: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIGatewaysByMac updates updates the gateway matching the given mac address
+*/
+func (a *Client) PutAPIGatewaysByMac(params *PutAPIGatewaysByMacParams, opts ...ClientOption) (*PutAPIGatewaysByMacOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIGatewaysByMacParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_gateways_by_mac",
+		Method:             "PUT",
+		PathPattern:        "/api/gateways/{mac}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PutAPIGatewaysByMacReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PutAPIGatewaysByMacOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for put_api_gateways_by_mac: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

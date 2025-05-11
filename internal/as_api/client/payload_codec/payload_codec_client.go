@@ -56,40 +56,48 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	GetDevice(params *GetDeviceParams, opts ...ClientOption) (*GetDeviceOK, error)
+	DeleteAPIPayloadcodecsByID(params *DeleteAPIPayloadcodecsByIDParams, opts ...ClientOption) (*DeleteAPIPayloadcodecsByIDOK, error)
 
-	GetSetting(params *GetSettingParams, opts ...ClientOption) (*GetSettingOK, error)
+	GetAPIPayloadcodecs(params *GetAPIPayloadcodecsParams, opts ...ClientOption) (*GetAPIPayloadcodecsOK, error)
 
-	Import(params *ImportParams, opts ...ClientOption) (*ImportOK, error)
+	GetAPIPayloadcodecsImport(params *GetAPIPayloadcodecsImportParams, opts ...ClientOption) (*GetAPIPayloadcodecsImportOK, error)
 
-	ListShort(params *ListShortParams, opts ...ClientOption) (*ListShortOK, error)
+	GetAPIPayloadcodecsSetting(params *GetAPIPayloadcodecsSettingParams, opts ...ClientOption) (*GetAPIPayloadcodecsSettingOK, error)
 
-	PutAPIPayloadcodecsID(params *PutAPIPayloadcodecsIDParams, opts ...ClientOption) (*PutAPIPayloadcodecsIDOK, error)
+	GetAPIPayloadcodecsShort(params *GetAPIPayloadcodecsShortParams, opts ...ClientOption) (*GetAPIPayloadcodecsShortOK, error)
 
-	Test(params *TestParams, opts ...ClientOption) (*TestOK, error)
+	GetAPIPayloadcodecsUpgrade(params *GetAPIPayloadcodecsUpgradeParams, opts ...ClientOption) (*GetAPIPayloadcodecsUpgradeOK, error)
 
-	Upgrade(params *UpgradeParams, opts ...ClientOption) (*UpgradeOK, error)
+	GetAPIPayloadcodecsByID(params *GetAPIPayloadcodecsByIDParams, opts ...ClientOption) (*GetAPIPayloadcodecsByIDOK, error)
+
+	GetAPIPayloadcodecsDeviceByDevEUI(params *GetAPIPayloadcodecsDeviceByDevEUIParams, opts ...ClientOption) (*GetAPIPayloadcodecsDeviceByDevEUIOK, error)
+
+	PostAPIPayloadcodecs(params *PostAPIPayloadcodecsParams, opts ...ClientOption) (*PostAPIPayloadcodecsOK, error)
+
+	PostAPIPayloadcodecsTest(params *PostAPIPayloadcodecsTestParams, opts ...ClientOption) (*PostAPIPayloadcodecsTestOK, error)
+
+	PutAPIPayloadcodecsByID(params *PutAPIPayloadcodecsByIDParams, opts ...ClientOption) (*PutAPIPayloadcodecsByIDOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-GetDevice gets payload codec for device by dev e UI
+DeleteAPIPayloadcodecsByID delete api payloadcodecs by id API
 */
-func (a *Client) GetDevice(params *GetDeviceParams, opts ...ClientOption) (*GetDeviceOK, error) {
+func (a *Client) DeleteAPIPayloadcodecsByID(params *DeleteAPIPayloadcodecsByIDParams, opts ...ClientOption) (*DeleteAPIPayloadcodecsByIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetDeviceParams()
+		params = NewDeleteAPIPayloadcodecsByIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetDevice",
-		Method:             "GET",
-		PathPattern:        "/api/payloadcodecs/{devEUI}/device",
+		ID:                 "delete_api_payloadcodecs_by_id",
+		Method:             "DELETE",
+		PathPattern:        "/api/payloadcodecs/{id}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetDeviceReader{formats: a.formats},
+		Reader:             &DeleteAPIPayloadcodecsByIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -101,33 +109,33 @@ func (a *Client) GetDevice(params *GetDeviceParams, opts ...ClientOption) (*GetD
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetDeviceOK)
+	success, ok := result.(*DeleteAPIPayloadcodecsByIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetDevice: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_payloadcodecs_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetSetting get setting API
+GetAPIPayloadcodecs get api payloadcodecs API
 */
-func (a *Client) GetSetting(params *GetSettingParams, opts ...ClientOption) (*GetSettingOK, error) {
+func (a *Client) GetAPIPayloadcodecs(params *GetAPIPayloadcodecsParams, opts ...ClientOption) (*GetAPIPayloadcodecsOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetSettingParams()
+		params = NewGetAPIPayloadcodecsParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetSetting",
+		ID:                 "get_api_payloadcodecs",
 		Method:             "GET",
-		PathPattern:        "/api/payloadcodecs-setting",
+		PathPattern:        "/api/payloadcodecs",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &GetSettingReader{formats: a.formats},
+		Reader:             &GetAPIPayloadcodecsReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -139,33 +147,33 @@ func (a *Client) GetSetting(params *GetSettingParams, opts ...ClientOption) (*Ge
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*GetSettingOK)
+	success, ok := result.(*GetAPIPayloadcodecsOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetSetting: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_payloadcodecs: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-Import import API
+GetAPIPayloadcodecsImport get api payloadcodecs import API
 */
-func (a *Client) Import(params *ImportParams, opts ...ClientOption) (*ImportOK, error) {
+func (a *Client) GetAPIPayloadcodecsImport(params *GetAPIPayloadcodecsImportParams, opts ...ClientOption) (*GetAPIPayloadcodecsImportOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewImportParams()
+		params = NewGetAPIPayloadcodecsImportParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "Import",
+		ID:                 "get_api_payloadcodecs-import",
 		Method:             "GET",
 		PathPattern:        "/api/payloadcodecs-import",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &ImportReader{formats: a.formats},
+		Reader:             &GetAPIPayloadcodecsImportReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -177,33 +185,71 @@ func (a *Client) Import(params *ImportParams, opts ...ClientOption) (*ImportOK, 
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*ImportOK)
+	success, ok := result.(*GetAPIPayloadcodecsImportOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for Import: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_payloadcodecs-import: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-ListShort lists only ID and name
+GetAPIPayloadcodecsSetting get api payloadcodecs setting API
 */
-func (a *Client) ListShort(params *ListShortParams, opts ...ClientOption) (*ListShortOK, error) {
+func (a *Client) GetAPIPayloadcodecsSetting(params *GetAPIPayloadcodecsSettingParams, opts ...ClientOption) (*GetAPIPayloadcodecsSettingOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewListShortParams()
+		params = NewGetAPIPayloadcodecsSettingParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "ListShort",
+		ID:                 "get_api_payloadcodecs-setting",
+		Method:             "GET",
+		PathPattern:        "/api/payloadcodecs-setting",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIPayloadcodecsSettingReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIPayloadcodecsSettingOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_payloadcodecs-setting: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIPayloadcodecsShort lists only ID and name
+*/
+func (a *Client) GetAPIPayloadcodecsShort(params *GetAPIPayloadcodecsShortParams, opts ...ClientOption) (*GetAPIPayloadcodecsShortOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIPayloadcodecsShortParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_payloadcodecs-short",
 		Method:             "GET",
 		PathPattern:        "/api/payloadcodecs-short",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &ListShortReader{formats: a.formats},
+		Reader:             &GetAPIPayloadcodecsShortReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -215,109 +261,33 @@ func (a *Client) ListShort(params *ListShortParams, opts ...ClientOption) (*List
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*ListShortOK)
+	success, ok := result.(*GetAPIPayloadcodecsShortOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for ListShort: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_payloadcodecs-short: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-PutAPIPayloadcodecsID put API payloadcodecs ID API
+GetAPIPayloadcodecsUpgrade upgrades payload codec lib from cloud by https
 */
-func (a *Client) PutAPIPayloadcodecsID(params *PutAPIPayloadcodecsIDParams, opts ...ClientOption) (*PutAPIPayloadcodecsIDOK, error) {
+func (a *Client) GetAPIPayloadcodecsUpgrade(params *GetAPIPayloadcodecsUpgradeParams, opts ...ClientOption) (*GetAPIPayloadcodecsUpgradeOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewPutAPIPayloadcodecsIDParams()
+		params = NewGetAPIPayloadcodecsUpgradeParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "PutAPIPayloadcodecsID",
-		Method:             "PUT",
-		PathPattern:        "/api/payloadcodecs/{id}",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &PutAPIPayloadcodecsIDReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*PutAPIPayloadcodecsIDOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PutAPIPayloadcodecsID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-Test test API
-*/
-func (a *Client) Test(params *TestParams, opts ...ClientOption) (*TestOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewTestParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "Test",
-		Method:             "POST",
-		PathPattern:        "/api/payloadcodecs-test",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &TestReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*TestOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for Test: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-Upgrade upgrades payload codec lib from cloud by https
-*/
-func (a *Client) Upgrade(params *UpgradeParams, opts ...ClientOption) (*UpgradeOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewUpgradeParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "Upgrade",
+		ID:                 "get_api_payloadcodecs-upgrade",
 		Method:             "GET",
 		PathPattern:        "/api/payloadcodecs-upgrade",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &UpgradeReader{formats: a.formats},
+		Reader:             &GetAPIPayloadcodecsUpgradeReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -329,13 +299,203 @@ func (a *Client) Upgrade(params *UpgradeParams, opts ...ClientOption) (*UpgradeO
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*UpgradeOK)
+	success, ok := result.(*GetAPIPayloadcodecsUpgradeOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for Upgrade: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_payloadcodecs-upgrade: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIPayloadcodecsByID gets payload codec for device by ID
+*/
+func (a *Client) GetAPIPayloadcodecsByID(params *GetAPIPayloadcodecsByIDParams, opts ...ClientOption) (*GetAPIPayloadcodecsByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIPayloadcodecsByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_payloadcodecs_by_id",
+		Method:             "GET",
+		PathPattern:        "/api/payloadcodecs/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIPayloadcodecsByIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIPayloadcodecsByIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_payloadcodecs_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIPayloadcodecsDeviceByDevEUI gets payload codec for device by dev e UI
+*/
+func (a *Client) GetAPIPayloadcodecsDeviceByDevEUI(params *GetAPIPayloadcodecsDeviceByDevEUIParams, opts ...ClientOption) (*GetAPIPayloadcodecsDeviceByDevEUIOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIPayloadcodecsDeviceByDevEUIParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_payloadcodecs_device_by_devEUI",
+		Method:             "GET",
+		PathPattern:        "/api/payloadcodecs/{devEUI}/device",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIPayloadcodecsDeviceByDevEUIReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIPayloadcodecsDeviceByDevEUIOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_payloadcodecs_device_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIPayloadcodecs post api payloadcodecs API
+*/
+func (a *Client) PostAPIPayloadcodecs(params *PostAPIPayloadcodecsParams, opts ...ClientOption) (*PostAPIPayloadcodecsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIPayloadcodecsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_payloadcodecs",
+		Method:             "POST",
+		PathPattern:        "/api/payloadcodecs",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIPayloadcodecsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIPayloadcodecsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_payloadcodecs: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIPayloadcodecsTest post api payloadcodecs test API
+*/
+func (a *Client) PostAPIPayloadcodecsTest(params *PostAPIPayloadcodecsTestParams, opts ...ClientOption) (*PostAPIPayloadcodecsTestOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIPayloadcodecsTestParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_payloadcodecs-test",
+		Method:             "POST",
+		PathPattern:        "/api/payloadcodecs-test",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIPayloadcodecsTestReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIPayloadcodecsTestOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_payloadcodecs-test: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIPayloadcodecsByID put api payloadcodecs by id API
+*/
+func (a *Client) PutAPIPayloadcodecsByID(params *PutAPIPayloadcodecsByIDParams, opts ...ClientOption) (*PutAPIPayloadcodecsByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIPayloadcodecsByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_payloadcodecs_by_id",
+		Method:             "PUT",
+		PathPattern:        "/api/payloadcodecs/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PutAPIPayloadcodecsByIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PutAPIPayloadcodecsByIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for put_api_payloadcodecs_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

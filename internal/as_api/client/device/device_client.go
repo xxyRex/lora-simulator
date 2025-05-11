@@ -56,46 +56,54 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	Activate(params *ActivateParams, opts ...ClientOption) (*ActivateOK, error)
+	DeleteAPIDevicesByDevEUI(params *DeleteAPIDevicesByDevEUIParams, opts ...ClientOption) (*DeleteAPIDevicesByDevEUIOK, error)
 
-	CreateKeys(params *CreateKeysParams, opts ...ClientOption) (*CreateKeysOK, error)
+	DeleteAPIDevicesKeysByDevEUI(params *DeleteAPIDevicesKeysByDevEUIParams, opts ...ClientOption) (*DeleteAPIDevicesKeysByDevEUIOK, error)
 
-	DeleteKeys(params *DeleteKeysParams, opts ...ClientOption) (*DeleteKeysOK, error)
+	GetAPIApplicationsDevicesByApplicationID(params *GetAPIApplicationsDevicesByApplicationIDParams, opts ...ClientOption) (*GetAPIApplicationsDevicesByApplicationIDOK, error)
 
-	GetActivation(params *GetActivationParams, opts ...ClientOption) (*GetActivationOK, error)
+	GetAPIDevicesActivationByDevEUI(params *GetAPIDevicesActivationByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesActivationByDevEUIOK, error)
 
-	GetKeys(params *GetKeysParams, opts ...ClientOption) (*GetKeysOK, error)
+	GetAPIDevicesByDevEUI(params *GetAPIDevicesByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesByDevEUIOK, error)
 
-	GetRandomDevAddr(params *GetRandomDevAddrParams, opts ...ClientOption) (*GetRandomDevAddrOK, error)
+	GetAPIDevicesEventsByDevEUI(params *GetAPIDevicesEventsByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesEventsByDevEUIOK, error)
 
-	ListByApplicationID(params *ListByApplicationIDParams, opts ...ClientOption) (*ListByApplicationIDOK, error)
+	GetAPIDevicesFramesByDevEUI(params *GetAPIDevicesFramesByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesFramesByDevEUIOK, error)
 
-	PutAPIDevicesDevEUI(params *PutAPIDevicesDevEUIParams, opts ...ClientOption) (*PutAPIDevicesDevEUIOK, error)
+	GetAPIDevicesKeysByDevEUI(params *GetAPIDevicesKeysByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesKeysByDevEUIOK, error)
 
-	StreamEventLogs(params *StreamEventLogsParams, opts ...ClientOption) (*StreamEventLogsOK, error)
+	PostAPIDevices(params *PostAPIDevicesParams, opts ...ClientOption) (*PostAPIDevicesOK, error)
 
-	UpdateKeys(params *UpdateKeysParams, opts ...ClientOption) (*UpdateKeysOK, error)
+	PostAPIDevicesActivateByDevEUI(params *PostAPIDevicesActivateByDevEUIParams, opts ...ClientOption) (*PostAPIDevicesActivateByDevEUIOK, error)
+
+	PostAPIDevicesGetRandomDevAddrByDevEUI(params *PostAPIDevicesGetRandomDevAddrByDevEUIParams, opts ...ClientOption) (*PostAPIDevicesGetRandomDevAddrByDevEUIOK, error)
+
+	PostAPIDevicesKeysByDevEUI(params *PostAPIDevicesKeysByDevEUIParams, opts ...ClientOption) (*PostAPIDevicesKeysByDevEUIOK, error)
+
+	PutAPIDevicesByDevEUI(params *PutAPIDevicesByDevEUIParams, opts ...ClientOption) (*PutAPIDevicesByDevEUIOK, error)
+
+	PutAPIDevicesKeysByDevEUI(params *PutAPIDevicesKeysByDevEUIParams, opts ...ClientOption) (*PutAPIDevicesKeysByDevEUIOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-Activate activates re activates the device only when a b p is set to true
+DeleteAPIDevicesByDevEUI deletes deletes the device matching the given dev e UI
 */
-func (a *Client) Activate(params *ActivateParams, opts ...ClientOption) (*ActivateOK, error) {
+func (a *Client) DeleteAPIDevicesByDevEUI(params *DeleteAPIDevicesByDevEUIParams, opts ...ClientOption) (*DeleteAPIDevicesByDevEUIOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewActivateParams()
+		params = NewDeleteAPIDevicesByDevEUIParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "Activate",
-		Method:             "POST",
-		PathPattern:        "/api/devices/{devEUI}/activate",
+		ID:                 "delete_api_devices_by_devEUI",
+		Method:             "DELETE",
+		PathPattern:        "/api/devices/{devEUI}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &ActivateReader{formats: a.formats},
+		Reader:             &DeleteAPIDevicesByDevEUIReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -107,71 +115,33 @@ func (a *Client) Activate(params *ActivateParams, opts ...ClientOption) (*Activa
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*ActivateOK)
+	success, ok := result.(*DeleteAPIDevicesByDevEUIOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for Activate: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_devices_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-CreateKeys creates keys creates the given device keys
+DeleteAPIDevicesKeysByDevEUI deletes keys deletes the device keys for the given dev e UI
 */
-func (a *Client) CreateKeys(params *CreateKeysParams, opts ...ClientOption) (*CreateKeysOK, error) {
+func (a *Client) DeleteAPIDevicesKeysByDevEUI(params *DeleteAPIDevicesKeysByDevEUIParams, opts ...ClientOption) (*DeleteAPIDevicesKeysByDevEUIOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewCreateKeysParams()
+		params = NewDeleteAPIDevicesKeysByDevEUIParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "CreateKeys",
-		Method:             "POST",
-		PathPattern:        "/api/devices/{devEUI}/keys",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &CreateKeysReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*CreateKeysOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for CreateKeys: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-DeleteKeys deletes keys deletes the device keys for the given dev e UI
-*/
-func (a *Client) DeleteKeys(params *DeleteKeysParams, opts ...ClientOption) (*DeleteKeysOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewDeleteKeysParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "DeleteKeys",
+		ID:                 "delete_api_devices_keys_by_devEUI",
 		Method:             "DELETE",
 		PathPattern:        "/api/devices/{devEUI}/keys",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &DeleteKeysReader{formats: a.formats},
+		Reader:             &DeleteAPIDevicesKeysByDevEUIReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -183,147 +153,33 @@ func (a *Client) DeleteKeys(params *DeleteKeysParams, opts ...ClientOption) (*De
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*DeleteKeysOK)
+	success, ok := result.(*DeleteAPIDevicesKeysByDevEUIOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for DeleteKeys: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for delete_api_devices_keys_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-GetActivation gets activation returns the current activation details of the device o t a a and a b p
+GetAPIApplicationsDevicesByApplicationID lists by application ID lists the devices by the given application ID sorted by the name of the device
 */
-func (a *Client) GetActivation(params *GetActivationParams, opts ...ClientOption) (*GetActivationOK, error) {
+func (a *Client) GetAPIApplicationsDevicesByApplicationID(params *GetAPIApplicationsDevicesByApplicationIDParams, opts ...ClientOption) (*GetAPIApplicationsDevicesByApplicationIDOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewGetActivationParams()
+		params = NewGetAPIApplicationsDevicesByApplicationIDParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "GetActivation",
-		Method:             "GET",
-		PathPattern:        "/api/devices/{devEUI}/activation",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetActivationReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*GetActivationOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetActivation: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-GetKeys gets keys returns the device keys for the given dev e UI
-*/
-func (a *Client) GetKeys(params *GetKeysParams, opts ...ClientOption) (*GetKeysOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetKeysParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "GetKeys",
-		Method:             "GET",
-		PathPattern:        "/api/devices/{devEUI}/keys",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetKeysReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*GetKeysOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetKeys: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-GetRandomDevAddr gets random dev addr returns a random dev addr taking the nwk ID prefix into account
-*/
-func (a *Client) GetRandomDevAddr(params *GetRandomDevAddrParams, opts ...ClientOption) (*GetRandomDevAddrOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetRandomDevAddrParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "GetRandomDevAddr",
-		Method:             "POST",
-		PathPattern:        "/api/devices/{devEUI}/getRandomDevAddr",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &GetRandomDevAddrReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*GetRandomDevAddrOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for GetRandomDevAddr: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-ListByApplicationID lists by application ID lists the devices by the given application ID sorted by the name of the device
-*/
-func (a *Client) ListByApplicationID(params *ListByApplicationIDParams, opts ...ClientOption) (*ListByApplicationIDOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewListByApplicationIDParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "ListByApplicationID",
+		ID:                 "get_api_applications_devices_by_applicationID",
 		Method:             "GET",
 		PathPattern:        "/api/applications/{applicationID}/devices",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &ListByApplicationIDReader{formats: a.formats},
+		Reader:             &GetAPIApplicationsDevicesByApplicationIDReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -335,33 +191,71 @@ func (a *Client) ListByApplicationID(params *ListByApplicationIDParams, opts ...
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*ListByApplicationIDOK)
+	success, ok := result.(*GetAPIApplicationsDevicesByApplicationIDOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for ListByApplicationID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_applications_devices_by_applicationID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-PutAPIDevicesDevEUI updates updates the device matching the given dev e UI
+GetAPIDevicesActivationByDevEUI gets activation returns the current activation details of the device o t a a and a b p
 */
-func (a *Client) PutAPIDevicesDevEUI(params *PutAPIDevicesDevEUIParams, opts ...ClientOption) (*PutAPIDevicesDevEUIOK, error) {
+func (a *Client) GetAPIDevicesActivationByDevEUI(params *GetAPIDevicesActivationByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesActivationByDevEUIOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewPutAPIDevicesDevEUIParams()
+		params = NewGetAPIDevicesActivationByDevEUIParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "PutAPIDevicesDevEUI",
-		Method:             "PUT",
+		ID:                 "get_api_devices_activation_by_devEUI",
+		Method:             "GET",
+		PathPattern:        "/api/devices/{devEUI}/activation",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIDevicesActivationByDevEUIReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIDevicesActivationByDevEUIOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_devices_activation_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIDevicesByDevEUI gets returns the device matching the given dev e UI
+*/
+func (a *Client) GetAPIDevicesByDevEUI(params *GetAPIDevicesByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesByDevEUIOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIDevicesByDevEUIParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_devices_by_devEUI",
+		Method:             "GET",
 		PathPattern:        "/api/devices/{devEUI}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &PutAPIDevicesDevEUIReader{formats: a.formats},
+		Reader:             &GetAPIDevicesByDevEUIReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -373,33 +267,33 @@ func (a *Client) PutAPIDevicesDevEUI(params *PutAPIDevicesDevEUIParams, opts ...
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*PutAPIDevicesDevEUIOK)
+	success, ok := result.(*GetAPIDevicesByDevEUIOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PutAPIDevicesDevEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_devices_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-StreamEventLogs streams event logs stream the device events uplink payloads a c ks joins errors note this endpoint is intended for debugging and should not be used for building integrations
+GetAPIDevicesEventsByDevEUI streams event logs stream the device events uplink payloads a c ks joins errors note this endpoint is intended for debugging and should not be used for building integrations
 */
-func (a *Client) StreamEventLogs(params *StreamEventLogsParams, opts ...ClientOption) (*StreamEventLogsOK, error) {
+func (a *Client) GetAPIDevicesEventsByDevEUI(params *GetAPIDevicesEventsByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesEventsByDevEUIOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewStreamEventLogsParams()
+		params = NewGetAPIDevicesEventsByDevEUIParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "StreamEventLogs",
+		ID:                 "get_api_devices_events_by_devEUI",
 		Method:             "GET",
 		PathPattern:        "/api/devices/{devEUI}/events",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &StreamEventLogsReader{formats: a.formats},
+		Reader:             &GetAPIDevicesEventsByDevEUIReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -411,33 +305,33 @@ func (a *Client) StreamEventLogs(params *StreamEventLogsParams, opts ...ClientOp
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*StreamEventLogsOK)
+	success, ok := result.(*GetAPIDevicesEventsByDevEUIOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for StreamEventLogs: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_devices_events_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-UpdateKeys updates keys updates the device keys
+GetAPIDevicesFramesByDevEUI streams frame logs streams the uplink and downlink frame logs for the given dev e UI note these are the raw lo ra w a n frames and this endpoint is intended for debugging
 */
-func (a *Client) UpdateKeys(params *UpdateKeysParams, opts ...ClientOption) (*UpdateKeysOK, error) {
+func (a *Client) GetAPIDevicesFramesByDevEUI(params *GetAPIDevicesFramesByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesFramesByDevEUIOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewUpdateKeysParams()
+		params = NewGetAPIDevicesFramesByDevEUIParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "UpdateKeys",
-		Method:             "PUT",
-		PathPattern:        "/api/devices/{devEUI}/keys",
+		ID:                 "get_api_devices_frames_by_devEUI",
+		Method:             "GET",
+		PathPattern:        "/api/devices/{devEUI}/frames",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
+		Schemes:            []string{"http", "https"},
 		Params:             params,
-		Reader:             &UpdateKeysReader{formats: a.formats},
+		Reader:             &GetAPIDevicesFramesByDevEUIReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -449,13 +343,279 @@ func (a *Client) UpdateKeys(params *UpdateKeysParams, opts ...ClientOption) (*Up
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*UpdateKeysOK)
+	success, ok := result.(*GetAPIDevicesFramesByDevEUIOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for UpdateKeys: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for get_api_devices_frames_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIDevicesKeysByDevEUI gets keys returns the device keys for the given dev e UI
+*/
+func (a *Client) GetAPIDevicesKeysByDevEUI(params *GetAPIDevicesKeysByDevEUIParams, opts ...ClientOption) (*GetAPIDevicesKeysByDevEUIOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIDevicesKeysByDevEUIParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_devices_keys_by_devEUI",
+		Method:             "GET",
+		PathPattern:        "/api/devices/{devEUI}/keys",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIDevicesKeysByDevEUIReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIDevicesKeysByDevEUIOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_devices_keys_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIDevices creates creates the given device
+*/
+func (a *Client) PostAPIDevices(params *PostAPIDevicesParams, opts ...ClientOption) (*PostAPIDevicesOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIDevicesParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_devices",
+		Method:             "POST",
+		PathPattern:        "/api/devices",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIDevicesReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIDevicesOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_devices: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIDevicesActivateByDevEUI activates re activates the device only when a b p is set to true
+*/
+func (a *Client) PostAPIDevicesActivateByDevEUI(params *PostAPIDevicesActivateByDevEUIParams, opts ...ClientOption) (*PostAPIDevicesActivateByDevEUIOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIDevicesActivateByDevEUIParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_devices_activate_by_devEUI",
+		Method:             "POST",
+		PathPattern:        "/api/devices/{devEUI}/activate",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIDevicesActivateByDevEUIReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIDevicesActivateByDevEUIOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_devices_activate_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIDevicesGetRandomDevAddrByDevEUI gets random dev addr returns a random dev addr taking the nwk ID prefix into account
+*/
+func (a *Client) PostAPIDevicesGetRandomDevAddrByDevEUI(params *PostAPIDevicesGetRandomDevAddrByDevEUIParams, opts ...ClientOption) (*PostAPIDevicesGetRandomDevAddrByDevEUIOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIDevicesGetRandomDevAddrByDevEUIParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_devices_getRandomDevAddr_by_devEUI",
+		Method:             "POST",
+		PathPattern:        "/api/devices/{devEUI}/getRandomDevAddr",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIDevicesGetRandomDevAddrByDevEUIReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIDevicesGetRandomDevAddrByDevEUIOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_devices_getRandomDevAddr_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIDevicesKeysByDevEUI creates keys creates the given device keys
+*/
+func (a *Client) PostAPIDevicesKeysByDevEUI(params *PostAPIDevicesKeysByDevEUIParams, opts ...ClientOption) (*PostAPIDevicesKeysByDevEUIOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIDevicesKeysByDevEUIParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_devices_keys_by_devEUI",
+		Method:             "POST",
+		PathPattern:        "/api/devices/{devEUI}/keys",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIDevicesKeysByDevEUIReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIDevicesKeysByDevEUIOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_devices_keys_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIDevicesByDevEUI updates updates the device matching the given dev e UI
+*/
+func (a *Client) PutAPIDevicesByDevEUI(params *PutAPIDevicesByDevEUIParams, opts ...ClientOption) (*PutAPIDevicesByDevEUIOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIDevicesByDevEUIParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_devices_by_devEUI",
+		Method:             "PUT",
+		PathPattern:        "/api/devices/{devEUI}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PutAPIDevicesByDevEUIReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PutAPIDevicesByDevEUIOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for put_api_devices_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIDevicesKeysByDevEUI updates keys updates the device keys
+*/
+func (a *Client) PutAPIDevicesKeysByDevEUI(params *PutAPIDevicesKeysByDevEUIParams, opts ...ClientOption) (*PutAPIDevicesKeysByDevEUIOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIDevicesKeysByDevEUIParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_devices_keys_by_devEUI",
+		Method:             "PUT",
+		PathPattern:        "/api/devices/{devEUI}/keys",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PutAPIDevicesKeysByDevEUIReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PutAPIDevicesKeysByDevEUIOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for put_api_devices_keys_by_devEUI: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
