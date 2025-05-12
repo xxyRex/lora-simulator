@@ -144,7 +144,7 @@ func (s *Simulation) start() {
 func (s *Simulation) init() error {
 	log.Info("Simulation: setting up")
 
-	if config.C.ChirpStack.API.RestartAs {
+	if config.C.LoraSimulator.API.RestartAs {
 		as.RestartAppServer()
 	}
 
@@ -164,7 +164,7 @@ func (s *Simulation) init() error {
 		return err
 	}
 
-	if config.C.ChirpStack.API.UseNewDevice {
+	if config.C.LoraSimulator.API.UseNewDevice {
 		if err := as.DeleteAllDevices(); err != nil {
 			return err
 		}
@@ -214,9 +214,9 @@ func (s *Simulation) tearDown() error {
 }
 
 func (s *Simulation) runSimulation() error {
-	if config.C.ChirpStack.API.WaitDeviceStableTime != 0 {
-		log.Infof("wait device stable time: %v", config.C.ChirpStack.API.WaitDeviceStableTime)
-		time.Sleep(config.C.ChirpStack.API.WaitDeviceStableTime)
+	if config.C.LoraSimulator.API.WaitDeviceStableTime != 0 {
+		log.Infof("wait device stable time: %v", config.C.LoraSimulator.API.WaitDeviceStableTime)
+		time.Sleep(config.C.LoraSimulator.API.WaitDeviceStableTime)
 	}
 
 	var gateways []*gateway.Gateway
@@ -246,7 +246,7 @@ func (s *Simulation) runSimulation() error {
 	batchCount := 0
 	for devEUI, appKey := range s.deviceAppKeys {
 		var gws []*gateway.Gateway
-		if config.C.ChirpStack.API.UseNewGateway {
+		if config.C.LoraSimulator.API.UseNewGateway {
 			devGateways := make(map[int]*gateway.Gateway)
 			devNumGateways := s.gatewayMinCount + mrand.Intn(s.gatewayMaxCount-s.gatewayMinCount+1)
 
@@ -274,7 +274,7 @@ func (s *Simulation) runSimulation() error {
 		}
 
 		deviceResult := []*models.APIDeviceItem{}
-		if !config.C.ChirpStack.API.UseNewDevice {
+		if !config.C.LoraSimulator.API.UseNewDevice {
 			for i := 0; i < s.deviceCount; i += 25 {
 				ret, err := as.GetDevices(i, 25)
 				if err != nil {
@@ -339,7 +339,7 @@ func (s *Simulation) runSimulation() error {
 func (s *Simulation) setupGateways() error {
 	log.Info("simulator: creating gateways")
 
-	if config.C.ChirpStack.API.UseNewGateway {
+	if config.C.LoraSimulator.API.UseNewGateway {
 		for i := 0; i < s.gatewayMaxCount; i++ {
 			var gatewayID lorawan.EUI64
 			if _, err := rand.Read(gatewayID[:]); err != nil {
@@ -370,7 +370,7 @@ func (s *Simulation) setupGateways() error {
 
 func (s *Simulation) tearDownGateways() error {
 	log.Info("simulator: tear-down gateways")
-	if !config.C.ChirpStack.API.UseNewGateway {
+	if !config.C.LoraSimulator.API.UseNewGateway {
 		return nil
 	}
 
@@ -386,7 +386,7 @@ func (s *Simulation) tearDownGateways() error {
 func (s *Simulation) setupDeviceProfile() error {
 	log.Info("simulator: creating device-profile")
 
-	if config.C.ChirpStack.API.UseNewProfile {
+	if config.C.LoraSimulator.API.UseNewProfile {
 		profileId, err := as.CreateDeviceProfile()
 		if err != nil {
 			return errors.Wrap(err, "create device-profile error")
@@ -414,7 +414,7 @@ func (s *Simulation) setupDeviceProfile() error {
 func (s *Simulation) tearDownDeviceProfile() error {
 	log.Info("simulator: tear-down device-profile")
 
-	if !config.C.ChirpStack.API.UseNewProfile {
+	if !config.C.LoraSimulator.API.UseNewProfile {
 		return nil
 	}
 
@@ -444,7 +444,7 @@ func (s *Simulation) setupApplication() error {
 		}
 	}
 
-	if config.C.ChirpStack.API.UseNewApp {
+	if config.C.LoraSimulator.API.UseNewApp {
 		id, err := as.CreateApplication()
 		if err != nil {
 			return errors.Wrap(err, "create applicaiton error")
@@ -465,7 +465,7 @@ func (s *Simulation) setupApplication() error {
 func (s *Simulation) tearDownApplication() error {
 	log.Info("simulator: tear-down application")
 
-	if !config.C.ChirpStack.API.UseNewApp {
+	if !config.C.LoraSimulator.API.UseNewApp {
 		return nil
 	}
 
@@ -677,7 +677,7 @@ func (s *Simulation) setupPayloadCodec() error {
 func (s *Simulation) setupBACnet() error {
 	log.Info("simulator: creating BACnet objects")
 
-	if !strings.Contains(config.C.ChirpStack.API.TestFeature, "bacnet") {
+	if !strings.Contains(config.C.LoraSimulator.API.TestFeature, "bacnet") {
 		return nil
 	}
 
@@ -745,7 +745,7 @@ func (s *Simulation) setupBACnet() error {
 func (s *Simulation) setupFuota() error {
 	log.Info("simulator: creating FUOTA task")
 
-	if !strings.Contains(config.C.ChirpStack.API.TestFeature, "fuota") || config.C.ChirpStack.API.FuotaTaskDeviceCount == 0 {
+	if !strings.Contains(config.C.LoraSimulator.API.TestFeature, "fuota") || config.C.LoraSimulator.API.FuotaTaskDeviceCount == 0 {
 		return nil
 	}
 	// 删除所有已存在的fuota任务
@@ -796,7 +796,7 @@ func (s *Simulation) setupFuota() error {
 	deveuiList := []string{}
 	for _, deveui := range allDeveuiList {
 		deveuiList = append(deveuiList, deveui)
-		if len(deveuiList) == config.C.ChirpStack.API.FuotaTaskDeviceCount {
+		if len(deveuiList) == config.C.LoraSimulator.API.FuotaTaskDeviceCount {
 			var fuotaTaskReq *models.APIFuotaTask = fuotaTaskReqTemplate
 			fuotaTaskReq.Name = fuotaTaskReq.Name + "-" + strconv.Itoa(taskCount)
 			fuotaTaskReq.Deveui = deveuiList
@@ -817,7 +817,7 @@ func (s *Simulation) setupFuota() error {
 func (s *Simulation) setupModbus() error {
 	log.Info("simulator: creating modbus servers")
 
-	if !strings.Contains(config.C.ChirpStack.API.TestFeature, "modbus") {
+	if !strings.Contains(config.C.LoraSimulator.API.TestFeature, "modbus") {
 		return nil
 	}
 
@@ -869,7 +869,7 @@ func (s *Simulation) setupModbus() error {
 		}
 	}
 
-	for k := 0; k < 10; k++ {
+	for k := 0; k < 1; k++ {
 		modbusServerCreateReq := as.ModbusServerCreateReq{
 			ID:       int64(k + 1),
 			Execute:  int64(1),

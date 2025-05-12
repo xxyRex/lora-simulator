@@ -451,7 +451,7 @@ func (d *Device) downlinkLoop() {
 
 // joinRequest sends the join-request.
 func (d *Device) joinRequest() {
-	if !config.C.ChirpStack.API.UseNewDevice {
+	if !config.C.LoraSimulator.API.UseNewDevice {
 		d.setState(deviceStateActivated)
 		return
 	}

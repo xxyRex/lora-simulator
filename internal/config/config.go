@@ -14,9 +14,8 @@ type Config struct {
 		ChannelPlan string `mapstructure:"channel_plan"`
 	}
 
-	ChirpStack struct {
+	LoraSimulator struct {
 		API struct {
-			APIKey               string        `mapstructure:"api_key"`
 			Server               string        `mapstructure:"server"`
 			LoginUrl             string        `mapstructure:"login_url"`
 			Username             string        `mapstructure:"username"`
@@ -53,7 +52,7 @@ type Config struct {
 				} `mapstructure:"mqtt"`
 			} `mapstructure:"backend"`
 		} `mapstructure:"gateway"`
-	} `mapstructure:"chirpstack"`
+	} `mapstructure:"lora-simulator"`
 
 	Simulator []struct {
 		TenantID             string        `mapstructure:"tenant_id"`

@@ -90,7 +90,7 @@ func parseJSON(data []byte) (map[string]interface{}, error) {
 }
 
 func post(url, data string) ([]byte, error) {
-	url = "http://" + config.C.ChirpStack.API.Server + url
+	url = "http://" + config.C.LoraSimulator.API.Server + url
 
 	var response []byte
 
@@ -115,15 +115,15 @@ func post(url, data string) ([]byte, error) {
 }
 
 func Setup(c config.Config) error {
-	conf := c.ChirpStack
+	conf := c.LoraSimulator
 
 	log.WithFields(log.Fields{
 		"server":   conf.API.Server,
 		"insecure": conf.API.Insecure,
 	}).Info("as: connecting api client")
 
-	username := config.C.ChirpStack.API.Username
-	password := config.C.ChirpStack.API.Password
+	username := config.C.LoraSimulator.API.Username
+	password := config.C.LoraSimulator.API.Password
 
 	aesKey := []byte(AES_KEY)
 	aesIv := []byte(AES_IV)
@@ -135,10 +135,10 @@ func Setup(c config.Config) error {
 	}
 
 	asPassword := aesPassword
-	if config.C.ChirpStack.API.IsLNS {
+	if config.C.LoraSimulator.API.IsLNS {
 		asPassword = sha256Hash(password)
 	}
-	if config.C.ChirpStack.API.UseOldAuth {
+	if config.C.LoraSimulator.API.UseOldAuth {
 		asPassword = "NicJjG18XOV3U1efQyo8AQ=="
 	}
 	err = ASLogin(username, asPassword)
@@ -196,7 +196,7 @@ func CGILogin(username, password string) error {
 	cgiClient = &http.Client{
 		Jar: jar,
 	}
-	url := "http://" + config.C.ChirpStack.API.Server + "/cgi"
+	url := "http://" + config.C.LoraSimulator.API.Server + "/cgi"
 
 	data := CGILoginReq{
 		ID:       "1",
@@ -257,7 +257,7 @@ func CGILogin(username, password string) error {
 }
 
 func ASLogin(username string, password string) error {
-	cfg := as_api.DefaultTransportConfig().WithHost(config.C.ChirpStack.API.Server)
+	cfg := as_api.DefaultTransportConfig().WithHost(config.C.LoraSimulator.API.Server)
 	cfg.Schemes = []string{"http"} // 强制使用 HTTP
 	asClient = as_api.NewHTTPClientWithConfig(strfmt.Default, cfg)
 
@@ -534,12 +534,12 @@ func GetApplications() ([]*models.APIAppListItem, error) {
 }
 
 func RestartAppServer() error {
-	server := strings.Split(config.C.ChirpStack.API.Server, ":")[0] // 移除端口号（如果有）
+	server := strings.Split(config.C.LoraSimulator.API.Server, ":")[0] // 移除端口号（如果有）
 
 	sshConfig := &ssh.ClientConfig{
 		User: "root",
 		Auth: []ssh.AuthMethod{
-			ssh.Password(config.C.ChirpStack.API.SshPassword), // 无密码，根据注释
+			ssh.Password(config.C.LoraSimulator.API.SshPassword), // 无密码，根据注释
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         10 * time.Second,
@@ -828,7 +828,7 @@ func CheckSavedCookies() {
 		return
 	}
 
-	serverURL, err := url.Parse("http://" + config.C.ChirpStack.API.Server)
+	serverURL, err := url.Parse("http://" + config.C.LoraSimulator.API.Server)
 	if err != nil {
 		log.Errorf("解析服务器URL失败: %v", err)
 		return
