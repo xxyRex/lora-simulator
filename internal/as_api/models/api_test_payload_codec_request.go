@@ -12,21 +12,37 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// APITestPayloadCodecRequest api test payload codec request
+// APITestPayloadCodecRequest 测试载荷编解码器请求
 //
 // swagger:model apiTestPayloadCodecRequest
 type APITestPayloadCodecRequest struct {
 
-	// data
+	// 编解码器JSON配置，定义数据字段的规范，包括：
+	// - 字段名称（支持嵌套，如"sensor.temperature"）
+	// - 数据类型（BOOL, NUMBER, TEXT, ENUM）
+	// - 数值类型（INT8, UINT8, INT16, UINT16, INT32, UINT32, FLOAT32, STRING, FLAG）
+	// - 读写权限（R/W/RW）
+	// - 最大长度（TEXT类型）
+	// - 枚举值定义（ENUM类型）
+	CodecJSON string `json:"codecJson,omitempty"`
+
+	// 测试数据：
+	// 编码时：输入JSON格式的数据，如 {"temperature": 25.5, "humidity": 60}
+	// 解码时：输入十六进制字节串，如 "01FF2A"
 	Data string `json:"data,omitempty"`
 
-	// f port
+	// LoRaWAN端口号，范围1-223，默认为1
+	// 用于指定编解码时使用的fPort参数
 	FPort int64 `json:"fPort,omitempty"`
 
-	// script
+	// JavaScript脚本代码：
+	// 编码时：使用编码脚本，将JSON对象转换为字节数组
+	// 解码时：使用解码脚本，将字节数组转换为JSON对象
 	Script string `json:"script,omitempty"`
 
-	// type
+	// 测试类型，支持：
+	// "encode": 编码测试（将JSON数据编码为十六进制字节串）
+	// "decode": 解码测试（将十六进制字节串解码为JSON数据）
 	Type string `json:"type,omitempty"`
 }
 

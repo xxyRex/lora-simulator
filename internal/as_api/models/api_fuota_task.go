@@ -19,7 +19,7 @@ import (
 type APIFuotaTask struct {
 
 	// created at
-	CreatedAt string `json:"created_at,omitempty"`
+	CreatedAt string `json:"createdAt,omitempty"`
 
 	// description
 	Description string `json:"description,omitempty"`
@@ -28,46 +28,46 @@ type APIFuotaTask struct {
 	Deveui []string `json:"deveui"`
 
 	// done devices
-	DoneDevices int32 `json:"done_devices,omitempty"`
+	DoneDevices int32 `json:"doneDevices,omitempty"`
 
 	// firmware info
-	FirmwareInfo *APIFirmwareInfo `json:"firmware_info,omitempty"`
+	FirmwareInfo *APIFirmwareInfo `json:"firmwareInfo,omitempty"`
 
 	// firmware name
-	FirmwareName string `json:"firmware_name,omitempty"`
+	FirmwareName string `json:"firmwareName,omitempty"`
 
 	// fragment info
-	FragmentInfo *APIFragmentInfo `json:"fragment_info,omitempty"`
+	FragmentInfo *APIFragmentInfo `json:"fragmentInfo,omitempty"`
 
 	// id
 	ID int32 `json:"id,omitempty"`
 
 	// is official firmware
-	IsOfficialFirmware bool `json:"is_official_firmware,omitempty"`
+	IsOfficialFirmware bool `json:"isOfficialFirmware,omitempty"`
 
 	// name
 	Name string `json:"name,omitempty"`
 
 	// official firmware info
-	OfficialFirmwareInfo *APIOfficialFirmwareInfoContent `json:"official_firmware_info,omitempty"`
+	OfficialFirmwareInfo *APIOfficialFirmwareInfoContent `json:"officialFirmwareInfo,omitempty"`
 
 	// started at
-	StartedAt string `json:"started_at,omitempty"`
+	StartedAt string `json:"startedAt,omitempty"`
 
 	// status
 	Status int32 `json:"status,omitempty"`
 
 	// stopped at
-	StoppedAt string `json:"stopped_at,omitempty"`
+	StoppedAt string `json:"stoppedAt,omitempty"`
 
 	// tmp mc info
-	TmpMcInfo *APITmpMcInfo `json:"tmp_mc_info,omitempty"`
+	TmpMcInfo *APITmpMcInfo `json:"tmpMcInfo,omitempty"`
 
 	// total devices
-	TotalDevices int32 `json:"total_devices,omitempty"`
+	TotalDevices int32 `json:"totalDevices,omitempty"`
 
 	// updated at
-	UpdatedAt string `json:"updated_at,omitempty"`
+	UpdatedAt string `json:"updatedAt,omitempty"`
 }
 
 // Validate validates this api fuota task
@@ -104,9 +104,9 @@ func (m *APIFuotaTask) validateFirmwareInfo(formats strfmt.Registry) error {
 	if m.FirmwareInfo != nil {
 		if err := m.FirmwareInfo.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("firmware_info")
+				return ve.ValidateName("firmwareInfo")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("firmware_info")
+				return ce.ValidateName("firmwareInfo")
 			}
 			return err
 		}
@@ -123,9 +123,9 @@ func (m *APIFuotaTask) validateFragmentInfo(formats strfmt.Registry) error {
 	if m.FragmentInfo != nil {
 		if err := m.FragmentInfo.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("fragment_info")
+				return ve.ValidateName("fragmentInfo")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("fragment_info")
+				return ce.ValidateName("fragmentInfo")
 			}
 			return err
 		}
@@ -142,9 +142,9 @@ func (m *APIFuotaTask) validateOfficialFirmwareInfo(formats strfmt.Registry) err
 	if m.OfficialFirmwareInfo != nil {
 		if err := m.OfficialFirmwareInfo.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("official_firmware_info")
+				return ve.ValidateName("officialFirmwareInfo")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("official_firmware_info")
+				return ce.ValidateName("officialFirmwareInfo")
 			}
 			return err
 		}
@@ -161,9 +161,9 @@ func (m *APIFuotaTask) validateTmpMcInfo(formats strfmt.Registry) error {
 	if m.TmpMcInfo != nil {
 		if err := m.TmpMcInfo.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("tmp_mc_info")
+				return ve.ValidateName("tmpMcInfo")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("tmp_mc_info")
+				return ce.ValidateName("tmpMcInfo")
 			}
 			return err
 		}
@@ -208,9 +208,9 @@ func (m *APIFuotaTask) contextValidateFirmwareInfo(ctx context.Context, formats 
 
 		if err := m.FirmwareInfo.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("firmware_info")
+				return ve.ValidateName("firmwareInfo")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("firmware_info")
+				return ce.ValidateName("firmwareInfo")
 			}
 			return err
 		}
@@ -229,9 +229,9 @@ func (m *APIFuotaTask) contextValidateFragmentInfo(ctx context.Context, formats 
 
 		if err := m.FragmentInfo.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("fragment_info")
+				return ve.ValidateName("fragmentInfo")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("fragment_info")
+				return ce.ValidateName("fragmentInfo")
 			}
 			return err
 		}
@@ -250,9 +250,9 @@ func (m *APIFuotaTask) contextValidateOfficialFirmwareInfo(ctx context.Context, 
 
 		if err := m.OfficialFirmwareInfo.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("official_firmware_info")
+				return ve.ValidateName("officialFirmwareInfo")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("official_firmware_info")
+				return ce.ValidateName("officialFirmwareInfo")
 			}
 			return err
 		}
@@ -271,9 +271,9 @@ func (m *APIFuotaTask) contextValidateTmpMcInfo(ctx context.Context, formats str
 
 		if err := m.TmpMcInfo.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("tmp_mc_info")
+				return ve.ValidateName("tmpMcInfo")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("tmp_mc_info")
+				return ce.ValidateName("tmpMcInfo")
 			}
 			return err
 		}

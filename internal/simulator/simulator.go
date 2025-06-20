@@ -126,6 +126,10 @@ func (s *Simulation) start() {
 		log.WithError(err).Error("simulator: init Simulation error")
 	}
 
+	if config.C.LoraSimulator.API.ApiTest {
+		go s.ApiTest()
+	}
+
 	if err := s.runSimulation(); err != nil {
 		log.WithError(err).Error("simulator: Simulation error")
 	}
@@ -821,103 +825,55 @@ func (s *Simulation) setupModbus() error {
 		return nil
 	}
 
-	modbusServers, err := as.GetModbusServer(as.ModbusGetServerReq{
-		ID:       int64(1),
-		Execute:  int64(1),
-		Core:     "yruo_modbus_slave",
-		Function: "get",
-		Values: []as.ModbusGetServerReqValue{
-			{
-				Base:   "server",
-				Search: "",
-				Order:  "asc",
-				Offset: 0,
-				Limit:  math.MaxInt32,
-			},
-		},
-	})
-
+	modbusServers, err := as.GetModbusServer(math.MaxInt32, 0, "")
 	if err != nil {
 		return err
 	}
 
-	if len(modbusServers.Result) > 0 {
+	if len(modbusServers) > 0 {
 		id := 0
-		for _, server := range modbusServers.Result[0].Servers {
-			ids := []string{}
-			ids = append(ids, server.ID)
-			err = as.DeleteModbusServer(as.ModbusServerDeleteReq{
-				ID:       int64(id),
-				Execute:  int64(1),
-				Core:     "yruo_modbus_slave",
-				Function: "del",
-				Values: []as.ModbusServerDeleteReqValue{
-					{
-						Base: "server",
-						IDS:  ids,
-					},
-				},
-			})
+		for _, server := range modbusServers {
+			err = as.DeleteModbusServer(server.ID)
 
 			if err != nil {
 				log.Error("failed to delete modbus servers: ", err)
 				return err
 			}
 
-			log.Info("deleted modbus servers: ", ids)
+			log.Info("deleted modbus servers: ", server.ID)
 			id += 1
 		}
 	}
 
 	for k := 0; k < 1; k++ {
-		modbusServerCreateReq := as.ModbusServerCreateReq{
-			ID:       int64(k + 1),
-			Execute:  int64(1),
-			Core:     "yruo_modbus_slave",
-			Function: "add",
-			Values: []as.ModbusServerCreateReqValue{
-				{
-					Base: "server",
-					Servers: []as.ModbusServerCreateReqServer{
-						{
-							Enable:      1,
-							Interface:   "eth 0",
-							ConnectType: "modbus_tcp",
-							Name:        "test" + strconv.Itoa(k),
-							Port:        10000 + int64(k),
-							SlaveID:     int64(k),
-							Description: "test" + strconv.Itoa(k),
-						},
-					},
-				},
+		modbusServerCreateReq := models.APIModbusServer{
+			ID:                 strconv.Itoa(k + 1),
+			Enable:             1,
+			Interface:          "eth 0",
+			ConnectType:        "modbus_tcp",
+			Name:               "test" + strconv.Itoa(k),
+			Port:               10000 + int32(k),
+			SlaveID:            int32(k),
+			Description:        "test" + strconv.Itoa(k),
+			SlaveIDType:        1,
+			GlobalObjectEnable: true,
+			GlobalObjects: []string{
+				"frequency",
+				"rssi",
+				"snr",
 			},
 		}
 
-		err = as.CreateModbusServer(modbusServerCreateReq)
+		err = as.CreateModbusServer(&modbusServerCreateReq)
 		if err != nil {
 			log.Error("failed to create modbus servers: ", err)
 			return err
 		}
 
-		log.Info("created modbus servers: ", modbusServerCreateReq.Values[0].Servers)
+		log.Info("created modbus servers: ", modbusServerCreateReq)
 	}
 
-	modbusServers, err = as.GetModbusServer(as.ModbusGetServerReq{
-		ID:       int64(1),
-		Execute:  int64(1),
-		Core:     "yruo_modbus_slave",
-		Function: "get",
-		Values: []as.ModbusGetServerReqValue{
-			{
-				Base:   "server",
-				Search: "",
-				Order:  "asc",
-				Offset: 0,
-				Limit:  math.MaxInt32,
-			},
-		},
-	})
-
+	modbusServers, err = as.GetModbusServer(math.MaxInt32, 0, "")
 	if err != nil {
 		return err
 	}
@@ -925,19 +881,19 @@ func (s *Simulation) setupModbus() error {
 	log.Infof("modbus servers: %v", modbusServers)
 
 	serverIDs := []string{}
-	if len(modbusServers.Result) < 1 || len(modbusServers.Result[0].Servers) < 1 {
+	if len(modbusServers) < 1 {
 		log.Error("no modbus server found")
 		return errors.New("no modbus server found")
 	}
 
-	for _, server := range modbusServers.Result[0].Servers {
+	for _, server := range modbusServers {
 		serverIDs = append(serverIDs, server.ID)
 	}
 
 	log.Infof("modbus server ids: %v", serverIDs)
 
 	modbusObjects, err := as.GetAllAvaliableModbusObjects(&models.APIGetModbusObjectRequest{
-		ServerID: "0",
+		ServerID: serverIDs[0],
 		Limit:    int32(1),
 		Offset:   0,
 		Search:   "",
@@ -981,15 +937,23 @@ func (s *Simulation) setupModbus() error {
 			testDataKeys[k] = struct{}{}
 		}
 
+		maxDevice := 2
+		newData := []*models.APIModbusDevice{}
 		for k := range modbusObjects.Data {
-			newObjs := []*models.APIObject{}
+			if k > maxDevice {
+				break
+			}
+			newObjs := []*models.APIModbusObject{}
 			for _, o := range modbusObjects.Data[k].Objects {
 				if _, exists := testDataKeys[o.LoraName]; exists {
 					newObjs = append(newObjs, o)
 				}
 			}
 			modbusObjects.Data[k].Objects = newObjs
+			newData = append(newData, modbusObjects.Data[k])
 		}
+
+		modbusObjects.Data = newData
 
 		err = as.AddModbusDatum(&models.APIAddModbusObjectRequest{
 			ServerID: serverIDs[serverIdIndex],
@@ -1005,6 +969,25 @@ func (s *Simulation) setupModbus() error {
 		serverIdIndex++
 		serverIdIndex = serverIdIndex % len(serverIDs)
 	}
+
+	return nil
+}
+
+func (s *Simulation) ApiTest() error {
+	log.Info("simulator: payload codec test")
+
+	csv, err := as.ExportBulkDevice()
+	if err != nil {
+		return err
+	}
+
+	csvFile, err := os.Create("bulk_device.csv")
+	if err != nil {
+		return err
+	}
+	defer csvFile.Close()
+
+	csvFile.WriteString(csv)
 
 	return nil
 }

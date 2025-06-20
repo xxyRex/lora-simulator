@@ -20,22 +20,22 @@ import (
 type APIPCO struct {
 
 	// 活动状态文本 (用于二进制/多状态对象)
-	ActiveText string `json:"active_text,omitempty"`
+	ActiveText string `json:"activeText,omitempty"`
 
 	// 报警值 (用于二进制/多状态对象)
-	AlarmValue int32 `json:"alarm_value,omitempty"`
+	AlarmValue int32 `json:"alarmValue,omitempty"`
 
 	// 报警值数组 (用于多状态对象)
-	AlarmValueArray []int32 `json:"alarm_value_array"`
+	AlarmValueArray []int32 `json:"alarmValueArray"`
 
 	// 相关单位数量 (相同目录下的单位)
 	Count int32 `json:"count,omitempty"`
 
 	// 是否启用 COV (Change of Value) 报告
-	CovEnable int32 `json:"cov_enable,omitempty"`
+	CovEnable int32 `json:"covEnable,omitempty"`
 
 	// COV 增量值
-	CovIncrement string `json:"cov_increment,omitempty"`
+	CovIncrement string `json:"covIncrement,omitempty"`
 
 	// 死区值
 	Deadband string `json:"deadband,omitempty"`
@@ -44,55 +44,58 @@ type APIPCO struct {
 	Description string `json:"description,omitempty"`
 
 	// 关联的设备 EUI
-	DevEui string `json:"dev_eui,omitempty"`
+	DevEui string `json:"devEui,omitempty"`
 
 	// 是否启用事件报警
-	EventEnable int32 `json:"event_enable,omitempty"`
+	EventEnable int32 `json:"eventEnable,omitempty"`
 
 	// 故障值数组 (用于多状态对象)
-	FaultValueArray []int32 `json:"fault_value_array"`
+	FaultValueArray []int32 `json:"faultValueArray"`
 
 	// 反馈值
-	FeedbackValue int32 `json:"feedback_value,omitempty"`
+	FeedbackValue int32 `json:"feedbackValue,omitempty"`
 
 	// 高限值
-	HighLimit string `json:"high_limit,omitempty"`
+	HighLimit string `json:"highLimit,omitempty"`
 
 	// PCO 的唯一标识符 (添加时格式为 dev_eui-payload_codec_object_id, 获取时为数据库 ID)
 	ID string `json:"id,omitempty"`
 
 	// 非活动状态文本 (用于二进制/多状态对象)
-	InactiveText string `json:"inactive_text,omitempty"`
+	InactiveText string `json:"inactiveText,omitempty"`
 
 	// BACnet 对象实例 ID
-	InstanceID int32 `json:"instance_id,omitempty"`
+	InstanceID int32 `json:"instanceId,omitempty"`
+
+	// 是否是全局对象
+	IsGlobalObject bool `json:"isGlobalObject,omitempty"`
 
 	// 是否启用限值报警
-	LimitEnable int32 `json:"limit_enable,omitempty"`
+	LimitEnable int32 `json:"limitEnable,omitempty"`
 
 	// LoRa 点位名称 (来自 Payload Codec)
-	LoraName string `json:"lora_name,omitempty"`
+	LoraName string `json:"loraName,omitempty"`
 
 	// LoRa 点位单位类型 ID (来自 Payload Codec)
-	LoraUnitTypeID int32 `json:"lora_unit_type_id,omitempty"`
+	LoraUnitTypeID int32 `json:"loraUnitTypeId,omitempty"`
 
 	// 低限值
-	LowLimit string `json:"low_limit,omitempty"`
+	LowLimit string `json:"lowLimit,omitempty"`
 
 	// BACnet 对象名称
 	Name string `json:"name,omitempty"`
 
 	// 关联的通知类实例 ID (-1 表示无)
-	NotificationClass int32 `json:"notification_class,omitempty"`
+	NotificationClass int32 `json:"notificationClass,omitempty"`
 
 	// 通知类型
-	NotifyType int32 `json:"notify_type,omitempty"`
+	NotifyType int32 `json:"notifyType,omitempty"`
 
 	// 状态数量 (用于多状态对象)
-	NumberOfStates int32 `json:"number_of_states,omitempty"`
+	NumberOfStates int32 `json:"numberOfStates,omitempty"`
 
 	// 关联的 Payload Codec Object ID
-	PayloadCodecObjectID string `json:"payload_codec_object_id,omitempty"`
+	PayloadCodecObjectID string `json:"payloadCodecObjectId,omitempty"`
 
 	// 极性 (用于二进制对象)
 	Polarity int32 `json:"polarity,omitempty"`
@@ -101,34 +104,34 @@ type APIPCO struct {
 	Reference []string `json:"reference"`
 
 	// 默认释放值
-	RelinquishDefault string `json:"relinquish_default,omitempty"`
+	RelinquishDefault string `json:"relinquishDefault,omitempty"`
 
 	// 状态文本列表 (用于多状态对象)
-	StateText []string `json:"state_text"`
+	StateText []string `json:"stateText"`
 
 	// 时间延迟
-	TimeDelay int32 `json:"time_delay,omitempty"`
+	TimeDelay int32 `json:"timeDelay,omitempty"`
 
 	// BACnet 对象类型 (例如 "analog_input_object")
 	Type string `json:"type,omitempty"`
 
 	// BACnet 对象类型别名 (例如 "Analog-Input")
-	TypeAlias string `json:"type_alias,omitempty"`
+	TypeAlias string `json:"typeAlias,omitempty"`
 
 	// 单位名称
 	Unit string `json:"unit,omitempty"`
 
 	// BACnet 单位类型 ID
-	UnitTypeID int32 `json:"unit_type_id,omitempty"`
+	UnitTypeID int32 `json:"unitTypeId,omitempty"`
 
 	// 相关单位列表 (相同目录下的单位)
 	Units []*APIUnitPCO `json:"units"`
 
 	// 最后更新时间 (来自 BACnet 服务)
-	UpdatedAt string `json:"updated_at,omitempty"`
+	UpdatedAt string `json:"updatedAt,omitempty"`
 
 	// 更新次数 (来自 BACnet 服务)
-	UpdatedTimes int32 `json:"updated_times,omitempty"`
+	UpdatedTimes int32 `json:"updatedTimes,omitempty"`
 
 	// 当前值 (来自 BACnet 服务)
 	Value string `json:"value,omitempty"`

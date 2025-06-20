@@ -18,13 +18,13 @@ import (
 type APIFragmentInfo struct {
 
 	// fragment interval
-	FragmentInterval int32 `json:"fragment_interval,omitempty"`
+	FragmentInterval int32 `json:"fragmentInterval,omitempty"`
 
 	// fragment redundancy
-	FragmentRedundancy int32 `json:"fragment_redundancy,omitempty"`
+	FragmentRedundancy int32 `json:"fragmentRedundancy,omitempty"`
 
 	// fragment size
-	FragmentSize int32 `json:"fragment_size,omitempty"`
+	FragmentSize int32 `json:"fragmentSize,omitempty"`
 }
 
 // Validate validates this api fragment info

@@ -7,7 +7,7 @@ log_level = 4
 channel_plan = "EU868"
 
 # ChirpStack configuration.
-[chirpstack]
+[lora-simulator]
 
 # API configuration.
 #
@@ -16,7 +16,7 @@ channel_plan = "EU868"
 #   * Gateways
 #   * Application
 #   * Devices
-[chirpstack.api]
+[lora-simulator.api]
 
 # API key.
 #
@@ -26,7 +26,7 @@ api_key = ""
 # Server.
 #
 # This must point to the ChirpStack API interface.
-server = "http://192.168.40.148"
+server = "192.168.40.147"
 
 # 网关as api登录url
 login_url = "/api/internal/login"
@@ -41,7 +41,7 @@ use_new_gateway = false
 # 暂时无用
 use_new_profile = false
 # 是否每次创建新的application
-use_new_app = true
+use_new_app = false
 # 是否使用旧版校验方式(60.0.0.42-r5前的网关)
 use_old_auth = false
 # 是否每次创建新的application
@@ -49,11 +49,17 @@ clean_before_test = true
 # 结束后是否删除所有数据
 teardown_after_test = false
 # 测试的功能，目前支持bacnet，fuota，normal,modbus
-test_feature = "normal,bacnet,modbus"
+test_feature = "normal,modbus"
 # 是否需要重启as
 restart_as = false
 # 每个fuota任务的设备数量
 fuota_task_device_count = 0
+# 是否每次创建新设备
+use_new_device = true
+# 添加完数据等待设备运行稳定后，再入网的等待时间
+wait_device_stable_time = "0s"
+# 是否只进行api的测试
+api_test = false
 
 # 是否使用TLS
 # Insecure.
@@ -64,11 +70,11 @@ insecure = true
 # MQTT integration configuration.
 #
 # This integration is used for counting the number of uplinks that are
-# published by the ChirpStack MQTT integration.
-[chirpstack.integration.mqtt]
+# published by the lora-simulator MQTT integration.
+[lora-simulator.integration.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.148:1883"
+server = "tcp://192.168.40.147:1883"
 
 ssh_password = ""
 
@@ -80,10 +86,10 @@ password = "Urs@L1nk#Ms2020"
 
 
 # MQTT gateway backend.
-[chirpstack.gateway.backend.mqtt]
+[lora-simulator.gateway.backend.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.148:1883"
+server = "tcp://192.168.40.147:1883"
 
 # Username.
 username = "lorawan"
@@ -99,7 +105,7 @@ password = "Urs@L1nk#Ms2020"
 
 # Tenant ID.
 #
-# It is recommended to create a new tenant in ChirpStack.
+# It is recommended to create a new tenant in lora-simulator.
 tenant_id = "f6f7d81d-647f-4c7f-8409-3e5218c0c523"
 
 # Duration.
@@ -125,7 +131,7 @@ activation_time = "100s"
 [simulator.device]
 
 # Number of devices to simulate.
-count = 1000
+count = 5
 
 # Uplink interval.
 uplink_interval = "300s"
@@ -169,7 +175,7 @@ max_count = 5
 #   * Join-Accepts received
 #   * Uplinks sent (by the devices)
 #   * Uplinks sent (by the gateways)
-#   * Uplinks sent (by the ChirpStack Application Server MQTT integration)
+#   * Uplinks sent (by the lora-simulator Application Server MQTT integration)
 [prometheus]
 
 # IP:port to bind the Prometheus endpoint to.

@@ -12,12 +12,15 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// APITestPayloadCodecResponse api test payload codec response
+// APITestPayloadCodecResponse 测试载荷编解码器响应
 //
 // swagger:model apiTestPayloadCodecResponse
 type APITestPayloadCodecResponse struct {
 
-	// result
+	// 编解码结果校验信息
+	CodecResult string `json:"codecResult,omitempty"`
+
+	// 编解码执行结果
 	Result string `json:"result,omitempty"`
 }
 

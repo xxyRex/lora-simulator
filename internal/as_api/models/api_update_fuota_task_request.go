@@ -19,7 +19,7 @@ import (
 type APIUpdateFuotaTaskRequest struct {
 
 	// fuota task
-	FuotaTask *APIFuotaTask `json:"fuota_task,omitempty"`
+	FuotaTask *APIFuotaTask `json:"fuotaTask,omitempty"`
 }
 
 // Validate validates this api update fuota task request
@@ -44,9 +44,9 @@ func (m *APIUpdateFuotaTaskRequest) validateFuotaTask(formats strfmt.Registry) e
 	if m.FuotaTask != nil {
 		if err := m.FuotaTask.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("fuota_task")
+				return ve.ValidateName("fuotaTask")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("fuota_task")
+				return ce.ValidateName("fuotaTask")
 			}
 			return err
 		}
@@ -79,9 +79,9 @@ func (m *APIUpdateFuotaTaskRequest) contextValidateFuotaTask(ctx context.Context
 
 		if err := m.FuotaTask.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("fuota_task")
+				return ve.ValidateName("fuotaTask")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("fuota_task")
+				return ce.ValidateName("fuotaTask")
 			}
 			return err
 		}

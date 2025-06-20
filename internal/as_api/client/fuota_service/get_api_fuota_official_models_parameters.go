@@ -141,7 +141,7 @@ func (o *GetAPIFuotaOfficialModelsParams) WriteToRequest(r runtime.ClientRequest
 
 	if o.DateCenter != nil {
 
-		// query param date_center
+		// query param dateCenter
 		var qrDateCenter string
 
 		if o.DateCenter != nil {
@@ -150,7 +150,7 @@ func (o *GetAPIFuotaOfficialModelsParams) WriteToRequest(r runtime.ClientRequest
 		qDateCenter := qrDateCenter
 		if qDateCenter != "" {
 
-			if err := r.SetQueryParam("date_center", qDateCenter); err != nil {
+			if err := r.SetQueryParam("dateCenter", qDateCenter); err != nil {
 				return err
 			}
 		}

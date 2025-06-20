@@ -60,6 +60,8 @@ type ClientService interface {
 
 	PostAPIBacnetAdd(params *PostAPIBacnetAddParams, opts ...ClientOption) (*PostAPIBacnetAddOK, error)
 
+	PostAPIBacnetDeleteDeveui(params *PostAPIBacnetDeleteDeveuiParams, opts ...ClientOption) (*PostAPIBacnetDeleteDeveuiOK, error)
+
 	PostAPIBacnetGet(params *PostAPIBacnetGetParams, opts ...ClientOption) (*PostAPIBacnetGetOK, error)
 
 	PostAPIBacnetGetAll(params *PostAPIBacnetGetAllParams, opts ...ClientOption) (*PostAPIBacnetGetAllOK, error)
@@ -142,6 +144,44 @@ func (a *Client) PostAPIBacnetAdd(params *PostAPIBacnetAddParams, opts ...Client
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for post_api_bacnet_add: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIBacnetDeleteDeveui deletes b a cnet objects by dev e UI
+*/
+func (a *Client) PostAPIBacnetDeleteDeveui(params *PostAPIBacnetDeleteDeveuiParams, opts ...ClientOption) (*PostAPIBacnetDeleteDeveuiOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIBacnetDeleteDeveuiParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_bacnet_delete_deveui",
+		Method:             "POST",
+		PathPattern:        "/api/bacnet/delete/deveui",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIBacnetDeleteDeveuiReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIBacnetDeleteDeveuiOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_bacnet_delete_deveui: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

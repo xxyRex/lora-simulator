@@ -17,6 +17,9 @@ import (
 // swagger:model apiDeviceProfile
 type APIDeviceProfile struct {
 
+	// adr enabled
+	AdrEnabled bool `json:"adrEnabled,omitempty"`
+
 	// class b timeout
 	ClassBTimeout int64 `json:"classBTimeout,omitempty"`
 

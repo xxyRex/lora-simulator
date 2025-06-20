@@ -23,7 +23,7 @@ type APIGetDevicesPCOsResponse struct {
 	Data []*APIBACnetDevice `json:"data"`
 
 	// NOC (Notification Class Object) 数据列表
-	NocData []*APINOC `json:"noc_data"`
+	NocData []*APINOC `json:"nocData"`
 
 	// 总数
 	Total int32 `json:"total,omitempty"`
@@ -86,9 +86,9 @@ func (m *APIGetDevicesPCOsResponse) validateNocData(formats strfmt.Registry) err
 		if m.NocData[i] != nil {
 			if err := m.NocData[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("noc_data" + "." + strconv.Itoa(i))
+					return ve.ValidateName("nocData" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("noc_data" + "." + strconv.Itoa(i))
+					return ce.ValidateName("nocData" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -154,9 +154,9 @@ func (m *APIGetDevicesPCOsResponse) contextValidateNocData(ctx context.Context, 
 
 			if err := m.NocData[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("noc_data" + "." + strconv.Itoa(i))
+					return ve.ValidateName("nocData" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("noc_data" + "." + strconv.Itoa(i))
+					return ce.ValidateName("nocData" + "." + strconv.Itoa(i))
 				}
 				return err
 			}

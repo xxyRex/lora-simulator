@@ -14,25 +14,28 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// APIModbusDevice api modbus device
+// APIModbusDevice ModbusDevice Modbus设备信息
 //
 // swagger:model apiModbusDevice
 type APIModbusDevice struct {
 
-	// dev eui
-	DevEui string `json:"dev_eui,omitempty"`
+	// 设备EUI（16进制字符串）
+	DevEui string `json:"devEui,omitempty"`
 
-	// device name
-	DeviceName string `json:"device_name,omitempty"`
+	// 设备名称
+	DeviceName string `json:"deviceName,omitempty"`
 
-	// id
+	// 设备ID（设备的DevEUI）
 	ID string `json:"id,omitempty"`
 
-	// ids
+	// 设备包含的临时对象ID列表（GetAll时使用）
 	Ids []string `json:"ids"`
 
-	// objects
-	Objects []*APIObject `json:"objects"`
+	// 设备包含的Modbus对象列表
+	Objects []*APIModbusObject `json:"objects"`
+
+	// 从机ID
+	SlaveID string `json:"slaveId,omitempty"`
 }
 
 // Validate validates this api modbus device

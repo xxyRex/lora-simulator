@@ -18,40 +18,40 @@ import (
 type APIBACnetServer struct {
 
 	// 是否自动添加新设备的 PCO 对象
-	AutoAddObjects bool `json:"auto_add_objects,omitempty"`
+	AutoAddObjects bool `json:"autoAddObjects,omitempty"`
 
 	// 是否启用 BBMD (BACnet Broadcast Management Device)
-	BbmdEnable int32 `json:"bbmd_enable,omitempty"`
+	BbmdEnable int32 `json:"bbmdEnable,omitempty"`
 
 	// BBMD IP 地址
-	BbmdIP string `json:"bbmd_ip,omitempty"`
+	BbmdIP string `json:"bbmdIp,omitempty"`
 
 	// BBMD 端口
-	BbmdPort int32 `json:"bbmd_port,omitempty"`
+	BbmdPort int32 `json:"bbmdPort,omitempty"`
 
 	// BBMD 注册间隔 (秒)
-	BbmdRegisterInterval int32 `json:"bbmd_register_interval,omitempty"`
+	BbmdRegisterInterval int32 `json:"bbmdRegisterInterval,omitempty"`
 
 	// BACnet 设备 ID
-	DeviceID int32 `json:"device_id,omitempty"`
+	DeviceID int32 `json:"deviceId,omitempty"`
 
 	// BACnet 设备名称
-	DeviceName string `json:"device_name,omitempty"`
+	DeviceName string `json:"deviceName,omitempty"`
 
 	// 是否启用 BACnet 服务
 	Enable int32 `json:"enable,omitempty"`
 
 	// 是否启用全局对象 (例如设备状态)
-	GlobalObjectEnable bool `json:"global_object_enable,omitempty"`
+	GlobalObjectEnable bool `json:"globalObjectEnable,omitempty"`
 
 	// 全局对象类型列表 (目前仅支持 "status")
-	GlobalObjects []string `json:"global_objects"`
+	GlobalObjects []string `json:"globalObjects"`
 
 	// 配置 ID
 	ID int32 `json:"id,omitempty"`
 
 	// UDP 端口
-	UDPPort int32 `json:"udp_port,omitempty"`
+	UDPPort int32 `json:"udpPort,omitempty"`
 }
 
 // Validate validates this api b a cnet server

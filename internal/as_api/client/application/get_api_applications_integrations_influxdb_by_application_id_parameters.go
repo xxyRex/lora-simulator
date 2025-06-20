@@ -141,8 +141,8 @@ func (o *GetAPIApplicationsIntegrationsInfluxdbByApplicationIDParams) WriteToReq
 	}
 	var res []error
 
-	// path param application_id
-	if err := r.SetPathParam("application_id", o.ApplicationID); err != nil {
+	// path param applicationId
+	if err := r.SetPathParam("applicationId", o.ApplicationID); err != nil {
 		return err
 	}
 

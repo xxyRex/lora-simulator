@@ -19,16 +19,16 @@ import (
 type APIGetDevicesByFirmwareInfoRequest struct {
 
 	// file content
-	FileContent string `json:"file_content,omitempty"`
+	FileContent string `json:"fileContent,omitempty"`
 
 	// firmware name
-	FirmwareName string `json:"firmware_name,omitempty"`
+	FirmwareName string `json:"firmwareName,omitempty"`
 
 	// limit
 	Limit int32 `json:"limit,omitempty"`
 
 	// official firmware info
-	OfficialFirmwareInfo *APIOfficialFirmwareInfoContent `json:"official_firmware_info,omitempty"`
+	OfficialFirmwareInfo *APIOfficialFirmwareInfoContent `json:"officialFirmwareInfo,omitempty"`
 
 	// offset
 	Offset int32 `json:"offset,omitempty"`
@@ -36,8 +36,8 @@ type APIGetDevicesByFirmwareInfoRequest struct {
 	// search
 	Search string `json:"search,omitempty"`
 
-	// task id
-	TaskID int32 `json:"task_id,omitempty"`
+	// task Id
+	TaskID int32 `json:"taskId,omitempty"`
 }
 
 // Validate validates this api get devices by firmware info request
@@ -62,9 +62,9 @@ func (m *APIGetDevicesByFirmwareInfoRequest) validateOfficialFirmwareInfo(format
 	if m.OfficialFirmwareInfo != nil {
 		if err := m.OfficialFirmwareInfo.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("official_firmware_info")
+				return ve.ValidateName("officialFirmwareInfo")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("official_firmware_info")
+				return ce.ValidateName("officialFirmwareInfo")
 			}
 			return err
 		}
@@ -97,9 +97,9 @@ func (m *APIGetDevicesByFirmwareInfoRequest) contextValidateOfficialFirmwareInfo
 
 		if err := m.OfficialFirmwareInfo.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("official_firmware_info")
+				return ve.ValidateName("officialFirmwareInfo")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("official_firmware_info")
+				return ce.ValidateName("officialFirmwareInfo")
 			}
 			return err
 		}

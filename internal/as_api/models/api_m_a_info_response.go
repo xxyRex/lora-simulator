@@ -18,10 +18,10 @@ import (
 type APIMAInfoResponse struct {
 
 	// ics token exists
-	IcsTokenExists bool `json:"ics_token_exists,omitempty"`
+	IcsTokenExists bool `json:"icsTokenExists,omitempty"`
 
 	// public key
-	PublicKey string `json:"public_key,omitempty"`
+	PublicKey string `json:"publicKey,omitempty"`
 
 	// uuid
 	UUID string `json:"uuid,omitempty"`

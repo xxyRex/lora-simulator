@@ -56,17 +56,153 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
+	DeleteAPIProtocolModbusServer(params *DeleteAPIProtocolModbusServerParams, opts ...ClientOption) (*DeleteAPIProtocolModbusServerOK, error)
+
+	GetAPIProtocolModbusServer(params *GetAPIProtocolModbusServerParams, opts ...ClientOption) (*GetAPIProtocolModbusServerOK, error)
+
+	PostAPIProtocolModbusDeviceDelete(params *PostAPIProtocolModbusDeviceDeleteParams, opts ...ClientOption) (*PostAPIProtocolModbusDeviceDeleteOK, error)
+
 	PostAPIProtocolModbusObjectAdd(params *PostAPIProtocolModbusObjectAddParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectAddOK, error)
+
+	PostAPIProtocolModbusObjectCopyModbusObjects(params *PostAPIProtocolModbusObjectCopyModbusObjectsParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectCopyModbusObjectsOK, error)
+
+	PostAPIProtocolModbusObjectDelete(params *PostAPIProtocolModbusObjectDeleteParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectDeleteOK, error)
+
+	PostAPIProtocolModbusObjectExport(params *PostAPIProtocolModbusObjectExportParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectExportOK, error)
 
 	PostAPIProtocolModbusObjectGet(params *PostAPIProtocolModbusObjectGetParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectGetOK, error)
 
+	PostAPIProtocolModbusObjectGetDevicesOfSameType(params *PostAPIProtocolModbusObjectGetDevicesOfSameTypeParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectGetDevicesOfSameTypeOK, error)
+
 	PostAPIProtocolModbusObjectGetall(params *PostAPIProtocolModbusObjectGetallParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectGetallOK, error)
+
+	PostAPIProtocolModbusObjectUpdate(params *PostAPIProtocolModbusObjectUpdateParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectUpdateOK, error)
+
+	PostAPIProtocolModbusServer(params *PostAPIProtocolModbusServerParams, opts ...ClientOption) (*PostAPIProtocolModbusServerOK, error)
+
+	PutAPIProtocolModbusDevice(params *PutAPIProtocolModbusDeviceParams, opts ...ClientOption) (*PutAPIProtocolModbusDeviceOK, error)
+
+	PutAPIProtocolModbusServer(params *PutAPIProtocolModbusServerParams, opts ...ClientOption) (*PutAPIProtocolModbusServerOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-PostAPIProtocolModbusObjectAdd post api protocol modbus object add API
+DeleteAPIProtocolModbusServer modbuses server delete modbus server 删除 modbus服务器 会同时删除相关的配置文件和缓存文件
+*/
+func (a *Client) DeleteAPIProtocolModbusServer(params *DeleteAPIProtocolModbusServerParams, opts ...ClientOption) (*DeleteAPIProtocolModbusServerOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewDeleteAPIProtocolModbusServerParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "delete_api_protocol_modbus_server",
+		Method:             "DELETE",
+		PathPattern:        "/api/protocol/modbus_server",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &DeleteAPIProtocolModbusServerReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*DeleteAPIProtocolModbusServerOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for delete_api_protocol_modbus_server: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIProtocolModbusServer modbuses server get modbus server list 获取 modbus服务器列表 支持按名称 连接类型 端口号搜索 返回服务器基本信息和对象统计
+*/
+func (a *Client) GetAPIProtocolModbusServer(params *GetAPIProtocolModbusServerParams, opts ...ClientOption) (*GetAPIProtocolModbusServerOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIProtocolModbusServerParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_protocol_modbus_server",
+		Method:             "GET",
+		PathPattern:        "/api/protocol/modbus_server",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIProtocolModbusServerReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIProtocolModbusServerOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_protocol_modbus_server: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIProtocolModbusDeviceDelete modbuses server delete modbus device 删除 modbus设备 删除 modbus设备
+*/
+func (a *Client) PostAPIProtocolModbusDeviceDelete(params *PostAPIProtocolModbusDeviceDeleteParams, opts ...ClientOption) (*PostAPIProtocolModbusDeviceDeleteOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIProtocolModbusDeviceDeleteParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_protocol_modbus_device_delete",
+		Method:             "POST",
+		PathPattern:        "/api/protocol/modbus_device/delete",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIProtocolModbusDeviceDeleteReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIProtocolModbusDeviceDeleteOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_protocol_modbus_device_delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIProtocolModbusObjectAdd modbuses server add 添加 modbus对象到指定服务器 根据服务器的 slave ID 类型自动分配地址和 slave ID
 */
 func (a *Client) PostAPIProtocolModbusObjectAdd(params *PostAPIProtocolModbusObjectAddParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectAddOK, error) {
 	// TODO: Validate the params before sending
@@ -104,7 +240,121 @@ func (a *Client) PostAPIProtocolModbusObjectAdd(params *PostAPIProtocolModbusObj
 }
 
 /*
-PostAPIProtocolModbusObjectGet post api protocol modbus object get API
+PostAPIProtocolModbusObjectCopyModbusObjects modbuses server copy modbus objects 复制 modbus对象到指定设备 根据源设备 e UI 复制 modbus对象到指定设备
+*/
+func (a *Client) PostAPIProtocolModbusObjectCopyModbusObjects(params *PostAPIProtocolModbusObjectCopyModbusObjectsParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectCopyModbusObjectsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIProtocolModbusObjectCopyModbusObjectsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_protocol_modbus_object_copy_modbus_objects",
+		Method:             "POST",
+		PathPattern:        "/api/protocol/modbus_object/copy_modbus_objects",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIProtocolModbusObjectCopyModbusObjectsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIProtocolModbusObjectCopyModbusObjectsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_protocol_modbus_object_copy_modbus_objects: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIProtocolModbusObjectDelete modbuses server delete 删除指定的 modbus对象 支持批量删除 会自动检查是否需要禁用服务器
+*/
+func (a *Client) PostAPIProtocolModbusObjectDelete(params *PostAPIProtocolModbusObjectDeleteParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectDeleteOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIProtocolModbusObjectDeleteParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_protocol_modbus_object_delete",
+		Method:             "POST",
+		PathPattern:        "/api/protocol/modbus_object/delete",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIProtocolModbusObjectDeleteReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIProtocolModbusObjectDeleteOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_protocol_modbus_object_delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIProtocolModbusObjectExport modbuses server export modbus object 导出 modbus对象 导出指定服务器上的 modbus对象到 excel文件
+*/
+func (a *Client) PostAPIProtocolModbusObjectExport(params *PostAPIProtocolModbusObjectExportParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectExportOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIProtocolModbusObjectExportParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_protocol_modbus_object_export",
+		Method:             "POST",
+		PathPattern:        "/api/protocol/modbus_object/export",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIProtocolModbusObjectExportReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIProtocolModbusObjectExportOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_protocol_modbus_object_export: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIProtocolModbusObjectGet modbuses server get 获取指定 modbus服务器上已配置的设备和 modbus对象信息 返回实际运行中的 modbus对象数据 包含实时值和更新时间
 */
 func (a *Client) PostAPIProtocolModbusObjectGet(params *PostAPIProtocolModbusObjectGetParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectGetOK, error) {
 	// TODO: Validate the params before sending
@@ -142,7 +392,45 @@ func (a *Client) PostAPIProtocolModbusObjectGet(params *PostAPIProtocolModbusObj
 }
 
 /*
-PostAPIProtocolModbusObjectGetall post api protocol modbus object getall API
+PostAPIProtocolModbusObjectGetDevicesOfSameType modbuses server get devices of same type 获取相同类型的设备 根据设备 e UI 获取相同类型的设备
+*/
+func (a *Client) PostAPIProtocolModbusObjectGetDevicesOfSameType(params *PostAPIProtocolModbusObjectGetDevicesOfSameTypeParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectGetDevicesOfSameTypeOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIProtocolModbusObjectGetDevicesOfSameTypeParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_protocol_modbus_object_get_devices_of_same_type",
+		Method:             "POST",
+		PathPattern:        "/api/protocol/modbus_object/get_devices_of_same_type",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIProtocolModbusObjectGetDevicesOfSameTypeReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIProtocolModbusObjectGetDevicesOfSameTypeOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_protocol_modbus_object_get_devices_of_same_type: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIProtocolModbusObjectGetall modbuses server get all 获取所有可用设备的 modbus对象配置信息 包含 payload codec对象的设备 主要用于展示可以添加到 modbus服务器的设备及其潜在的 modbus对象
 */
 func (a *Client) PostAPIProtocolModbusObjectGetall(params *PostAPIProtocolModbusObjectGetallParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectGetallOK, error) {
 	// TODO: Validate the params before sending
@@ -176,6 +464,158 @@ func (a *Client) PostAPIProtocolModbusObjectGetall(params *PostAPIProtocolModbus
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for post_api_protocol_modbus_object_getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIProtocolModbusObjectUpdate modbuses server update 更新 modbus对象配置 会检查地址冲突和名称重复 更新后自动重载服务器配置
+*/
+func (a *Client) PostAPIProtocolModbusObjectUpdate(params *PostAPIProtocolModbusObjectUpdateParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectUpdateOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIProtocolModbusObjectUpdateParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_protocol_modbus_object_update",
+		Method:             "POST",
+		PathPattern:        "/api/protocol/modbus_object/update",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIProtocolModbusObjectUpdateReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIProtocolModbusObjectUpdateOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_protocol_modbus_object_update: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostAPIProtocolModbusServer modbuses server create modbus server 创建新的 modbus服务器 会检查端口占用和名称重复 验证参数有效性
+*/
+func (a *Client) PostAPIProtocolModbusServer(params *PostAPIProtocolModbusServerParams, opts ...ClientOption) (*PostAPIProtocolModbusServerOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostAPIProtocolModbusServerParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "post_api_protocol_modbus_server",
+		Method:             "POST",
+		PathPattern:        "/api/protocol/modbus_server",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PostAPIProtocolModbusServerReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostAPIProtocolModbusServerOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for post_api_protocol_modbus_server: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIProtocolModbusDevice modbuses server update modbus device 更新 modbus设备 更新 modbus设备信息
+*/
+func (a *Client) PutAPIProtocolModbusDevice(params *PutAPIProtocolModbusDeviceParams, opts ...ClientOption) (*PutAPIProtocolModbusDeviceOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIProtocolModbusDeviceParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_protocol_modbus_device",
+		Method:             "PUT",
+		PathPattern:        "/api/protocol/modbus_device",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PutAPIProtocolModbusDeviceReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PutAPIProtocolModbusDeviceOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for put_api_protocol_modbus_device: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PutAPIProtocolModbusServer modbuses server update modbus server 更新 modbus服务器配置 会验证参数并重新生成配置文件
+*/
+func (a *Client) PutAPIProtocolModbusServer(params *PutAPIProtocolModbusServerParams, opts ...ClientOption) (*PutAPIProtocolModbusServerOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPutAPIProtocolModbusServerParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "put_api_protocol_modbus_server",
+		Method:             "PUT",
+		PathPattern:        "/api/protocol/modbus_server",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &PutAPIProtocolModbusServerReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PutAPIProtocolModbusServerOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for put_api_protocol_modbus_server: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

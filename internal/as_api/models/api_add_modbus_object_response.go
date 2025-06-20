@@ -12,15 +12,15 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// APIAddModbusObjectResponse api add modbus object response
+// APIAddModbusObjectResponse AddModbusObjectResponse 添加Modbus对象响应
 //
 // swagger:model apiAddModbusObjectResponse
 type APIAddModbusObjectResponse struct {
 
-	// code
+	// 错误码
 	Code int64 `json:"code,omitempty"`
 
-	// error
+	// 错误信息
 	Error string `json:"error,omitempty"`
 }
 

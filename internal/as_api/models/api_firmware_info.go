@@ -21,25 +21,25 @@ type APIFirmwareInfo struct {
 	Description string `json:"description,omitempty"`
 
 	// file content
-	FileContent string `json:"file_content,omitempty"`
+	FileContent string `json:"fileContent,omitempty"`
 
 	// firmware name
-	FirmwareName string `json:"firmware_name,omitempty"`
+	FirmwareName string `json:"firmwareName,omitempty"`
 
 	// firmware version
-	FirmwareVersion string `json:"firmware_version,omitempty"`
+	FirmwareVersion string `json:"firmwareVersion,omitempty"`
 
-	// official firmware url
-	OfficialFirmwareURL string `json:"official_firmware_url,omitempty"`
+	// official firmware Url
+	OfficialFirmwareURL string `json:"officialFirmwareUrl,omitempty"`
 
 	// product model
-	ProductModel string `json:"product_model,omitempty"`
+	ProductModel string `json:"productModel,omitempty"`
 
 	// support firmware version
-	SupportFirmwareVersion string `json:"support_firmware_version,omitempty"`
+	SupportFirmwareVersion string `json:"supportFirmwareVersion,omitempty"`
 
 	// support hardware version
-	SupportHardwareVersion string `json:"support_hardware_version,omitempty"`
+	SupportHardwareVersion string `json:"supportHardwareVersion,omitempty"`
 }
 
 // Validate validates this api firmware info

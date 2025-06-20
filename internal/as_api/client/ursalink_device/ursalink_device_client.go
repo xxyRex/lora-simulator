@@ -64,6 +64,8 @@ type ClientService interface {
 
 	GetAPIUrdevicesSimple(params *GetAPIUrdevicesSimpleParams, opts ...ClientOption) (*GetAPIUrdevicesSimpleOK, error)
 
+	GetAPIUrdevicesallExport(params *GetAPIUrdevicesallExportParams, opts ...ClientOption) (*GetAPIUrdevicesallExportOK, error)
+
 	PostAPIUrdevices(params *PostAPIUrdevicesParams, opts ...ClientOption) (*PostAPIUrdevicesOK, error)
 
 	PostAPIUrdevicesall(params *PostAPIUrdevicesallParams, opts ...ClientOption) (*PostAPIUrdevicesallOK, error)
@@ -222,6 +224,44 @@ func (a *Client) GetAPIUrdevicesSimple(params *GetAPIUrdevicesSimpleParams, opts
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for get_api_urdevices_simple: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIUrdevicesallExport 批量导出设备s
+*/
+func (a *Client) GetAPIUrdevicesallExport(params *GetAPIUrdevicesallExportParams, opts ...ClientOption) (*GetAPIUrdevicesallExportOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIUrdevicesallExportParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_urdevicesall_export",
+		Method:             "GET",
+		PathPattern:        "/api/urdevicesall/export",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIUrdevicesallExportReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIUrdevicesallExportOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_urdevicesall_export: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

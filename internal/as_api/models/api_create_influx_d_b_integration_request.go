@@ -19,7 +19,7 @@ import (
 type APICreateInfluxDBIntegrationRequest struct {
 
 	// Application ID to create the integration for.
-	ApplicationID string `json:"application_id,omitempty"`
+	ApplicationID string `json:"applicationId,omitempty"`
 
 	// Integration configuration.
 	Configuration *APIInfluxDBIntegrationConfiguration `json:"configuration,omitempty"`

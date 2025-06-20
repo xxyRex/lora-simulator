@@ -18,25 +18,25 @@ import (
 type APIRecipient struct {
 
 	// 是否需要确认通知
-	ConfirmedNotify int32 `json:"confirmed_notify,omitempty"`
+	ConfirmedNotify int32 `json:"confirmedNotify,omitempty"`
 
 	// 设备标识符
-	DeviceIdentifier int32 `json:"device_identifier,omitempty"`
+	DeviceIdentifier int32 `json:"deviceIdentifier,omitempty"`
 
 	// 开始时间
-	FromTime string `json:"from_time,omitempty"`
+	FromTime string `json:"fromTime,omitempty"`
 
 	// 进程标识符
-	ProcessIdentifier int32 `json:"process_identifier,omitempty"`
+	ProcessIdentifier int32 `json:"processIdentifier,omitempty"`
 
 	// 结束时间
-	ToTime string `json:"to_time,omitempty"`
+	ToTime string `json:"toTime,omitempty"`
 
 	// 转换事件 (位掩码)
 	Transitions int32 `json:"transitions,omitempty"`
 
 	// 有效日期 (位掩码)
-	ValidDay int32 `json:"valid_day,omitempty"`
+	ValidDay int32 `json:"validDay,omitempty"`
 }
 
 // Validate validates this api recipient

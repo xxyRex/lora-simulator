@@ -14,15 +14,15 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// APIGetModbusObjectResponse api get modbus object response
+// APIGetModbusObjectResponse GetModbusObjectResponse 获取Modbus对象响应
 //
 // swagger:model apiGetModbusObjectResponse
 type APIGetModbusObjectResponse struct {
 
-	// data
+	// Modbus设备列表
 	Data []*APIModbusDevice `json:"data"`
 
-	// total
+	// 设备总数量
 	Total int32 `json:"total,omitempty"`
 }
 

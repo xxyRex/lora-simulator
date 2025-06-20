@@ -18,10 +18,10 @@ import (
 type APIUrbridge struct {
 
 	// ca cert
-	CaCert string `json:"ca_cert,omitempty"`
+	CaCert string `json:"caCert,omitempty"`
 
 	// ca cert path
-	CaCertPath string `json:"ca_cert_path,omitempty"`
+	CaCertPath string `json:"caCertPath,omitempty"`
 
 	// id
 	ID int64 `json:"id,omitempty"`
@@ -29,50 +29,50 @@ type APIUrbridge struct {
 	// password
 	Password string `json:"password,omitempty"`
 
-	// region id
-	RegionID string `json:"region_id,omitempty"`
+	// region Id
+	RegionID string `json:"regionId,omitempty"`
 
 	// serv addr
-	ServAddr string `json:"serv_addr,omitempty"`
+	ServAddr string `json:"servAddr,omitempty"`
 
 	// serv enabled
-	ServEnabled bool `json:"serv_enabled,omitempty"`
+	ServEnabled bool `json:"servEnabled,omitempty"`
 
 	// serv mqtt port
-	ServMqttPort int64 `json:"serv_mqtt_port,omitempty"`
+	ServMqttPort int64 `json:"servMqttPort,omitempty"`
 
 	// serv port down
-	ServPortDown int64 `json:"serv_port_down,omitempty"`
+	ServPortDown int64 `json:"servPortDown,omitempty"`
 
 	// serv port up
-	ServPortUp int64 `json:"serv_port_up,omitempty"`
+	ServPortUp int64 `json:"servPortUp,omitempty"`
 
 	// serv type
-	ServType string `json:"serv_type,omitempty"`
+	ServType string `json:"servType,omitempty"`
 
 	// sync freq plan
-	SyncFreqPlan bool `json:"sync_freq_plan,omitempty"`
+	SyncFreqPlan bool `json:"syncFreqPlan,omitempty"`
 
 	// tls cert
-	TLSCert string `json:"tls_cert,omitempty"`
+	TLSCert string `json:"tlsCert,omitempty"`
 
 	// tls cert path
-	TLSCertPath string `json:"tls_cert_path,omitempty"`
+	TLSCertPath string `json:"tlsCertPath,omitempty"`
 
 	// tls key
-	TLSKey string `json:"tls_key,omitempty"`
+	TLSKey string `json:"tlsKey,omitempty"`
 
 	// tls key path
-	TLSKeyPath string `json:"tls_key_path,omitempty"`
+	TLSKeyPath string `json:"tlsKeyPath,omitempty"`
 
 	// tls mode
-	TLSMode int64 `json:"tls_mode,omitempty"`
+	TLSMode int64 `json:"tlsMode,omitempty"`
 
 	// use cred
-	UseCred bool `json:"use_cred,omitempty"`
+	UseCred bool `json:"useCred,omitempty"`
 
-	// use tls
-	UseTLS bool `json:"use_tls,omitempty"`
+	// use Tls
+	UseTLS bool `json:"useTls,omitempty"`
 
 	// username
 	Username string `json:"username,omitempty"`

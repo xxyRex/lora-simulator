@@ -12,27 +12,27 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// APIGetModbusObjectRequest api get modbus object request
+// APIGetModbusObjectRequest GetModbusObjectRequest 获取Modbus对象请求
 //
 // swagger:model apiGetModbusObjectRequest
 type APIGetModbusObjectRequest struct {
 
-	// limit
+	// 每页限制数量
 	Limit int32 `json:"limit,omitempty"`
 
-	// offset
+	// 分页偏移量
 	Offset int32 `json:"offset,omitempty"`
 
-	// order
+	// 排序方式：asc(升序)或desc(降序)，默认asc
 	Order string `json:"order,omitempty"`
 
-	// search
+	// 搜索关键字（支持设备名称、对象名称、寄存器类型、数据类型搜索）
 	Search string `json:"search,omitempty"`
 
-	// server id
-	ServerID string `json:"server_id,omitempty"`
+	// 服务器ID（Get方法必填，GetAll方法用于过滤）
+	ServerID string `json:"serverId,omitempty"`
 
-	// sort
+	// 排序字段：name(按名称排序)或register_addr(按寄存器地址排序)，默认name
 	Sort string `json:"sort,omitempty"`
 }
 

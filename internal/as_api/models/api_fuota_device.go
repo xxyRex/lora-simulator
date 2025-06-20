@@ -18,37 +18,37 @@ import (
 type APIFuotaDevice struct {
 
 	// dev eui
-	DevEui string `json:"dev_eui,omitempty"`
+	DevEui string `json:"devEui,omitempty"`
 
 	// firmware version
-	FirmwareVersion string `json:"firmware_version,omitempty"`
+	FirmwareVersion string `json:"firmwareVersion,omitempty"`
 
 	// fragment session status
-	FragmentSessionStatus int32 `json:"fragment_session_status,omitempty"`
+	FragmentSessionStatus int32 `json:"fragmentSessionStatus,omitempty"`
 
 	// hardware version
-	HardwareVersion string `json:"hardware_version,omitempty"`
+	HardwareVersion string `json:"hardwareVersion,omitempty"`
 
 	// multicast session status
-	MulticastSessionStatus int32 `json:"multicast_session_status,omitempty"`
+	MulticastSessionStatus int32 `json:"multicastSessionStatus,omitempty"`
 
 	// name
 	Name string `json:"name,omitempty"`
 
 	// product model
-	ProductModel string `json:"product_model,omitempty"`
+	ProductModel string `json:"productModel,omitempty"`
 
-	// profile id
-	ProfileID string `json:"profile_id,omitempty"`
+	// profile Id
+	ProfileID string `json:"profileId,omitempty"`
 
 	// profile name
-	ProfileName string `json:"profile_name,omitempty"`
+	ProfileName string `json:"profileName,omitempty"`
 
 	// status
 	Status int32 `json:"status,omitempty"`
 
-	// task id
-	TaskID int32 `json:"task_id,omitempty"`
+	// task Id
+	TaskID int32 `json:"taskId,omitempty"`
 }
 
 // Validate validates this api fuota device

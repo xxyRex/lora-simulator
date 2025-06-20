@@ -33,6 +33,7 @@ type Config struct {
 			FuotaTaskDeviceCount int           `mapstructure:"fuota_task_device_count"`
 			UseNewDevice         bool          `mapstructure:"use_new_device"`
 			WaitDeviceStableTime time.Duration `mapstructure:"wait_device_stable_time"`
+			ApiTest              bool          `mapstructure:"api_test"`
 		} `mapstructure:"api"`
 
 		Integration struct {

@@ -24,13 +24,13 @@ type APITmpMcInfo struct {
 	Frequency int32 `json:"frequency,omitempty"`
 
 	// group type
-	GroupType int32 `json:"group_type,omitempty"`
+	GroupType int32 `json:"groupType,omitempty"`
 
 	// session time delay
-	SessionTimeDelay int32 `json:"session_time_delay,omitempty"`
+	SessionTimeDelay int32 `json:"sessionTimeDelay,omitempty"`
 
 	// session time out
-	SessionTimeOut int32 `json:"session_time_out,omitempty"`
+	SessionTimeOut int32 `json:"sessionTimeOut,omitempty"`
 
 	// status
 	Status int32 `json:"status,omitempty"`

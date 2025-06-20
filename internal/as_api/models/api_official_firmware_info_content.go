@@ -21,19 +21,19 @@ type APIOfficialFirmwareInfoContent struct {
 	Crc32 string `json:"crc32,omitempty"`
 
 	// firmware notes cn
-	FirmwareNotesCn string `json:"firmware_notes_cn,omitempty"`
+	FirmwareNotesCn string `json:"firmwareNotesCn,omitempty"`
 
 	// firmware notes en
-	FirmwareNotesEn string `json:"firmware_notes_en,omitempty"`
+	FirmwareNotesEn string `json:"firmwareNotesEn,omitempty"`
 
 	// firmware version
-	FirmwareVersion string `json:"firmware_version,omitempty"`
+	FirmwareVersion string `json:"firmwareVersion,omitempty"`
 
 	// frequency bands
-	FrequencyBands []string `json:"frequency_bands"`
+	FrequencyBands []string `json:"frequencyBands"`
 
 	// hardware version
-	HardwareVersion string `json:"hardware_version,omitempty"`
+	HardwareVersion string `json:"hardwareVersion,omitempty"`
 
 	// id
 	ID string `json:"id,omitempty"`
@@ -51,10 +51,10 @@ type APIOfficialFirmwareInfoContent struct {
 	Size string `json:"size,omitempty"`
 
 	// support min firmware version
-	SupportMinFirmwareVersion string `json:"support_min_firmware_version,omitempty"`
+	SupportMinFirmwareVersion string `json:"supportMinFirmwareVersion,omitempty"`
 
 	// support min hardware version
-	SupportMinHardwareVersion string `json:"support_min_hardware_version,omitempty"`
+	SupportMinHardwareVersion string `json:"supportMinHardwareVersion,omitempty"`
 
 	// url
 	URL string `json:"url,omitempty"`

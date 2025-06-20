@@ -238,7 +238,7 @@ func (o *GetAPIFuotaDevicesParams) WriteToRequest(r runtime.ClientRequest, reg s
 
 	if o.TaskID != nil {
 
-		// query param task_id
+		// query param taskId
 		var qrTaskID int32
 
 		if o.TaskID != nil {
@@ -247,7 +247,7 @@ func (o *GetAPIFuotaDevicesParams) WriteToRequest(r runtime.ClientRequest, reg s
 		qTaskID := swag.FormatInt32(qrTaskID)
 		if qTaskID != "" {
 
-			if err := r.SetQueryParam("task_id", qTaskID); err != nil {
+			if err := r.SetQueryParam("taskId", qTaskID); err != nil {
 				return err
 			}
 		}

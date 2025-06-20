@@ -14,16 +14,16 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// APIAddModbusObjectRequest api add modbus object request
+// APIAddModbusObjectRequest AddModbusObjectRequest 添加Modbus对象请求
 //
 // swagger:model apiAddModbusObjectRequest
 type APIAddModbusObjectRequest struct {
 
-	// data
+	// 需要添加Modbus对象的设备列表
 	Data []*APIModbusDevice `json:"data"`
 
-	// server id
-	ServerID string `json:"server_id,omitempty"`
+	// 目标Modbus服务器ID
+	ServerID string `json:"serverId,omitempty"`
 }
 
 // Validate validates this api add modbus object request

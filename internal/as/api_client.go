@@ -2,6 +2,7 @@ package as
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -87,31 +88,6 @@ func parseJSON(data []byte) (map[string]interface{}, error) {
 	}
 
 	return jsonObj, nil
-}
-
-func post(url, data string) ([]byte, error) {
-	url = "http://" + config.C.LoraSimulator.API.Server + url
-
-	var response []byte
-
-	req, err := http.NewRequest("POST", url, strings.NewReader(data))
-	if err != nil {
-		return response, err
-	}
-
-	resp, err := cgiClient.Do(req)
-	if err != nil {
-		return response, err
-	}
-
-	defer resp.Body.Close()
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return bodyBytes, nil
 }
 
 func Setup(c config.Config) error {
@@ -678,146 +654,42 @@ func DeleteFuotaTask(ids []int32) error {
 	return nil
 }
 
-type ModbusServerCreateReq struct {
-	ID       int64                        `json:"id"`
-	Execute  int64                        `json:"execute"`
-	Core     string                       `json:"core"`
-	Function string                       `json:"function"`
-	Values   []ModbusServerCreateReqValue `json:"values"`
-}
+func CreateModbusServer(data *models.APIModbusServer) error {
+	params := modbus_service.NewPostAPIProtocolModbusServerParams()
+	params.Body = data
 
-type ModbusServerCreateReqValue struct {
-	Base    string                        `json:"base"`
-	Servers []ModbusServerCreateReqServer `json:"servers"`
-}
-
-type ModbusServerCreateReqServer struct {
-	Enable      int64  `json:"enable"`
-	Interface   string `json:"interface"`
-	ConnectType string `json:"connect_type"`
-	Name        string `json:"name"`
-	Port        int64  `json:"port"`
-	SlaveID     int64  `json:"slave_id"`
-	Description string `json:"description"`
-}
-
-func CreateModbusServer(data ModbusServerCreateReq) error {
-	url := "/cgi"
-
-	requestJSON, err := json.Marshal(data)
+	_, err := asClient.ModbusService.PostAPIProtocolModbusServer(params)
 	if err != nil {
 		return err
 	}
-
-	bytes, err := post(url, string(requestJSON))
-	if err != nil {
-		return err
-	}
-
-	ret := string(bytes)
-	log.Info("create modbus server: ", ret)
 
 	return nil
 }
 
-type ModbusGetServerReq struct {
-	ID       int64                     `json:"id"`
-	Execute  int64                     `json:"execute"`
-	Core     string                    `json:"core"`
-	Function string                    `json:"function"`
-	Values   []ModbusGetServerReqValue `json:"values"`
-}
+func GetModbusServer(limit int, offset int, search string) ([]*models.APIModbusServer, error) {
+	params := modbus_service.NewGetAPIProtocolModbusServerParams()
+	limitInt32 := int32(limit)
+	offsetInt32 := int32(offset)
+	params.Limit = &limitInt32
+	params.Offset = &offsetInt32
+	params.Search = &search
 
-type ModbusGetServerReqValue struct {
-	Base   string `json:"base"`
-	Search string `json:"search"`
-	Order  string `json:"order"`
-	Offset int64  `json:"offset"`
-	Limit  int64  `json:"limit"`
-}
-
-type ModbusGetServerRes struct {
-	ID     int64                      `json:"id"`
-	Model  string                     `json:"model"`
-	Pn     string                     `json:"pn"`
-	OEM    string                     `json:"oem"`
-	Rtver  string                     `json:"rtver"`
-	Status int64                      `json:"status"`
-	Result []ModbusGetServerResResult `json:"result"`
-}
-
-type ModbusGetServerResResult struct {
-	Total   int64                      `json:"total"`
-	Servers []ModbusGetServerResServer `json:"servers"`
-}
-
-type ModbusGetServerResServer struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Port        int64  `json:"port"`
-	Enable      int64  `json:"enable"`
-	SlaveID     int64  `json:"slave_id"`
-	Interface   string `json:"interface"`
-	ConnectType string `json:"connect_type"`
-	Description string `json:"description"`
-	Ipaddr      string `json:"ipaddr"`
-	ObjectNum   int64  `json:"object_num"`
-}
-
-func GetModbusServer(data ModbusGetServerReq) (ModbusGetServerRes, error) {
-	url := "/cgi"
-
-	requestJSON, err := json.Marshal(data)
+	resp, err := asClient.ModbusService.GetAPIProtocolModbusServer(params)
 	if err != nil {
-		return ModbusGetServerRes{}, err
+		return nil, err
 	}
 
-	bytes, err := post(url, string(requestJSON))
-	if err != nil {
-		return ModbusGetServerRes{}, err
-	}
-
-	var res ModbusGetServerRes
-	err = json.Unmarshal(bytes, &res)
-	log.Infof("GetModbusServer bytes: %s", string(bytes))
-	if err != nil {
-		log.Error("failed to unmarshal modbus server: ", err)
-		return ModbusGetServerRes{}, nil
-	}
-
-	log.Infof("GetModbusServer: %v", res)
-
-	return res, nil
+	return resp.Payload.Servers, nil
 }
 
-type ModbusServerDeleteReq struct {
-	ID       int64                        `json:"id"`
-	Execute  int64                        `json:"execute"`
-	Core     string                       `json:"core"`
-	Function string                       `json:"function"`
-	Values   []ModbusServerDeleteReqValue `json:"values"`
-}
+func DeleteModbusServer(id string) error {
+	params := modbus_service.NewDeleteAPIProtocolModbusServerParams()
+	params.ID = &id
 
-type ModbusServerDeleteReqValue struct {
-	Base string   `json:"base"`
-	IDS  []string `json:"ids"`
-}
-
-func DeleteModbusServer(data ModbusServerDeleteReq) error {
-	url := "/cgi"
-
-	requestJSON, err := json.Marshal(data)
+	_, err := asClient.ModbusService.DeleteAPIProtocolModbusServer(params)
 	if err != nil {
 		return err
 	}
-
-	bytes, err := post(url, string(requestJSON))
-	if err != nil {
-		return err
-	}
-
-	ret := string(bytes)
-	log.Info("delete modbus server: ", ret)
 
 	return nil
 }
@@ -944,4 +816,35 @@ func AddModbusDatum(body *models.APIAddModbusObjectRequest) error {
 	log.Info("add modbus datum: ", body)
 
 	return nil
+}
+
+func PayloadCodecTest(data *models.APITestPayloadCodecRequest) (string, error) {
+	params := payload_codec.NewPostAPIPayloadcodecsTestParams()
+	params.Body = data
+
+	resp, err := asClient.PayloadCodec.PostAPIPayloadcodecsTest(params)
+	if err != nil {
+		return "", err
+	}
+
+	log.Infof("payload codec test resp: %v", resp)
+
+	return resp.Payload.Result, nil
+}
+
+func ExportBulkDevice() (string, error) {
+	params := ursalink_device.NewGetAPIUrdevicesallExportParams()
+
+	resp, err := asClient.UrsalinkDevice.GetAPIUrdevicesallExport(params)
+	if err != nil {
+		return "", err
+	}
+
+	// base64 decode
+	csv, err := base64.StdEncoding.DecodeString(resp.Payload.Csv)
+	if err != nil {
+		return "", err
+	}
+
+	return string(csv), nil
 }

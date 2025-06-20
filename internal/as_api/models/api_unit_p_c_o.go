@@ -21,7 +21,7 @@ type APIUnitPCO struct {
 	Unit string `json:"unit,omitempty"`
 
 	// 单位类型 ID
-	UnitTypeID int32 `json:"unit_type_id,omitempty"`
+	UnitTypeID int32 `json:"unitTypeId,omitempty"`
 }
 
 // Validate validates this api unit p c o

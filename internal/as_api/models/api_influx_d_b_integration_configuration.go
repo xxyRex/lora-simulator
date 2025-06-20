@@ -31,7 +31,7 @@ type APIInfluxDBIntegrationConfiguration struct {
 	Precision *APIInfluxDBPrecision `json:"precision,omitempty"`
 
 	// InfluxDB retention policy name.
-	RetentionPolicyName string `json:"retention_policy_name,omitempty"`
+	RetentionPolicyName string `json:"retentionPolicyName,omitempty"`
 
 	// InfluxDB username.
 	Username string `json:"username,omitempty"`

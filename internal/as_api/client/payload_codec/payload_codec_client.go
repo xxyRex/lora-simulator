@@ -424,7 +424,7 @@ func (a *Client) PostAPIPayloadcodecs(params *PostAPIPayloadcodecsParams, opts .
 }
 
 /*
-PostAPIPayloadcodecsTest post api payloadcodecs test API
+PostAPIPayloadcodecsTest payloads codec 测试载荷编解码器 支持编码测试 JSON 转字节 和解码测试 字节转 JSON 同时提供编解码结果的校验功能 包括数据类型 数值范围 读写权限等校验
 */
 func (a *Client) PostAPIPayloadcodecsTest(params *PostAPIPayloadcodecsTestParams, opts ...ClientOption) (*PostAPIPayloadcodecsTestOK, error) {
 	// TODO: Validate the params before sending
