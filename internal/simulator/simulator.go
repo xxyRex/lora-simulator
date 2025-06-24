@@ -27,6 +27,7 @@ import (
 	device "github.com/brocaar/lora-simulator/internal/device"
 	"github.com/brocaar/lora-simulator/internal/gateway"
 	"github.com/brocaar/lora-simulator/internal/ns"
+	"github.com/brocaar/lora-simulator/internal/test_payload_codec"
 	"github.com/brocaar/lorawan"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 	"github.com/gocarina/gocsv"
@@ -128,6 +129,13 @@ func (s *Simulation) start() {
 
 	if config.C.LoraSimulator.API.ApiTest {
 		go s.ApiTest()
+	}
+
+	if config.C.LoraSimulator.TestPayloadCodec.Enable {
+		if err := s.TestPayloadCodec(); err != nil {
+			log.WithError(err).Error("simulator: test payload codec error")
+			return
+		}
 	}
 
 	if err := s.runSimulation(); err != nil {
@@ -990,4 +998,208 @@ func (s *Simulation) ApiTest() error {
 	csvFile.WriteString(csv)
 
 	return nil
+}
+
+func (s *Simulation) TestPayloadCodec() error {
+	log.Info("simulator: test payload codec")
+
+	for _, deviceSheet := range config.C.LoraSimulator.TestPayloadCodec.TestDeviceSheet {
+		log.Info("simulator: test payload codec sheet: ", deviceSheet.Sheet)
+		log.Info("simulator: test payload codec device: ", deviceSheet.Device)
+
+		suite, err := test_payload_codec.ParseExcelSheet(config.C.LoraSimulator.TestPayloadCodec.TestCaseFile, deviceSheet.Sheet)
+		if err != nil {
+			log.Error("TestPayloadCodec: failed to parse excel sheet: ", err)
+			continue
+		}
+
+		decodeScriptFile := fmt.Sprintf(config.C.LoraSimulator.TestPayloadCodec.TestCodecDir+"/vendors/milesight-iot/%s/%s-decoder.js", deviceSheet.Device, deviceSheet.Device)
+		encodeScriptFile := fmt.Sprintf(config.C.LoraSimulator.TestPayloadCodec.TestCodecDir+"/vendors/milesight-iot/%s/%s-encoder.js", deviceSheet.Device, deviceSheet.Device)
+
+		decodeScript, err := os.ReadFile(decodeScriptFile)
+		if err != nil {
+			log.Error("TestPayloadCodec: failed to read decode script: ", err)
+			continue
+		}
+
+		encodeScript, err := os.ReadFile(encodeScriptFile)
+		if err != nil {
+			log.Error("TestPayloadCodec: failed to read encode script: ", err)
+			continue
+		}
+
+		successTestCase := test_payload_codec.PayloadCodecTestSuite{}
+		failedTestCase := test_payload_codec.PayloadCodecTestSuite{}
+		for i := range suite.TestCases {
+			time.Sleep(3 * time.Second)
+
+			testCase := &suite.TestCases[i]
+			jsonContent, err := json.Marshal(testCase.JSONContent)
+			if err != nil {
+				log.Error("TestPayloadCodec: failed to marshal json content: ", err)
+				continue
+			}
+
+			testCase.APIENResult = true
+			testCase.APIDEResult = true
+
+			encodePayloadCodecReq := &models.APITestPayloadCodecRequest{
+				Data:   string(jsonContent),
+				FPort:  1,
+				Script: string(encodeScript),
+				Type:   "encode",
+			}
+
+			encodeApiResult, err := as.PayloadCodecTest(encodePayloadCodecReq)
+			if err != nil {
+				log.Error("TestPayloadCodec: failed to encode payload codec: ", err)
+				continue
+			}
+
+			encodedHex := strings.ToLower(encodeApiResult)
+			if encodedHex != testCase.Command {
+				testCase.APIENResult = false
+				testCase.APIENResultMsg = fmt.Sprintf("encoded hex: %s, expected: %s", encodedHex, testCase.Response)
+			}
+
+			decodePayloadCodecReq := &models.APITestPayloadCodecRequest{
+				Data:   testCase.Response,
+				FPort:  1,
+				Script: string(decodeScript),
+				Type:   "decode",
+			}
+
+			time.Sleep(3 * time.Second)
+
+			decodeApiResult, err := as.PayloadCodecTest(decodePayloadCodecReq)
+			if err != nil {
+				log.Error("TestPayloadCodec: failed to decode payload codec: ", err)
+				testCase.APIDEResult = false
+				testCase.APIDEResultMsg = err.Error()
+				continue
+			}
+
+			// 解析解码结果并与期望值比较
+			testCase.APIDEResult, err = s.compareDecodeResult(decodeApiResult, testCase.JSONContent)
+			if err != nil {
+				log.WithError(err).Error("failed to compare decode result, decodeApiResult: ", decodeApiResult)
+				testCase.APIDEResult = false
+				testCase.APIDEResultMsg = err.Error()
+			}
+
+			if testCase.APIDEResult && testCase.APIENResult {
+				successTestCase.TestCases = append(successTestCase.TestCases, *testCase)
+			} else {
+				failedTestCase.TestCases = append(failedTestCase.TestCases, *testCase)
+			}
+
+			successTestCase.SaveToJSON(config.C.LoraSimulator.TestPayloadCodec.TestResultDir + "/" + deviceSheet.Device + "-success.json")
+			failedTestCase.SaveToJSON(config.C.LoraSimulator.TestPayloadCodec.TestResultDir + "/" + deviceSheet.Device + "-failed.json")
+		}
+	}
+
+	return nil
+}
+
+// compareDecodeResult 比较解码结果与期望的JSON内容
+func (s *Simulation) compareDecodeResult(apiResult interface{}, expectedContent interface{}) (bool, error) {
+	// 直接将 apiResult 转换为字符串（因为 PayloadCodecTest 返回的就是 JSON 字符串）
+	apiResultStr, ok := apiResult.(string)
+	if !ok {
+		return false, fmt.Errorf("API result is not a string: %T", apiResult)
+	}
+
+	// 解析API返回的JSON字符串为 interface{}
+	var actualContent interface{}
+	if err := json.Unmarshal([]byte(apiResultStr), &actualContent); err != nil {
+		return false, fmt.Errorf("failed to unmarshal API result string: %w", err)
+	}
+
+	// 深度比较两个interface{}
+	isEqual := s.deepEqual(actualContent, expectedContent)
+	if !isEqual {
+		return false, fmt.Errorf("actual content: %v, expected content: %v", actualContent, expectedContent)
+	}
+
+	return true, nil
+}
+
+// deepEqual 递归地比较两个interface{}对象
+func (s *Simulation) deepEqual(a, b interface{}) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+
+	// 将两个值都转换为JSON再比较，确保类型一致
+	aBytes, err := json.Marshal(a)
+	if err != nil {
+		return false
+	}
+	bBytes, err := json.Marshal(b)
+	if err != nil {
+		return false
+	}
+
+	// 解析为map进行结构化比较
+	var aMap, bMap interface{}
+	if err := json.Unmarshal(aBytes, &aMap); err != nil {
+		return false
+	}
+	if err := json.Unmarshal(bBytes, &bMap); err != nil {
+		return false
+	}
+
+	return s.deepEqualValue(aMap, bMap)
+}
+
+// deepEqualValue 递归比较两个值
+func (s *Simulation) deepEqualValue(a, b interface{}) bool {
+	switch aVal := a.(type) {
+	case map[string]interface{}:
+		bVal, ok := b.(map[string]interface{})
+		if !ok {
+			return false
+		}
+
+		// 检查字段数量是否相同
+		if len(aVal) != len(bVal) {
+			return false
+		}
+
+		// 逐个比较字段
+		for key, aValue := range aVal {
+			bValue, exists := bVal[key]
+			if !exists {
+				return false
+			}
+			if !s.deepEqualValue(aValue, bValue) {
+				return false
+			}
+		}
+		return true
+
+	case []interface{}:
+		bVal, ok := b.([]interface{})
+		if !ok {
+			return false
+		}
+
+		if len(aVal) != len(bVal) {
+			return false
+		}
+
+		for i, aValue := range aVal {
+			if !s.deepEqualValue(aValue, bVal[i]) {
+				return false
+			}
+		}
+		return true
+
+	default:
+		// 对于基本类型，直接比较
+		return aVal == b
+	}
 }

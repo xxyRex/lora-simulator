@@ -26,7 +26,7 @@ api_key = ""
 # Server.
 #
 # This must point to the ChirpStack API interface.
-server = "192.168.40.147"
+server = "192.168.40.148"
 
 # 网关as api登录url
 login_url = "/api/internal/login"
@@ -74,7 +74,7 @@ insecure = true
 [lora-simulator.integration.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.147:1883"
+server = "tcp://192.168.40.148:1883"
 
 ssh_password = ""
 
@@ -89,7 +89,7 @@ password = "Urs@L1nk#Ms2020"
 [lora-simulator.gateway.backend.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.147:1883"
+server = "tcp://192.168.40.148:1883"
 
 # Username.
 username = "lorawan"
@@ -182,3 +182,21 @@ max_count = 5
 #
 # Metrics can be retrieved from /metrics.
 bind = "0.0.0.0:9000"
+
+[lora-simulator.test_payload_codec]
+# 是否开启测试
+enable = false
+# 测试用例文件路径
+test_case_file = "/mnt/data/work_code/gateway/lora-simulator/cmd/lora-simulator/payload_en_decoder/编解码数据表.xlsx"
+# 测试结果文件路径
+test_result_dir = "/mnt/data/work_code/gateway/lora-simulator/cmd/lora-simulator/payload_en_decoder/"
+
+test_codec_dir = "/mnt/data/work_code/gateway/github/codec-release-git"
+
+[[lora-simulator.test_payload_codec.test_device_sheet]]
+sheet = "WT101"
+device = "wt101"
+
+[[lora-simulator.test_payload_codec.test_device_sheet]]
+sheet = "WT201"
+device = "wt201"

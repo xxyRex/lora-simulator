@@ -26,6 +26,7 @@ type Config struct {
 			UseNewApp            bool          `mapstructure:"use_new_app"`
 			UseOldAuth           bool          `mapstructure:"use_old_auth"`
 			CleanBeforeTest      bool          `mapstructure:"clean_before_test"`
+			TeardownAfterTest    bool          `mapstructure:"teardown_after_test"`
 			TestFeature          string        `mapstructure:"test_feature"`
 			Insecure             bool          `mapstructure:"insecure"`
 			SshPassword          string        `mapstructure:"ssh_password"`
@@ -34,13 +35,15 @@ type Config struct {
 			UseNewDevice         bool          `mapstructure:"use_new_device"`
 			WaitDeviceStableTime time.Duration `mapstructure:"wait_device_stable_time"`
 			ApiTest              bool          `mapstructure:"api_test"`
+			APIKey               string        `mapstructure:"api_key"`
 		} `mapstructure:"api"`
 
 		Integration struct {
 			MQTT struct {
-				Server   string `mapstructure:"server"`
-				Username string `mapstructure:"username"`
-				Password string `mapstructure:"password"`
+				Server      string `mapstructure:"server"`
+				Username    string `mapstructure:"username"`
+				Password    string `mapstructure:"password"`
+				SshPassword string `mapstructure:"ssh_password"`
 			} `mapstructure:"mqtt"`
 		} `mapstructure:"integration"`
 
@@ -53,6 +56,19 @@ type Config struct {
 				} `mapstructure:"mqtt"`
 			} `mapstructure:"backend"`
 		} `mapstructure:"gateway"`
+
+		TestPayloadCodec struct {
+			Enable          bool   `mapstructure:"enable"`
+			TestCaseFile    string `mapstructure:"test_case_file"`
+			TestSheet       string `mapstructure:"test_sheet"`
+			TestDevice      string `mapstructure:"test_device"`
+			TestResultDir   string `mapstructure:"test_result_dir"`
+			TestCodecDir    string `mapstructure:"test_codec_dir"`
+			TestDeviceSheet []struct {
+				Sheet  string `mapstructure:"sheet"`
+				Device string `mapstructure:"device"`
+			} `mapstructure:"test_device_sheet"`
+		} `mapstructure:"test_payload_codec"`
 	} `mapstructure:"lora-simulator"`
 
 	Simulator []struct {
