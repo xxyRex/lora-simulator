@@ -1034,26 +1034,32 @@ func (s *Simulation) TestPayloadCodec() error {
 			time.Sleep(3 * time.Second)
 
 			testCase := &suite.TestCases[i]
-			jsonContent, err := json.Marshal(testCase.JSONContent)
-			if err != nil {
-				log.Error("TestPayloadCodec: failed to marshal json content: ", err)
-				continue
-			}
+			encodeApiResult := ""
+			if testCase.JSONContent != nil {
+				jsonContent, err := json.Marshal(testCase.JSONContent)
+				if err != nil {
+					log.Error("TestPayloadCodec: failed to marshal json content: ", err)
+					continue
+				}
 
-			testCase.APIENResult = true
-			testCase.APIDEResult = true
+				testCase.APIENResult = true
+				testCase.APIDEResult = true
 
-			encodePayloadCodecReq := &models.APITestPayloadCodecRequest{
-				Data:   string(jsonContent),
-				FPort:  1,
-				Script: string(encodeScript),
-				Type:   "encode",
-			}
+				encodePayloadCodecReq := &models.APITestPayloadCodecRequest{
+					Data:   string(jsonContent),
+					FPort:  1,
+					Script: string(encodeScript),
+					Type:   "encode",
+				}
 
-			encodeApiResult, err := as.PayloadCodecTest(encodePayloadCodecReq)
-			if err != nil {
-				log.Error("TestPayloadCodec: failed to encode payload codec: ", err)
-				continue
+				encodeApiResult, err = as.PayloadCodecTest(encodePayloadCodecReq)
+				if err != nil {
+					log.Errorf("TestPayloadCodec: failed to encode payload codec: %v, jsonContent: %s, description: %s", err, string(jsonContent), testCase.Description)
+					continue
+				}
+			} else {
+				testCase.APIENResult = false
+				testCase.APIENResultMsg = "jsonContent is null"
 			}
 
 			encodedHex := strings.ToLower(encodeApiResult)
@@ -1073,7 +1079,7 @@ func (s *Simulation) TestPayloadCodec() error {
 
 			decodeApiResult, err := as.PayloadCodecTest(decodePayloadCodecReq)
 			if err != nil {
-				log.Error("TestPayloadCodec: failed to decode payload codec: ", err)
+				log.Errorf("TestPayloadCodec: failed to decode payload codec: %v, response: %s", err, testCase.Response)
 				testCase.APIDEResult = false
 				testCase.APIDEResultMsg = err.Error()
 				continue
