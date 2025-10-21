@@ -68,6 +68,9 @@ type APIDevicePacket struct {
 	// Frame must be sent immediately only in downlink packet.
 	Immediately string `json:"immediately,omitempty"`
 
+	// 该数据流数据对应的下行队列数据被删除的时间
+	InvalidatedTime string `json:"invalidatedTime,omitempty"`
+
 	// LoRa SNR only in uplink packet.
 	LoraSNR string `json:"loraSNR,omitempty"`
 

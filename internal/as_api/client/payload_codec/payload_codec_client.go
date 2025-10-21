@@ -68,6 +68,8 @@ type ClientService interface {
 
 	GetAPIPayloadcodecsUpgrade(params *GetAPIPayloadcodecsUpgradeParams, opts ...ClientOption) (*GetAPIPayloadcodecsUpgradeOK, error)
 
+	GetAPIPayloadcodecsUsedObjectsByID(params *GetAPIPayloadcodecsUsedObjectsByIDParams, opts ...ClientOption) (*GetAPIPayloadcodecsUsedObjectsByIDOK, error)
+
 	GetAPIPayloadcodecsByID(params *GetAPIPayloadcodecsByIDParams, opts ...ClientOption) (*GetAPIPayloadcodecsByIDOK, error)
 
 	GetAPIPayloadcodecsDeviceByDevEUI(params *GetAPIPayloadcodecsDeviceByDevEUIParams, opts ...ClientOption) (*GetAPIPayloadcodecsDeviceByDevEUIOK, error)
@@ -306,6 +308,44 @@ func (a *Client) GetAPIPayloadcodecsUpgrade(params *GetAPIPayloadcodecsUpgradePa
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for get_api_payloadcodecs-upgrade: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIPayloadcodecsUsedObjectsByID get api payloadcodecs used objects by id API
+*/
+func (a *Client) GetAPIPayloadcodecsUsedObjectsByID(params *GetAPIPayloadcodecsUsedObjectsByIDParams, opts ...ClientOption) (*GetAPIPayloadcodecsUsedObjectsByIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIPayloadcodecsUsedObjectsByIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_payloadcodecs-used-objects_by_id",
+		Method:             "GET",
+		PathPattern:        "/api/payloadcodecs-used-objects/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIPayloadcodecsUsedObjectsByIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIPayloadcodecsUsedObjectsByIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_payloadcodecs-used-objects_by_id: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

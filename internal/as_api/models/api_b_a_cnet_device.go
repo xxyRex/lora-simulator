@@ -20,7 +20,7 @@ import (
 type APIBACnetDevice struct {
 
 	// 设备 EUI
-	DevEui string `json:"devEui,omitempty"`
+	DevEui string `json:"dev_eui,omitempty"`
 
 	// 设备 ID (通常是 DevEUI)
 	ID string `json:"id,omitempty"`

@@ -17,6 +17,9 @@ import (
 // swagger:model apiCopyModbusObjectsRequest
 type APICopyModbusObjectsRequest struct {
 
+	// 需要复制的object ID列表
+	ObjectIds []string `json:"objectIds"`
+
 	// 是否覆盖
 	Override bool `json:"override,omitempty"`
 

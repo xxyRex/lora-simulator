@@ -20,7 +20,7 @@ import (
 type APIAddDevicePCO struct {
 
 	// 设备 EUI
-	DevEui string `json:"devEui,omitempty"`
+	DevEui string `json:"dev_eui,omitempty"`
 
 	// 设备名称 (用于全局对象创建)
 	Name string `json:"name,omitempty"`

@@ -58,6 +58,8 @@ type Config struct {
 		} `mapstructure:"gateway"`
 
 		TestPayloadCodec struct {
+			OldHost         string `mapstructure:"old_host"`
+			NewHost         string `mapstructure:"new_host"`
 			Enable          bool   `mapstructure:"enable"`
 			TestCaseFile    string `mapstructure:"test_case_file"`
 			TestSheet       string `mapstructure:"test_sheet"`

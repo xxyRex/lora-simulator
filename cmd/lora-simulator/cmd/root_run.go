@@ -17,6 +17,7 @@ import (
 	"github.com/brocaar/lora-simulator/internal/config"
 	"github.com/brocaar/lora-simulator/internal/ns"
 	"github.com/brocaar/lora-simulator/internal/simulator"
+	"github.com/brocaar/lora-simulator/internal/test_payload_codec"
 )
 
 func run(cnd *cobra.Command, args []string) error {
@@ -27,6 +28,7 @@ func run(cnd *cobra.Command, args []string) error {
 		setupASIntegration,
 		setupNSIntegration,
 		setupPrometheus,
+		startPayloadCodecTest,
 		startSimulator,
 	}
 
@@ -101,6 +103,20 @@ func setupPrometheus(ctx context.Context, wg *sync.WaitGroup) error {
 		err := server.ListenAndServe()
 		log.WithError(err).Error("prometheus endpoint server error")
 	}()
+
+	return nil
+}
+
+func startPayloadCodecTest(ctx context.Context, wg *sync.WaitGroup) error {
+	if !config.C.LoraSimulator.TestPayloadCodec.Enable {
+		return nil
+	}
+
+	if err := test_payload_codec.Start(ctx); err != nil {
+		return errors.Wrap(err, "start payload codec test error")
+	}
+
+	os.Exit(0)
 
 	return nil
 }

@@ -90,6 +90,35 @@ func parseJSON(data []byte) (map[string]interface{}, error) {
 	return jsonObj, nil
 }
 
+func SimpleSetup(host string, username string, password string) error {
+	aesKey := []byte(AES_KEY)
+	aesIv := []byte(AES_IV)
+
+	aesPassword, err := utils.AesCBCEncrypt([]byte(password), aesKey, aesIv)
+	if err != nil {
+		return err
+	}
+
+	asPassword := aesPassword
+	if config.C.LoraSimulator.API.UseOldAuth {
+		asPassword = "NicJjG18XOV3U1efQyo8AQ=="
+	}
+
+	err = ASLogin(host, username, asPassword)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	err = CGILogin(host, username, aesPassword)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
+}
+
 func Setup(c config.Config) error {
 	conf := c.LoraSimulator
 
@@ -117,13 +146,13 @@ func Setup(c config.Config) error {
 	if config.C.LoraSimulator.API.UseOldAuth {
 		asPassword = "NicJjG18XOV3U1efQyo8AQ=="
 	}
-	err = ASLogin(username, asPassword)
+	err = ASLogin(conf.API.Server, username, asPassword)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
 
-	err = CGILogin(username, aesPassword)
+	err = CGILogin(conf.API.Server, username, aesPassword)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -162,7 +191,7 @@ type CGILoginValue struct {
 	Password string `json:"password"`
 }
 
-func CGILogin(username, password string) error {
+func CGILogin(host string, username, password string) error {
 	// 创建一个支持Cookie管理的CookieJar
 	jar, err := cookiejar.New(&cookiejar.Options{})
 	if err != nil {
@@ -232,8 +261,8 @@ func CGILogin(username, password string) error {
 	return nil
 }
 
-func ASLogin(username string, password string) error {
-	cfg := as_api.DefaultTransportConfig().WithHost(config.C.LoraSimulator.API.Server)
+func ASLogin(host string, username string, password string) error {
+	cfg := as_api.DefaultTransportConfig().WithHost(host)
 	cfg.Schemes = []string{"http"} // 强制使用 HTTP
 	asClient = as_api.NewHTTPClientWithConfig(strfmt.Default, cfg)
 
@@ -425,21 +454,46 @@ func GetDevices(offset int, limit int) ([]*models.APIDeviceItem, error) {
 }
 
 func GetPayloadCoedc() ([]*models.APIPayloadCodecItem, error) {
-	params := payload_codec.NewGetAPIPayloadcodecsParams()
-	limitStr := strconv.Itoa(math.MaxInt16)
-	offsetStr := strconv.Itoa(0)
-	searchStr := ""
+	var allResults []*models.APIPayloadCodecItem
+	limit := 10 // 减少单次请求的数据量
+	offset := 0
 
-	params.Limit = &limitStr
-	params.Offset = &offsetStr
-	params.Search = &searchStr
+	for {
+		params := payload_codec.NewGetAPIPayloadcodecsParams()
+		limitStr := strconv.Itoa(limit)
+		offsetStr := strconv.Itoa(offset)
+		searchStr := ""
+		typeStr := "default"
 
-	resp, err := asClient.PayloadCodec.GetAPIPayloadcodecs(params)
-	if err != nil {
-		return nil, err
+		params.Limit = &limitStr
+		params.Offset = &offsetStr
+		params.Search = &searchStr
+		params.Type = &typeStr
+
+		resp, err := asClient.PayloadCodec.GetAPIPayloadcodecs(params)
+		if err != nil {
+			log.Error("GetPayloadCoedc err: ", err)
+			return nil, err
+		}
+
+		// 如果没有数据返回，说明已经获取完所有数据
+		if resp.Payload == nil || len(resp.Payload.Result) == 0 {
+			break
+		}
+
+		// 将当前页的结果添加到总结果中
+		allResults = append(allResults, resp.Payload.Result...)
+
+		// 如果返回的数据量小于limit，说明已经是最后一页
+		if len(resp.Payload.Result) < limit {
+			break
+		}
+
+		// 准备下一页请求
+		offset += limit
 	}
 
-	return resp.Payload.Result, nil
+	return allResults, nil
 }
 
 func GetGateway() ([]lorawan.EUI64, error) {
@@ -847,4 +901,28 @@ func ExportBulkDevice() (string, error) {
 	}
 
 	return string(csv), nil
+}
+
+func GetPayloadCodecList(typeStr string) ([]*models.APIShortPayloadCodecItem, error) {
+	params := payload_codec.NewGetAPIPayloadcodecsShortParams()
+	params.Type = &typeStr
+
+	resp, err := asClient.PayloadCodec.GetAPIPayloadcodecsShort(params)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Payload.Result, nil
+}
+
+func GetPayloadCodecByID(id string) (*models.APIGetPayloadCodecResponse, error) {
+	params := payload_codec.NewGetAPIPayloadcodecsByIDParams()
+	params.ID = id
+
+	resp, err := asClient.PayloadCodec.GetAPIPayloadcodecsByID(params)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Payload, nil
 }

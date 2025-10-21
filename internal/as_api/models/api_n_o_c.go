@@ -20,7 +20,7 @@ import (
 type APINOC struct {
 
 	// 是否需要确认
-	AckRequired int32 `json:"ackRequired,omitempty"`
+	AckRequired int32 `json:"ack_required,omitempty"`
 
 	// 描述
 	Description string `json:"description,omitempty"`
@@ -29,22 +29,22 @@ type APINOC struct {
 	ID string `json:"id,omitempty"`
 
 	// 实例 ID
-	InstanceID int32 `json:"instanceId,omitempty"`
+	InstanceID int32 `json:"instance_id,omitempty"`
 
 	// 对象名称
-	ObjectName string `json:"objectName,omitempty"`
+	ObjectName string `json:"object_name,omitempty"`
 
 	// 接收者列表
-	RecipientList []*APIRecipient `json:"recipientList"`
+	RecipientList []*APIRecipient `json:"recipient_list"`
 
 	// 变为故障状态的优先级
-	ToFaultPriority int32 `json:"toFaultPriority,omitempty"`
+	ToFaultPriority int32 `json:"to_fault_priority,omitempty"`
 
 	// 恢复正常状态的优先级
-	ToNormalPriority int32 `json:"toNormalPriority,omitempty"`
+	ToNormalPriority int32 `json:"to_normal_priority,omitempty"`
 
 	// 变为非正常状态的优先级
-	ToOffnormalPriority int32 `json:"toOffnormalPriority,omitempty"`
+	ToOffnormalPriority int32 `json:"to_offnormal_priority,omitempty"`
 
 	// 对象类型 ("notification-class-object")
 	Type string `json:"type,omitempty"`
@@ -77,9 +77,9 @@ func (m *APINOC) validateRecipientList(formats strfmt.Registry) error {
 		if m.RecipientList[i] != nil {
 			if err := m.RecipientList[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("recipientList" + "." + strconv.Itoa(i))
+					return ve.ValidateName("recipient_list" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("recipientList" + "." + strconv.Itoa(i))
+					return ce.ValidateName("recipient_list" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -116,9 +116,9 @@ func (m *APINOC) contextValidateRecipientList(ctx context.Context, formats strfm
 
 			if err := m.RecipientList[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("recipientList" + "." + strconv.Itoa(i))
+					return ve.ValidateName("recipient_list" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("recipientList" + "." + strconv.Itoa(i))
+					return ce.ValidateName("recipient_list" + "." + strconv.Itoa(i))
 				}
 				return err
 			}

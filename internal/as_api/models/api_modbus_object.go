@@ -26,6 +26,9 @@ type APIModbusObject struct {
 	// 对象唯一标识ID（数据库主键，更新时必填）
 	ID string `json:"id,omitempty"`
 
+	// 是否是全局对象
+	IsGlobalObject bool `json:"isGlobalObject,omitempty"`
+
 	// LoRa名称（与PayloadCodec对象的name_id对应）
 	LoraName string `json:"loraName,omitempty"`
 
@@ -46,6 +49,9 @@ type APIModbusObject struct {
 
 	// 寄存器类型：coil(线圈)、discrete(离散输入)、input_register(输入寄存器)、holding_register(保持寄存器)
 	RegisterType string `json:"registerType,omitempty"`
+
+	// 服务器ID
+	ServerID string `json:"serverId,omitempty"`
 
 	// 数值单位
 	Unit string `json:"unit,omitempty"`

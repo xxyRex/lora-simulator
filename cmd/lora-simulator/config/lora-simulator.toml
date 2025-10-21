@@ -41,7 +41,7 @@ use_new_gateway = false
 # 暂时无用
 use_new_profile = false
 # 是否每次创建新的application
-use_new_app = false
+use_new_app = true
 # 是否使用旧版校验方式(60.0.0.42-r5前的网关)
 use_old_auth = false
 # 是否每次创建新的application
@@ -49,7 +49,7 @@ clean_before_test = true
 # 结束后是否删除所有数据
 teardown_after_test = false
 # 测试的功能，目前支持bacnet，fuota，normal,modbus
-test_feature = "normal,modbus"
+test_feature = "normal,bacnet"
 # 是否需要重启as
 restart_as = false
 # 每个fuota任务的设备数量
@@ -65,7 +65,8 @@ api_test = false
 # Insecure.
 #
 # Set this to true when the endpoint is not using TLS.
-insecure = true
+# Set this to false to use HTTPS but skip certificate verification.
+insecure = false
 
 # MQTT integration configuration.
 #
@@ -131,7 +132,7 @@ activation_time = "100s"
 [simulator.device]
 
 # Number of devices to simulate.
-count = 5
+count = 1
 
 # Uplink interval.
 uplink_interval = "300s"
@@ -178,7 +179,7 @@ max_count = 5
 #   * Uplinks sent (by the lora-simulator Application Server MQTT integration)
 [prometheus]
 
-# IP:port to bind the Prometheus endpoint to.
+# IP:port to bind the Prometheus endp oint to.
 #
 # Metrics can be retrieved from /metrics.
 bind = "0.0.0.0:9000"
@@ -186,16 +187,13 @@ bind = "0.0.0.0:9000"
 [lora-simulator.test_payload_codec]
 # 是否开启测试
 enable = false
+# 旧版网关host
+old_host = "192.168.40.148"
+# 新版网关host
+new_host = "192.168.40.148"
+
 # 测试用例文件路径
-test_case_file = "/mnt/data/work_code/gateway/lora-simulator/cmd/lora-simulator/payload_en_decoder/编解码数据表.xlsx"
-# 测试结果文件路径
-test_result_dir = "/mnt/data/work_code/gateway/lora-simulator/cmd/lora-simulator/payload_en_decoder/"
-
-test_codec_dir = "/mnt/data/work_code/gateway/github/codec-release-git"
-
-[[lora-simulator.test_payload_codec.test_device_sheet]]
-sheet = "WT101"
-device = "wt101"
+test_case_file = "/mnt/data/work_code/gateway/lora-simulator/codec.xlsx"
 
 [[lora-simulator.test_payload_codec.test_device_sheet]]
 sheet = "WT201"

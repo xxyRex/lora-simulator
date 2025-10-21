@@ -131,13 +131,6 @@ func (s *Simulation) start() {
 		go s.ApiTest()
 	}
 
-	if config.C.LoraSimulator.TestPayloadCodec.Enable {
-		if err := s.TestPayloadCodec(); err != nil {
-			log.WithError(err).Error("simulator: test payload codec error")
-			return
-		}
-	}
-
 	if err := s.runSimulation(); err != nil {
 		log.WithError(err).Error("simulator: Simulation error")
 	}
@@ -857,7 +850,7 @@ func (s *Simulation) setupModbus() error {
 		modbusServerCreateReq := models.APIModbusServer{
 			ID:                 strconv.Itoa(k + 1),
 			Enable:             1,
-			Interface:          "eth 0",
+			Interface:          "eth0",
 			ConnectType:        "modbus_tcp",
 			Name:               "test" + strconv.Itoa(k),
 			Port:               10000 + int32(k),

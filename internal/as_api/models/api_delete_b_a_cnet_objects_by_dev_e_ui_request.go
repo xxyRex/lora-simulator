@@ -18,7 +18,7 @@ import (
 type APIDeleteBACnetObjectsByDevEUIRequest struct {
 
 	// 设备 EUI
-	DevEuiList []string `json:"devEuiList"`
+	DevEuiList []string `json:"dev_eui_list"`
 }
 
 // Validate validates this api delete b a cnet objects by dev e UI request

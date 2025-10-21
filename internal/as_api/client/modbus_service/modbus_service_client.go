@@ -60,6 +60,8 @@ type ClientService interface {
 
 	GetAPIProtocolModbusServer(params *GetAPIProtocolModbusServerParams, opts ...ClientOption) (*GetAPIProtocolModbusServerOK, error)
 
+	GetAPIProtocolModbusServerNetworkInterfacesOptions(params *GetAPIProtocolModbusServerNetworkInterfacesOptionsParams, opts ...ClientOption) (*GetAPIProtocolModbusServerNetworkInterfacesOptionsOK, error)
+
 	PostAPIProtocolModbusDeviceDelete(params *PostAPIProtocolModbusDeviceDeleteParams, opts ...ClientOption) (*PostAPIProtocolModbusDeviceDeleteOK, error)
 
 	PostAPIProtocolModbusObjectAdd(params *PostAPIProtocolModbusObjectAddParams, opts ...ClientOption) (*PostAPIProtocolModbusObjectAddOK, error)
@@ -160,6 +162,44 @@ func (a *Client) GetAPIProtocolModbusServer(params *GetAPIProtocolModbusServerPa
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for get_api_protocol_modbus_server: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetAPIProtocolModbusServerNetworkInterfacesOptions modbuses server get interfaces 获取可选的网络接口
+*/
+func (a *Client) GetAPIProtocolModbusServerNetworkInterfacesOptions(params *GetAPIProtocolModbusServerNetworkInterfacesOptionsParams, opts ...ClientOption) (*GetAPIProtocolModbusServerNetworkInterfacesOptionsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetAPIProtocolModbusServerNetworkInterfacesOptionsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "get_api_protocol_modbus_server_network_interfaces_options",
+		Method:             "GET",
+		PathPattern:        "/api/protocol/modbus_server/network_interfaces_options",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &GetAPIProtocolModbusServerNetworkInterfacesOptionsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetAPIProtocolModbusServerNetworkInterfacesOptionsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for get_api_protocol_modbus_server_network_interfaces_options: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

@@ -19,6 +19,9 @@ type APIUrExportBulkDeviceResponse struct {
 
 	// 经过base64编码的csv文件内容
 	Csv string `json:"csv,omitempty"`
+
+	// 文件名
+	Filename string `json:"filename,omitempty"`
 }
 
 // Validate validates this api ur export bulk device response
