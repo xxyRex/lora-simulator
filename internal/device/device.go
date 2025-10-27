@@ -333,7 +333,7 @@ func NewDevice(ctx context.Context, wg *sync.WaitGroup, opts ...DeviceOption) (*
 		downlinkFrames:         make(chan *gw.DownlinkFrame, 100),
 		state:                  deviceStateOTAA,
 		lastJoinRequestTime:    time.Now(),
-		minJoinRequestInterval: time.Duration(rand.Intn(60)) * time.Second,
+		minJoinRequestInterval: 0,
 		joinRequestCount:       0,
 	}
 
@@ -650,6 +650,43 @@ func (d *Device) dataUp(mType lorawan.MType, ack bool) {
 	d.fPort = 0
 }
 
+// sendAck sends an ACK uplink (empty payload) in response to a confirmed downlink.
+func (d *Device) sendAck() {
+	log.WithFields(log.Fields{
+		"dev_eui": d.devEUI,
+	}).Info("simulator: sending ACK for confirmed downlink")
+
+	d.dataUpCount++
+
+	phy := lorawan.PHYPayload{
+		MHDR: lorawan.MHDR{
+			MType: lorawan.UnconfirmedDataUp,
+			Major: lorawan.LoRaWANR1,
+		},
+		MACPayload: &lorawan.MACPayload{
+			FHDR: lorawan.FHDR{
+				DevAddr: d.devAddr,
+				FCnt:    d.fCntUp,
+				FCtrl: lorawan.FCtrl{
+					ADR: false,
+					ACK: true,
+				},
+			},
+		},
+	}
+
+	if err := phy.SetUplinkDataMIC(lorawan.LoRaWAN1_0, 0, 0, 0, d.nwkSKey, d.nwkSKey); err != nil {
+		log.WithError(err).Error("simulator: set uplink data MIC error")
+		return
+	}
+
+	d.fCntUp++
+
+	d.sendUplink(phy)
+
+	deviceUplinkCounter().Inc()
+}
+
 // joinAccept validates and handles the join-accept downlink.
 func (d *Device) joinAccept(phy lorawan.PHYPayload) error {
 	if atomic.LoadInt32(&d.joinWindowFlag) == 0 {
@@ -787,8 +824,9 @@ func (d *Device) downlinkData(phy lorawan.PHYPayload) error {
 	}
 	d.datadownCount++
 
+	// 如果收到 confirmed 下行，需要发送 ACK 响应
 	if phy.MHDR.MType == lorawan.ConfirmedDataDown {
-		d.dataUp(lorawan.UnconfirmedDataUp, true)
+		d.sendAck()
 	}
 
 	d.downlinkHandler(phy.MHDR.MType == lorawan.ConfirmedDataDown, macPL.FHDR.FCtrl.ACK, d.fCntDown, fPort, data)

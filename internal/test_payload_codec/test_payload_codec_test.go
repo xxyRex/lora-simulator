@@ -137,3 +137,25 @@ func ExampleParseExcelSheet() {
 		fmt.Printf("保存失败: %v\n", err)
 	}
 }
+
+func TestParseTSLConfigExcelSheet(t *testing.T) {
+	filePath := "/mnt/data/work_code/gateway/lora-simulator/cmd/lora-simulator/payload_en_decoder/codec.xlsx"
+	sheetName := "AM103L"
+	tslConfigTestData, err := ParseTSLConfigExcelSheetByHeader(filePath, sheetName)
+	if err != nil {
+		t.Errorf("ParseTSLConfigExcelSheet(%s, %s) error: %v", filePath, sheetName, err)
+	}
+
+	for _, data := range tslConfigTestData {
+		fmt.Printf("Description: %s\n", data.Description)
+		fmt.Printf("Command: %s\n", data.Command)
+		fmt.Printf("Response: %s\n", data.Response)
+		fmt.Printf("CodecType: %s\n", data.CodecType)
+		fmt.Printf("IPSOType: %s\n", data.IPSOType)
+		fmt.Printf("Code: %s\n", data.Code)
+		fmt.Printf("Raw: %s\n", data.Raw)
+		fmt.Printf("Result: %s\n", data.Result)
+		fmt.Printf("ErrorMsg: %s\n", data.ErrorMsg)
+		fmt.Printf("TSLConfig: %v\n", data.TSLConfig)
+	}
+}

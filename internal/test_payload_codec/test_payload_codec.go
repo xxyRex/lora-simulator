@@ -1,12 +1,18 @@
 package test_payload_codec
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/brocaar/lora-simulator/internal/as"
+	"github.com/brocaar/lora-simulator/internal/as_api/models"
+	"github.com/brocaar/lora-simulator/internal/config"
+	log "github.com/sirupsen/logrus"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -348,4 +354,507 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// 新结构体
+type TSLConfigTestData struct {
+	Description string                 `json:"description"`
+	Command     string                 `json:"command"`
+	Response    string                 `json:"response"`
+	CodecType   string                 `json:"codec_type"`
+	IPSOType    string                 `json:"ipso_type"`
+	Code        string                 `json:"code"`
+	Raw         string                 `json:"raw"`
+	Result      string                 `json:"result"`
+	ErrorMsg    string                 `json:"error_msg"`
+	TSLConfig   map[string]interface{} `json:"tsl_config"`
+}
+
+// 新函数
+func ParseTSLConfigExcelSheetByHeader(filePath, sheetName string) ([]TSLConfigTestData, error) {
+	f, err := excelize.OpenFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("打开Excel文件失败: %v", err)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Printf("关闭Excel文件时出错: %v\n", err)
+		}
+	}()
+
+	rows, err := f.GetRows(sheetName)
+	if err != nil {
+		return nil, fmt.Errorf("读取工作表 %s 失败: %v", sheetName, err)
+	}
+	if len(rows) < 1 {
+		return nil, fmt.Errorf("工作表 %s 为空", sheetName)
+	}
+
+	// 1. 解析表头
+	header := rows[0]
+	headerMap := make(map[string]int)
+	for idx, name := range header {
+		headerMap[strings.TrimSpace(name)] = idx
+	}
+
+	// 2. 逐行解析
+	var result []TSLConfigTestData
+	for i := 1; i < len(rows); i++ {
+		row := rows[i]
+		get := func(col string) string {
+			if idx, ok := headerMap[col]; ok && idx < len(row) {
+				return strings.TrimSpace(row[idx])
+			}
+			return ""
+		}
+		data := TSLConfigTestData{
+			Description: get("中文含义"),
+			Command:     get("指令"),
+			Response:    get("回复指令"),
+			CodecType:   get("编码格式"),
+			IPSOType:    get("IPSO类型"),
+			Code:        get("代码"),
+			Raw:         get("RAW"),
+			Result:      get("结果"),
+			ErrorMsg:    get("错误信息"),
+		}
+		tslStr := get("tsl_config")
+		if tslStr != "" {
+			var tsl map[string]interface{}
+			if err := json.Unmarshal([]byte(tslStr), &tsl); err == nil {
+				data.TSLConfig = tsl
+			} else {
+				data.TSLConfig = map[string]interface{}{"raw": tslStr, "parse_error": err.Error()}
+			}
+		}
+		result = append(result, data)
+	}
+	return result, nil
+}
+
+type value struct {
+	Value int    `json:"value"`
+	Name  string `json:"name"`
+}
+
+type codecItem struct {
+	ID                      string   `json:"id"`
+	Name                    string   `json:"name"`
+	Value                   string   `json:"value"`
+	Unit                    string   `json:"unit"`
+	AccessMode              string   `json:"access_mode"`
+	DataType                string   `json:"data_type"`
+	ValueType               string   `json:"value_type"`
+	MaxLength               uint32   `json:"max_length"`
+	Values                  []*value `json:"values"`
+	BacnetType              string   `json:"bacnet_type"`
+	BacnetUnitType          string   `json:"bacnet_unit_type"`
+	BacnetUnitTypeID        *uint32  `json:"bacnet_unit_type_id"`
+	Reference               []string `json:"reference"`
+	BacnetPolarity          *int     `json:"bacnet_polarity,omitempty"`
+	BacnetRelinquishDefault *string  `json:"bacnet_relinquish_default,omitempty"`
+	Description             string   `json:"description"`
+	PayloadCodecObjectID    int64    `json:"-"`
+}
+
+// TSLConfig 结构体用于解析包含 object 字段的 JSON 文件
+type TSLConfig struct {
+	Version string      `json:"version"`
+	Bytes   string      `json:"bytes"`
+	Object  []codecItem `json:"object"`
+}
+
+func ReadCodecItem(filePath string) ([]codecItem, error) {
+	jsonFile, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer jsonFile.Close()
+
+	// 首先尝试解析为 TSLConfig 结构
+	var tslConfig TSLConfig
+	decoder := json.NewDecoder(jsonFile)
+	if err := decoder.Decode(&tslConfig); err == nil {
+		// 如果成功解析为 TSLConfig，返回其中的 Object 字段
+		return tslConfig.Object, nil
+	}
+
+	// 如果解析失败，重置文件指针并尝试解析为 codecItem 数组
+	jsonFile.Seek(0, 0)
+	var codecItems []codecItem
+	decoder = json.NewDecoder(jsonFile)
+	if err := decoder.Decode(&codecItems); err != nil {
+		return nil, err
+	}
+	return codecItems, nil
+}
+
+type TestResult struct {
+	Device         string           `json:"device"`
+	TestResultItem []TestResultItem `json:"test_result_item"`
+}
+
+type TestResultItem struct {
+	Type     string `json:"type"`
+	Data     string `json:"data"`
+	Result   string `json:"result"`
+	ErrorMsg string `json:"error_msg"`
+	Success  bool   `json:"success"`
+	Name     string `json:"name"`
+}
+
+type PayloadCodecTest struct {
+	ctx        context.Context
+	TestResult []TestResult
+}
+
+func Start(ctx context.Context) error {
+	p := &PayloadCodecTest{
+		ctx:        ctx,
+		TestResult: make([]TestResult, 0),
+	}
+	as.SimpleSetup(config.C.LoraSimulator.TestPayloadCodec.OldHost, config.C.LoraSimulator.API.Username, config.C.LoraSimulator.API.Password)
+	p.TestPayloadCodec()
+	p.saveTestResultToFile("old_host_test_result.json")
+
+	as.SimpleSetup(config.C.LoraSimulator.TestPayloadCodec.NewHost, config.C.LoraSimulator.API.Username, config.C.LoraSimulator.API.Password)
+	p.TestPayloadCodec()
+	p.saveTestResultToFile("new_host_test_result.json")
+
+	p.compareTestResult("old_host_test_result.json", "new_host_test_result.json")
+
+	return nil
+}
+
+func (p *PayloadCodecTest) TestPayloadCodec() error {
+	pcShortList, err := as.GetPayloadCodecList("default")
+	if err != nil {
+		return err
+	}
+
+	pcShortMap := make(map[string]*models.APIShortPayloadCodecItem)
+	for _, pcShortItem := range pcShortList {
+		pcShortMap[pcShortItem.Name] = pcShortItem
+	}
+
+	for _, deviceSheet := range config.C.LoraSimulator.TestPayloadCodec.TestDeviceSheet {
+		pcShortItem, ok := pcShortMap[deviceSheet.Device]
+		if !ok {
+			log.Errorf("payload codec not found: %s", deviceSheet.Device)
+			continue
+		}
+
+		payloadCodec, err := as.GetPayloadCodecByID(pcShortItem.ID)
+		if err != nil {
+			log.Errorf("failed to get payload codec: %v", err)
+			continue
+		}
+
+		testData, err := ParseTSLConfigExcelSheetByHeader(config.C.LoraSimulator.TestPayloadCodec.TestCaseFile, deviceSheet.Sheet)
+		if err != nil {
+			log.Errorf("failed to parse excel sheet: %v", err)
+			continue
+		}
+
+		testResult := TestResult{
+			Device:         deviceSheet.Device,
+			TestResultItem: make([]TestResultItem, 0),
+		}
+
+		for _, data := range testData {
+			if data.IPSOType != "正常" {
+				continue
+			}
+
+			switch data.CodecType {
+			case "decode":
+				testResult.TestResultItem = append(testResult.TestResultItem, p.decode(data.Description, data.Command, payloadCodec.DecoderScript))
+			case "encode":
+				decodeApiResult := p.decode(data.Description, data.Command, payloadCodec.DecoderScript)
+				testResult.TestResultItem = append(testResult.TestResultItem, p.encode(data.Description, decodeApiResult.Result, payloadCodec.EncoderScript))
+			}
+			time.Sleep(1 * time.Second)
+		}
+
+		p.TestResult = append(p.TestResult, testResult)
+	}
+
+	return nil
+}
+
+func (p *PayloadCodecTest) encode(name string, data string, script string) TestResultItem {
+	testItem := TestResultItem{
+		Type:     "encode",
+		Data:     data,
+		Result:   "",
+		ErrorMsg: "",
+		Name:     name,
+		Success:  false,
+	}
+
+	if data == "" {
+		testItem.ErrorMsg = "data is empty"
+		testItem.Success = false
+		return testItem
+	}
+
+	log.Infof("encode data: %s", data)
+	encodeApiResult, err := as.PayloadCodecTest(&models.APITestPayloadCodecRequest{
+		Data:   data,
+		FPort:  1,
+		Script: script,
+		Type:   "encode",
+	})
+	if err != nil {
+		log.Errorf("failed to encode data: %s, error: %v", data, err)
+		testItem.ErrorMsg = err.Error()
+		testItem.Success = false
+		return testItem
+	}
+	testItem.Result = encodeApiResult
+	testItem.Success = true
+	return testItem
+}
+
+func (p *PayloadCodecTest) decode(name string, data string, script string) TestResultItem {
+	testItem := TestResultItem{
+		Type:     "decode",
+		Data:     data,
+		Result:   "",
+		ErrorMsg: "",
+		Name:     name,
+		Success:  false,
+	}
+
+	decodeApiResult, err := as.PayloadCodecTest(&models.APITestPayloadCodecRequest{
+		Data:   data,
+		FPort:  1,
+		Script: script,
+		Type:   "decode",
+	})
+	if err != nil {
+		testItem.ErrorMsg = err.Error()
+		testItem.Success = false
+		return testItem
+	}
+	testItem.Result = decodeApiResult
+	testItem.Success = true
+	return testItem
+}
+
+func (p *PayloadCodecTest) saveTestResultToFile(filePath string) {
+	jsonData, err := json.Marshal(p.TestResult)
+	if err != nil {
+		log.Errorf("failed to marshal test result: %v", err)
+		return
+	}
+	p.TestResult = []TestResult{}
+	os.WriteFile(filePath, jsonData, 0644)
+}
+
+func (p *PayloadCodecTest) compareTestResult(old_host_test_result_file string, new_host_test_result_file string) {
+	old_host_test_result, err := os.ReadFile(old_host_test_result_file)
+	if err != nil {
+		log.Errorf("failed to read old host test result: %v", err)
+		return
+	}
+
+	old_host_test_result_list := []TestResult{}
+	err = json.Unmarshal(old_host_test_result, &old_host_test_result_list)
+	if err != nil {
+		log.Errorf("failed to unmarshal old host test result: %v", err)
+		return
+	}
+
+	new_host_test_result, err := os.ReadFile(new_host_test_result_file)
+	if err != nil {
+		log.Errorf("failed to read new host test result: %v", err)
+		return
+	}
+
+	new_host_test_result_list := []TestResult{}
+	err = json.Unmarshal(new_host_test_result, &new_host_test_result_list)
+	if err != nil {
+		log.Errorf("failed to unmarshal new host test result: %v", err)
+		return
+	}
+
+	// 创建旧主机测试结果的映射，方便查找
+	oldResultMap := make(map[string]map[string]TestResultItem)
+	for _, deviceResult := range old_host_test_result_list {
+		deviceMap := make(map[string]TestResultItem)
+		for _, item := range deviceResult.TestResultItem {
+			// 使用 name_type 作为唯一键
+			key := fmt.Sprintf("%s_%s", item.Name, item.Type)
+			deviceMap[key] = item
+		}
+		oldResultMap[deviceResult.Device] = deviceMap
+	}
+
+	// 存储差异结果
+	var diffResults []map[string]interface{}
+
+	// 遍历新主机测试结果，与旧主机进行比较
+	for _, newDeviceResult := range new_host_test_result_list {
+		deviceName := newDeviceResult.Device
+		oldDeviceMap, exists := oldResultMap[deviceName]
+
+		if !exists {
+			// 如果旧主机没有这个设备，记录所有新主机的测试项
+			for _, item := range newDeviceResult.TestResultItem {
+				diffResults = append(diffResults, map[string]interface{}{
+					"device":        deviceName,
+					"name":          item.Name,
+					"type":          item.Type,
+					"data":          item.Data,
+					"old_result":    "设备不存在",
+					"new_result":    item.Result,
+					"old_success":   false,
+					"new_success":   item.Success,
+					"old_error_msg": "",
+					"new_error_msg": item.ErrorMsg,
+					"diff_type":     "device_not_exist_in_old",
+				})
+			}
+			continue
+		}
+
+		// 比较同一设备下的测试项
+		for _, newItem := range newDeviceResult.TestResultItem {
+			key := fmt.Sprintf("%s_%s", newItem.Name, newItem.Type)
+			oldItem, exists := oldDeviceMap[key]
+
+			if !exists {
+				// 如果旧主机没有这个测试项，记录差异
+				diffResults = append(diffResults, map[string]interface{}{
+					"device":        deviceName,
+					"name":          newItem.Name,
+					"type":          newItem.Type,
+					"data":          newItem.Data,
+					"old_result":    "测试项不存在",
+					"new_result":    newItem.Result,
+					"old_success":   false,
+					"new_success":   newItem.Success,
+					"old_error_msg": "",
+					"new_error_msg": newItem.ErrorMsg,
+					"diff_type":     "test_item_not_exist_in_old",
+				})
+				continue
+			}
+
+			// 比较结果和成功状态
+			if oldItem.Result != newItem.Result || oldItem.Success != newItem.Success {
+				diffResults = append(diffResults, map[string]interface{}{
+					"device":        deviceName,
+					"name":          newItem.Name,
+					"type":          newItem.Type,
+					"data":          newItem.Data,
+					"old_result":    oldItem.Result,
+					"new_result":    newItem.Result,
+					"old_success":   oldItem.Success,
+					"new_success":   newItem.Success,
+					"old_error_msg": oldItem.ErrorMsg,
+					"new_error_msg": newItem.ErrorMsg,
+					"diff_type":     "result_or_success_different",
+				})
+			}
+		}
+
+		// 检查旧主机中有但新主机中没有的测试项
+		for key, oldItem := range oldDeviceMap {
+			parts := strings.Split(key, "_")
+			if len(parts) < 2 {
+				continue
+			}
+			name := strings.Join(parts[:len(parts)-1], "_")
+			testType := parts[len(parts)-1]
+
+			found := false
+			for _, newItem := range newDeviceResult.TestResultItem {
+				if newItem.Name == name && newItem.Type == testType {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				diffResults = append(diffResults, map[string]interface{}{
+					"device":        deviceName,
+					"name":          name,
+					"type":          testType,
+					"data":          oldItem.Data,
+					"old_result":    oldItem.Result,
+					"new_result":    "测试项不存在",
+					"old_success":   oldItem.Success,
+					"new_success":   false,
+					"old_error_msg": oldItem.ErrorMsg,
+					"new_error_msg": "",
+					"diff_type":     "test_item_not_exist_in_new",
+				})
+			}
+		}
+	}
+
+	// 检查新主机中没有但旧主机中有的设备
+	for deviceName, oldDeviceMap := range oldResultMap {
+		found := false
+		for _, newDeviceResult := range new_host_test_result_list {
+			if newDeviceResult.Device == deviceName {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			// 如果新主机没有这个设备，记录所有旧主机的测试项
+			for _, oldItem := range oldDeviceMap {
+				parts := strings.Split(fmt.Sprintf("%s_%s", oldItem.Name, oldItem.Type), "_")
+				if len(parts) < 2 {
+					continue
+				}
+				name := strings.Join(parts[:len(parts)-1], "_")
+				testType := parts[len(parts)-1]
+
+				diffResults = append(diffResults, map[string]interface{}{
+					"device":        deviceName,
+					"name":          name,
+					"type":          testType,
+					"data":          oldItem.Data,
+					"old_result":    oldItem.Result,
+					"new_result":    "设备不存在",
+					"old_success":   oldItem.Success,
+					"new_success":   false,
+					"old_error_msg": oldItem.ErrorMsg,
+					"new_error_msg": "",
+					"diff_type":     "device_not_exist_in_new",
+				})
+			}
+		}
+	}
+
+	// 保存差异结果到文件
+	diffFileName := "test_result_diff.json"
+	diffData := map[string]interface{}{
+		"total_diff_count": len(diffResults),
+		"diff_items":       diffResults,
+		"summary": map[string]interface{}{
+			"old_host_file": old_host_test_result_file,
+			"new_host_file": new_host_test_result_file,
+			"compare_time":  time.Now().Format("2006-01-02 15:04:05"),
+		},
+	}
+
+	jsonData, err := json.MarshalIndent(diffData, "", "  ")
+	if err != nil {
+		log.Errorf("failed to marshal diff result: %v", err)
+		return
+	}
+
+	err = os.WriteFile(diffFileName, jsonData, 0644)
+	if err != nil {
+		log.Errorf("failed to write diff result to file: %v", err)
+		return
+	}
+
+	log.Infof("比较完成，发现 %d 个差异项，结果已保存到 %s", len(diffResults), diffFileName)
 }
