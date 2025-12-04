@@ -1,6 +1,14 @@
 {
     "device_types": [
         {
+            "device_id": "vs330",
+            "count": 1
+        },
+        {
+            "device_id": "wt201",
+            "count": 1
+        },
+        {
             "device_id": "uc100",
             "count": 1
         }
