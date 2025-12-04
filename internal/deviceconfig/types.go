@@ -19,7 +19,6 @@ type DeviceTypeConfig struct {
 	SN            string   `json:"sn"`
 	DevEUIPrefix  string   `json:"deveui"`
 	DeviceProfile []string `json:"device_profile"`
-	Codec         string   `json:"codec"`
 	DecoderScript string   `json:"decoder_script"`
 	EncoderScript string   `json:"encoder_script"`
 	TestData      string   `json:"test_data"`

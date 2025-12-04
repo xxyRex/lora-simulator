@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dop251/goja"
 	"github.com/pkg/errors"
-	"github.com/robertkrimen/otto"
 	log "github.com/sirupsen/logrus"
 
 	"sync/atomic"
@@ -555,61 +555,54 @@ func (d *Device) joinRequest() {
 // encodePayload 执行 JS 编码器并返回编码后的字节数组
 // Now supports per-device test data
 func (d *Device) encodePayload(encoderScript string, testData map[string]interface{}) ([]byte, error) {
-	// 创建新的 VM 实例
-	vm := otto.New()
+	// 创建新的 Goja VM 实例
+	vm := goja.New()
 
 	// 执行编码器脚本,注册 Encode 函数
-	if _, err := vm.Run(encoderScript); err != nil {
+	if _, err := vm.RunString(encoderScript); err != nil {
 		return nil, fmt.Errorf("execute encoder script error: %v", err)
 	}
 
-	// 调用 Encode 函数
-	encode, err := vm.Get("Encode")
-	if err != nil {
-		return nil, fmt.Errorf("get encode function error: %v", err)
+	// 获取 Encode 函数
+	encode, ok := goja.AssertFunction(vm.Get("Encode"))
+	if !ok {
+		return nil, fmt.Errorf("Encode is not a function")
 	}
 
-	result, err := encode.Call(otto.NullValue(), nil, testData)
+	// 调用 Encode 函数
+	result, err := encode(goja.Undefined(), goja.Null(), vm.ToValue(testData))
 	if err != nil {
 		return nil, fmt.Errorf("call encode function error: %v", err)
 	}
 
 	// 将结果转换为字节数组
-	exportedValue, err := result.Export()
-	if err != nil {
-		return nil, fmt.Errorf("export result error: %v", err)
-	}
+	exportedValue := result.Export()
 
 	var bytes []byte
 
 	// 处理不同类型的返回值
-	int32Slice, isInt32Slice := exportedValue.([]int32)
-	if isInt32Slice {
-		bytes = make([]byte, len(int32Slice))
-		for i, num := range int32Slice {
-			bytes[i] = byte(num)
-		}
-	} else {
-		encodedBytes, ok := exportedValue.([]interface{})
-		if !ok {
-			return nil, fmt.Errorf("encodedBytes is not a []interface{}")
-		}
-
-		for _, byteVal := range encodedBytes {
-			if num, ok := byteVal.(int32); ok {
+	switch v := exportedValue.(type) {
+	case []interface{}:
+		for _, byteVal := range v {
+			switch num := byteVal.(type) {
+			case int64:
 				bytes = append(bytes, byte(num))
-			} else if num, ok := byteVal.(int); ok {
+			case float64:
 				bytes = append(bytes, byte(num))
-			} else if num, ok := byteVal.(int64); ok {
-				bytes = append(bytes, byte(num))
-			} else if num, ok := byteVal.(float64); ok {
-				bytes = append(bytes, byte(num))
-			} else if num, ok := byteVal.(float32); ok {
-				bytes = append(bytes, byte(num))
-			} else {
-				return nil, fmt.Errorf("unexpected type for byte value")
+			default:
+				return nil, fmt.Errorf("unexpected type for byte value: %T", byteVal)
 			}
 		}
+	case []int64:
+		for _, num := range v {
+			bytes = append(bytes, byte(num))
+		}
+	case []float64:
+		for _, num := range v {
+			bytes = append(bytes, byte(num))
+		}
+	default:
+		return nil, fmt.Errorf("unexpected result type: %T", exportedValue)
 	}
 
 	return bytes, nil

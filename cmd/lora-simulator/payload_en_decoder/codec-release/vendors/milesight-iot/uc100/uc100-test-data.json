@@ -1,0 +1,15 @@
+{
+    "ipso_version": "v1.0",
+    "hardware_version": "v2.0",
+    "firmware_version": "v1.9",
+    "tsl_version": "v1.0",
+    "sn": "6732541800000002",
+    "lorawan_class": 2,
+    "device_status": 1,
+    "modbus_chn_1": 100,
+    "modbus_chn_1_data_type": 2,
+    "modbus_chn_1_sign": 0,
+    "modbus_chn_2": 25.5,
+    "modbus_chn_2_data_type": 5,
+    "modbus_chn_2_sign": 0
+}
