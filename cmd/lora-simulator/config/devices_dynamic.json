@@ -1,18 +1,6 @@
 {
     "devices": {
         "deveui_range":"all",
-        "device_status": {
-            "uplink_paused": false,
-            "uplink_type": "UpUnc",
-            "uplink_interval": 10000
-        },
-        "object": {
-            "temperature_control": {
-                "mode": 1,
-                "temperature": 22.5
-            },
-            "temperature_unit": 0
-        },
         "fuota_debug": {
             "mg_group_setup_ans": {
                 "skip_mg_group_setup_ans": false,

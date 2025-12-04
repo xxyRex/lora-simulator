@@ -51,10 +51,11 @@ func allowUplink(devEUI lorawan.EUI64) bool {
 type DeviceOption func(*Device) error
 
 const (
-	CODEC_PARENT_DIR       = "payload_en_decoder"
-	CODEC_DIR              = CODEC_PARENT_DIR + "/codec-release/"
-	DEFAULT_TEST_DATA_PATH = CODEC_PARENT_DIR + "/test-data.json"
-	AFTER_JOIN_DELAY       = 6 * time.Second
+	CODEC_PARENT_DIR   = "payload_en_decoder"
+	CODEC_DIR          = CODEC_PARENT_DIR + "/codec-release/"
+	AFTER_JOIN_DELAY   = 6 * time.Second
+	UPLINK_TYPE_UP_UNC = "UpUnc"
+	UPLINK_TYPE_UP_CON = "UpCnf"
 )
 
 type deviceState int
@@ -107,6 +108,10 @@ type Device struct {
 
 	// Device sends uplink as confirmed.
 	confirmed bool
+
+	// Per-device uplink configuration (from simulation-config.json)
+	uplinkPaused  bool
+	uplinkConfirm bool
 
 	dynamicPayload []byte
 
@@ -380,6 +385,22 @@ func WithDeviceTestDataPath(testDataPath string) DeviceOption {
 	}
 }
 
+// WithUplinkPaused sets whether uplink is paused for this device
+func WithUplinkPaused(paused bool) DeviceOption {
+	return func(d *Device) error {
+		d.uplinkPaused = paused
+		return nil
+	}
+}
+
+// WithUplinkConfirm sets whether this device uses confirmed uplinks
+func WithUplinkConfirm(confirm bool) DeviceOption {
+	return func(d *Device) error {
+		d.uplinkConfirm = confirm
+		return nil
+	}
+}
+
 // NewDevice creates a new device simulation.
 func NewDevice(ctx context.Context, wg *sync.WaitGroup, opts ...DeviceOption) (*Device, error) {
 	ctx, cancel := context.WithCancel(ctx)
@@ -432,13 +453,20 @@ func (d *Device) uplinkLoop() {
 			d.joinRequest()
 			time.Sleep(AFTER_JOIN_DELAY)
 		case deviceStateActivated:
+			// Use per-device uplink configuration (from simulation-config.json)
+			paused := d.uplinkPaused
+			uplinkType := UPLINK_TYPE_UP_UNC
+			if d.uplinkConfirm {
+				uplinkType = UPLINK_TYPE_UP_CON
+			}
+
+			// Optional: allow runtime override from devices_dynamic.json for global settings
 			config := GetDynamicDevicesConfig(d.devEUI)
-			paused := false
-			uplinkType := "UpUnc"
 			if config != nil {
-				paused = config.Devices.DeviceStatus.UplinkPaused
-				uplinkType = config.Devices.DeviceStatus.UplinkType
-				d.uplinkInterval = config.Devices.DeviceStatus.UplinkIntervalTime
+				// Only use global uplink interval if device-specific interval is not set
+				if d.uplinkInterval == 0 && config.Devices.GlobalUplinkIntervalTime > 0 {
+					d.uplinkInterval = config.Devices.GlobalUplinkIntervalTime
+				}
 			}
 			if paused {
 				continue
@@ -609,32 +637,25 @@ func (d *Device) encodePayload(encoderScript string, testData map[string]interfa
 }
 
 // loadTestData loads test data from the appropriate path
-// Priority: device-specific test data > device type test data > default test data
+// Priority: device-specific test data > device type test data
+// Returns empty map if no test data is available (no longer requires default test data file)
 func (d *Device) loadTestData() (map[string]interface{}, error) {
 	// If device already has pre-loaded test data, use it
 	if d.deviceTestData != nil {
 		return d.deviceTestData, nil
 	}
 
-	// Determine the test data path
-	testDataPath := DEFAULT_TEST_DATA_PATH
-	if d.deviceTestDataPath != "" {
-		testDataPath = d.deviceTestDataPath
+	// If no device-specific test data path is configured, return empty map
+	if d.deviceTestDataPath == "" {
+		log.Debugf("no test data path configured for device %s, using empty test data", d.devEUI)
+		return make(map[string]interface{}), nil
 	}
 
-	// Try to open the test data file
-	testDataFile, err := os.Open(testDataPath)
+	// Try to open the device-specific test data file
+	testDataFile, err := os.Open(d.deviceTestDataPath)
 	if err != nil {
-		// If device-specific path fails, fall back to default
-		if testDataPath != DEFAULT_TEST_DATA_PATH {
-			log.Warnf("device-specific test data not found at %s, falling back to default", testDataPath)
-			testDataFile, err = os.Open(DEFAULT_TEST_DATA_PATH)
-			if err != nil {
-				return nil, fmt.Errorf("open test data file error: %v", err)
-			}
-		} else {
-			return nil, fmt.Errorf("open test data file error: %v", err)
-		}
+		log.Warnf("test data not found at %s for device %s, using empty test data: %v", d.deviceTestDataPath, d.devEUI, err)
+		return make(map[string]interface{}), nil
 	}
 	defer testDataFile.Close()
 
@@ -670,21 +691,33 @@ func (d *Device) getEncoderData() {
 		return
 	}
 
-	// Determine test data path for modification time check
-	testDataPath := DEFAULT_TEST_DATA_PATH
+	// Check encoder script modification time to determine if re-encoding is needed
+	var shouldReEncode bool
 	if d.deviceTestDataPath != "" {
-		testDataPath = d.deviceTestDataPath
+		// If device has a specific test data path, check its modification time
+		testDataInfo, err := os.Stat(d.deviceTestDataPath)
+		if err != nil {
+			// Test data file doesn't exist, but we can still encode with empty data
+			log.Debugf("test data file not found for device %s: %v, will use empty test data", d.devEUI, err)
+			shouldReEncode = d.encoderScriptFileModTime.IsZero()
+		} else if !d.encoderScriptFileModTime.Equal(testDataInfo.ModTime()) {
+			d.encoderScriptFileModTime = testDataInfo.ModTime()
+			shouldReEncode = true
+		}
+	} else {
+		// No test data path configured, check encoder script modification time instead
+		encoderInfo, err := os.Stat(ecPath)
+		if err != nil {
+			log.Errorf("stat encoder file error: %v", err)
+			return
+		}
+		if !d.encoderScriptFileModTime.Equal(encoderInfo.ModTime()) {
+			d.encoderScriptFileModTime = encoderInfo.ModTime()
+			shouldReEncode = true
+		}
 	}
 
-	testDataInfo, err := os.Stat(testDataPath)
-	if err != nil {
-		log.Errorf("stat test data file error: %v", err)
-		return
-	}
-
-	if !d.encoderScriptFileModTime.Equal(testDataInfo.ModTime()) {
-		d.encoderScriptFileModTime = testDataInfo.ModTime()
-
+	if shouldReEncode {
 		file, err := os.Open(ecPath)
 		if err != nil {
 			log.Errorf("open encoder file error: %v", err)
@@ -693,7 +726,7 @@ func (d *Device) getEncoderData() {
 		defer file.Close()
 		encoderScript, _ := io.ReadAll(file)
 
-		// Load test data (device-specific or default)
+		// Load test data (device-specific or empty)
 		testData, err := d.loadTestData()
 		if err != nil {
 			log.Errorf("load test data error: %v", err)

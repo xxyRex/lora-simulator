@@ -33,11 +33,15 @@ type SimulationConfig struct {
 }
 
 // DeviceTypeInstance represents a device type instance in simulation config
-// Note: UplinkInterval is controlled by the main config file, not here
+// Each device type can have its own independent uplink configuration
 type DeviceTypeInstance struct {
 	DeviceID         string  `json:"device_id"`
 	Count            int     `json:"count"`
 	TestDataOverride *string `json:"test_data_override,omitempty"`
+	// Per-device-type uplink configuration
+	UplinkPaused   bool  `json:"uplink_paused"`
+	UplinkConfirm  bool  `json:"uplink_confirm"`
+	UplinkInterval int64 `json:"uplink_interval"` // in milliseconds
 }
 
 // DeviceInstance represents a runtime device instance
@@ -52,6 +56,9 @@ type DeviceInstance struct {
 	UplinkInterval time.Duration
 	DeviceProfile  string
 	Application    string
+	// Per-device uplink configuration
+	UplinkPaused  bool
+	UplinkConfirm bool
 }
 
 // ParseDuration parses a duration string (e.g., "300s", "5m") to time.Duration

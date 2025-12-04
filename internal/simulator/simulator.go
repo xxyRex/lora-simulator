@@ -42,6 +42,8 @@ const (
 	DEVICE_STORED_INFO_FILE    = "temp/device_stored_info.json"
 	SIMULATION_CONFIG_FILE     = "config/simulation-config.json"
 	DEVICES_JSON_FILE          = "payload_en_decoder/codec-release/vendors/milesight-iot/devices.json"
+	// Test data path for BACnet/Modbus filtering (optional, not required for basic simulation)
+	PROTOCOL_TEST_DATA_PATH = "payload_en_decoder/test-data.json"
 )
 
 // Start starts the simulator.
@@ -334,14 +336,17 @@ func (s *Simulation) runSimulation() error {
 			}
 		}
 
-		// Override uplink interval from device instance (if using multi-type simulation)
-		// Uplink interval is configured in simulation-config.json, not in devices.json
+		// Override uplink settings from device instance (if using multi-type simulation)
+		// Uplink config is now per-device-type in simulation-config.json
 		if s.deviceInstances != nil {
 			for _, instance := range s.deviceInstances {
 				if strings.ToLower(instance.DevEUI) == strings.ToLower(devEUI.String()) {
 					if instance.UplinkInterval > 0 {
 						deviceOpts = append(deviceOpts, device.WithUplinkInterval(instance.UplinkInterval))
 					}
+					// Pass per-device-type uplink configuration
+					deviceOpts = append(deviceOpts, device.WithUplinkPaused(instance.UplinkPaused))
+					deviceOpts = append(deviceOpts, device.WithUplinkConfirm(instance.UplinkConfirm))
 					break
 				}
 			}
@@ -766,6 +771,24 @@ func (s *Simulation) setupBACnet() error {
 
 	const MAX_ADD_DATUM = 30
 
+	// Load test data for filtering (optional)
+	var testDataKeys map[string]struct{}
+	testDataFile, err := os.Open(PROTOCOL_TEST_DATA_PATH)
+	if err != nil {
+		log.Warnf("test data file not found at %s, adding all BACnet objects without filtering", PROTOCOL_TEST_DATA_PATH)
+	} else {
+		defer testDataFile.Close()
+		var testData map[string]interface{}
+		if err := json.NewDecoder(testDataFile).Decode(&testData); err != nil {
+			log.Warnf("failed to decode test data: %v, adding all BACnet objects without filtering", err)
+		} else {
+			testDataKeys = make(map[string]struct{})
+			for k := range testData {
+				testDataKeys[k] = struct{}{}
+			}
+		}
+	}
+
 	for i := 0; i < int(objects.Total); i += MAX_ADD_DATUM {
 		log.Info("add from ", i, " to ", i+MAX_ADD_DATUM)
 		objects, err := as.GetAvailableBACnetObjects("", "asc", i, MAX_ADD_DATUM)
@@ -773,31 +796,17 @@ func (s *Simulation) setupBACnet() error {
 			return err
 		}
 
-		testDataFile, err := os.Open(device.DEFAULT_TEST_DATA_PATH)
-		if err != nil {
-			return err
-		}
-		defer testDataFile.Close()
-
-		var testData map[string]interface{}
-		if err := json.NewDecoder(testDataFile).Decode(&testData); err != nil {
-			return err
-		}
-
-		// 创建一个 map 来存储测试数据的键，提高查找效率
-		testDataKeys := make(map[string]struct{})
-		for k := range testData {
-			testDataKeys[k] = struct{}{}
-		}
-
-		for k := range objects.Data {
-			newObjs := []*models.APIPCO{}
-			for _, obj := range objects.Data[k].Objects {
-				if _, exists := testDataKeys[obj.LoraName]; exists {
-					newObjs = append(newObjs, obj)
+		// Filter objects by test data keys if available
+		if testDataKeys != nil {
+			for k := range objects.Data {
+				newObjs := []*models.APIPCO{}
+				for _, obj := range objects.Data[k].Objects {
+					if _, exists := testDataKeys[obj.LoraName]; exists {
+						newObjs = append(newObjs, obj)
+					}
 				}
+				objects.Data[k].Objects = newObjs
 			}
-			objects.Data[k].Objects = newObjs
 		}
 
 		err = as.AddBACnetObjects(objects.Data)
@@ -971,6 +980,24 @@ func (s *Simulation) setupModbus() error {
 
 	const MAX_ADD_DATUM = 30
 
+	// Load test data for filtering (optional)
+	var testDataKeys map[string]struct{}
+	testDataFile, err := os.Open(PROTOCOL_TEST_DATA_PATH)
+	if err != nil {
+		log.Warnf("test data file not found at %s, adding all Modbus objects without filtering", PROTOCOL_TEST_DATA_PATH)
+	} else {
+		defer testDataFile.Close()
+		var testData map[string]interface{}
+		if err := json.NewDecoder(testDataFile).Decode(&testData); err != nil {
+			log.Warnf("failed to decode test data: %v, adding all Modbus objects without filtering", err)
+		} else {
+			testDataKeys = make(map[string]struct{})
+			for k := range testData {
+				testDataKeys[k] = struct{}{}
+			}
+		}
+	}
+
 	serverIdIndex := 0
 	for i := 0; i < int(modbusObjects.Total); i += MAX_ADD_DATUM {
 		log.Infof("add from %d to %d", i, i+MAX_ADD_DATUM)
@@ -986,35 +1013,22 @@ func (s *Simulation) setupModbus() error {
 			return err
 		}
 
-		testDataFile, err := os.Open(device.DEFAULT_TEST_DATA_PATH)
-		if err != nil {
-			return err
-		}
-		defer testDataFile.Close()
-
-		var testData map[string]interface{}
-		if err := json.NewDecoder(testDataFile).Decode(&testData); err != nil {
-			return err
-		}
-
-		testDataKeys := make(map[string]struct{})
-		for k := range testData {
-			testDataKeys[k] = struct{}{}
-		}
-
 		maxDevice := 2
 		newData := []*models.APIModbusDevice{}
 		for k := range modbusObjects.Data {
 			if k > maxDevice {
 				break
 			}
-			newObjs := []*models.APIModbusObject{}
-			for _, o := range modbusObjects.Data[k].Objects {
-				if _, exists := testDataKeys[o.LoraName]; exists {
-					newObjs = append(newObjs, o)
+			// Filter objects by test data keys if available
+			if testDataKeys != nil {
+				newObjs := []*models.APIModbusObject{}
+				for _, o := range modbusObjects.Data[k].Objects {
+					if _, exists := testDataKeys[o.LoraName]; exists {
+						newObjs = append(newObjs, o)
+					}
 				}
+				modbusObjects.Data[k].Objects = newObjs
 			}
-			modbusObjects.Data[k].Objects = newObjs
 			newData = append(newData, modbusObjects.Data[k])
 		}
 

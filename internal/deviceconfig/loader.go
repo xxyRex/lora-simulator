@@ -147,9 +147,12 @@ func (l *DeviceConfigLoader) GenerateDeviceInstances() ([]*DeviceInstance, error
 			continue
 		}
 
-		// Use default uplink interval
-		// Note: uplink_interval is controlled by the main config file (lora-simulator.toml)
+		// Use uplink interval from simulation-config.json if specified,
+		// otherwise use default (5 minutes)
 		interval := 5 * time.Minute // default 5 minutes
+		if typeInstance.UplinkInterval > 0 {
+			interval = time.Duration(typeInstance.UplinkInterval) * time.Millisecond
+		}
 
 		// Determine count from simulation-config.json
 		count := typeInstance.Count
@@ -184,6 +187,9 @@ func (l *DeviceConfigLoader) GenerateDeviceInstances() ([]*DeviceInstance, error
 				FPort:          fPort,
 				UplinkInterval: interval,
 				DeviceProfile:  deviceProfile,
+				// Per-device-type uplink configuration
+				UplinkPaused:  typeInstance.UplinkPaused,
+				UplinkConfirm: typeInstance.UplinkConfirm,
 			}
 			instances = append(instances, instance)
 		}
