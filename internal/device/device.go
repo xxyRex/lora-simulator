@@ -22,6 +22,7 @@ import (
 
 	"github.com/brocaar/lora-simulator/internal/as_api/models"
 	"github.com/brocaar/lora-simulator/internal/config"
+	"github.com/brocaar/lora-simulator/internal/deviceconfig"
 	"github.com/brocaar/lora-simulator/internal/fragmentation"
 	"github.com/brocaar/lora-simulator/internal/gateway"
 	"github.com/brocaar/lora-simulator/internal/multicastsetup"
@@ -50,10 +51,10 @@ func allowUplink(devEUI lorawan.EUI64) bool {
 type DeviceOption func(*Device) error
 
 const (
-	CODEC_PARENT_DIR = "payload_en_decoder"
-	CODEC_DIR        = CODEC_PARENT_DIR + "/codec-release/vendors/milesight-iot/"
-	TEST_DATA_PATH   = CODEC_PARENT_DIR + "/test-data.json"
-	AFTER_JOIN_DELAY = 6 * time.Second
+	CODEC_PARENT_DIR       = "payload_en_decoder"
+	CODEC_DIR              = CODEC_PARENT_DIR + "/codec-release/"
+	DEFAULT_TEST_DATA_PATH = CODEC_PARENT_DIR + "/test-data.json"
+	AFTER_JOIN_DELAY       = 6 * time.Second
 )
 
 type deviceState int
@@ -180,6 +181,18 @@ type Device struct {
 	minJoinRequestInterval time.Duration
 
 	joinRequestCount uint64
+
+	// Device type configuration from devices.json
+	deviceTypeConfig *deviceconfig.DeviceTypeConfig
+
+	// Device-specific test data (loaded from device-specific test data file)
+	deviceTestData map[string]interface{}
+
+	// Device-specific encoder script path
+	deviceEncoderScript string
+
+	// Device-specific test data path
+	deviceTestDataPath string
 }
 
 func WithDeviceStoredInfo(item *models.APIDeviceItem) DeviceOption {
@@ -317,6 +330,52 @@ func WithDownlinkHandlerFunc(f func(confirmed, ack bool, fCntDown uint32, fPort 
 func WithPayloadCodec(payloadCodec *models.APIPayloadCodecItem) DeviceOption {
 	return func(d *Device) error {
 		d.payloadCodec = payloadCodec
+		return nil
+	}
+}
+
+// WithDeviceTypeConfig sets the device type configuration from devices.json
+func WithDeviceTypeConfig(cfg *deviceconfig.DeviceTypeConfig) DeviceOption {
+	return func(d *Device) error {
+		d.deviceTypeConfig = cfg
+		if cfg != nil {
+			// Set device-specific encoder script path
+			if cfg.EncoderScript != "" {
+				d.deviceEncoderScript = CODEC_DIR + cfg.EncoderScript
+			}
+			// Set device-specific test data path
+			if cfg.TestData != "" {
+				d.deviceTestDataPath = CODEC_DIR + cfg.TestData
+			}
+			// Set default fPort if specified
+			if cfg.DefaultFPort > 0 {
+				d.fPort = uint8(cfg.DefaultFPort)
+			}
+		}
+		return nil
+	}
+}
+
+// WithDeviceTestData sets the device-specific test data
+func WithDeviceTestData(testData map[string]interface{}) DeviceOption {
+	return func(d *Device) error {
+		d.deviceTestData = testData
+		return nil
+	}
+}
+
+// WithDeviceEncoderScript sets the device-specific encoder script path
+func WithDeviceEncoderScript(scriptPath string) DeviceOption {
+	return func(d *Device) error {
+		d.deviceEncoderScript = scriptPath
+		return nil
+	}
+}
+
+// WithDeviceTestDataPath sets the device-specific test data path
+func WithDeviceTestDataPath(testDataPath string) DeviceOption {
+	return func(d *Device) error {
+		d.deviceTestDataPath = testDataPath
 		return nil
 	}
 }
@@ -494,19 +553,8 @@ func (d *Device) joinRequest() {
 }
 
 // encodePayload 执行 JS 编码器并返回编码后的字节数组
-func (d *Device) encodePayload(encoderScript string) ([]byte, error) {
-	// 读取测试数据
-	testDataFile, err := os.Open(TEST_DATA_PATH)
-	if err != nil {
-		return nil, fmt.Errorf("open test data file error: %v", err)
-	}
-	defer testDataFile.Close()
-
-	var testData map[string]interface{}
-	if err := json.NewDecoder(testDataFile).Decode(&testData); err != nil {
-		return nil, fmt.Errorf("decode test data error: %v", err)
-	}
-
+// Now supports per-device test data
+func (d *Device) encodePayload(encoderScript string, testData map[string]interface{}) ([]byte, error) {
 	// 创建新的 VM 实例
 	vm := otto.New()
 
@@ -567,9 +615,75 @@ func (d *Device) encodePayload(encoderScript string) ([]byte, error) {
 	return bytes, nil
 }
 
+// loadTestData loads test data from the appropriate path
+// Priority: device-specific test data > device type test data > default test data
+func (d *Device) loadTestData() (map[string]interface{}, error) {
+	// If device already has pre-loaded test data, use it
+	if d.deviceTestData != nil {
+		return d.deviceTestData, nil
+	}
+
+	// Determine the test data path
+	testDataPath := DEFAULT_TEST_DATA_PATH
+	if d.deviceTestDataPath != "" {
+		testDataPath = d.deviceTestDataPath
+	}
+
+	// Try to open the test data file
+	testDataFile, err := os.Open(testDataPath)
+	if err != nil {
+		// If device-specific path fails, fall back to default
+		if testDataPath != DEFAULT_TEST_DATA_PATH {
+			log.Warnf("device-specific test data not found at %s, falling back to default", testDataPath)
+			testDataFile, err = os.Open(DEFAULT_TEST_DATA_PATH)
+			if err != nil {
+				return nil, fmt.Errorf("open test data file error: %v", err)
+			}
+		} else {
+			return nil, fmt.Errorf("open test data file error: %v", err)
+		}
+	}
+	defer testDataFile.Close()
+
+	var testData map[string]interface{}
+	if err := json.NewDecoder(testDataFile).Decode(&testData); err != nil {
+		return nil, fmt.Errorf("decode test data error: %v", err)
+	}
+
+	return testData, nil
+}
+
+// getEncoderScriptPath returns the encoder script path
+// Priority: device-specific encoder script > payloadCodec-based path
+func (d *Device) getEncoderScriptPath() string {
+	// Use device-specific encoder script if set
+	if d.deviceEncoderScript != "" {
+		return d.deviceEncoderScript
+	}
+
+	// Fall back to payloadCodec-based path (legacy behavior)
+	if d.payloadCodec != nil {
+		return CODEC_DIR + "vendors/milesight-iot/" + strings.ToLower(d.payloadCodec.Name) + "/" + strings.ToLower(d.payloadCodec.Name) + "-encoder.js"
+	}
+
+	return ""
+}
+
 func (d *Device) getEncoderData() {
-	ecPath := CODEC_DIR + strings.ToLower(d.payloadCodec.Name) + "/" + strings.ToLower(d.payloadCodec.Name) + "-encoder.js"
-	testDataInfo, err := os.Stat(TEST_DATA_PATH)
+	// Get encoder script path (device-specific or legacy)
+	ecPath := d.getEncoderScriptPath()
+	if ecPath == "" {
+		log.Errorf("no encoder script path available for device %s", d.devEUI)
+		return
+	}
+
+	// Determine test data path for modification time check
+	testDataPath := DEFAULT_TEST_DATA_PATH
+	if d.deviceTestDataPath != "" {
+		testDataPath = d.deviceTestDataPath
+	}
+
+	testDataInfo, err := os.Stat(testDataPath)
 	if err != nil {
 		log.Errorf("stat test data file error: %v", err)
 		return
@@ -586,7 +700,14 @@ func (d *Device) getEncoderData() {
 		defer file.Close()
 		encoderScript, _ := io.ReadAll(file)
 
-		bytes, err := d.encodePayload(string(encoderScript))
+		// Load test data (device-specific or default)
+		testData, err := d.loadTestData()
+		if err != nil {
+			log.Errorf("load test data error: %v", err)
+			return
+		}
+
+		bytes, err := d.encodePayload(string(encoderScript), testData)
 		if err != nil {
 			log.Errorf("encode payload error: %v", err)
 			return
@@ -598,7 +719,10 @@ func (d *Device) getEncoderData() {
 		d.payload = d.dynamicPayload
 	}
 
-	d.fPort = 1
+	// Use device-specific fPort if set, otherwise default to 1
+	if d.fPort == 0 {
+		d.fPort = 1
+	}
 }
 
 // dataUp sends an data uplink.

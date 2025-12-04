@@ -33,7 +33,7 @@ login_url = "/api/internal/login"
 # 网关as api登录用户名
 username = "admin"
 # 网关as api登录密码
-password = "password"
+password = "password1"
 # 是否是devicehubv2 LNS
 is_lns = false
 # devicehubv2 LNS配置

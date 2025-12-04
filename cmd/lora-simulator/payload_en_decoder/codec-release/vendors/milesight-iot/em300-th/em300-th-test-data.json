@@ -1,0 +1,9 @@
+{
+    "ipso_version": "v1.0",
+    "hardware_version": "v1.0",
+    "firmware_version": "v1.2",
+    "battery": 100,
+    "temperature": 25.5,
+    "humidity": 60,
+    "lorawan_class": 0
+}

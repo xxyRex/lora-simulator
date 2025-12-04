@@ -25,22 +25,23 @@ import (
 	"github.com/brocaar/lora-simulator/internal/as_api/models"
 	"github.com/brocaar/lora-simulator/internal/config"
 	device "github.com/brocaar/lora-simulator/internal/device"
+	"github.com/brocaar/lora-simulator/internal/deviceconfig"
 	"github.com/brocaar/lora-simulator/internal/gateway"
 	"github.com/brocaar/lora-simulator/internal/ns"
 	"github.com/brocaar/lora-simulator/internal/test_payload_codec"
 	"github.com/brocaar/lorawan"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
-	"github.com/gocarina/gocsv"
 )
 
 const (
 	BACNET_SPECIFIC_WRITE_JSON = "bacnet_script/specific_write/objects.json"
 	BACNET_FEATURE             = "bacnet"
 	FUOTA_FEATURE              = "fuota"
-	DEVICES_IMPORT_FILE        = "config/devices_import.csv"
 	FUOTA_REQ_FILE             = "api/fuota_req.json"
 	MODBUS_SERVER_CREATE_FILE  = "api/modbus_server_create.json"
 	DEVICE_STORED_INFO_FILE    = "temp/device_stored_info.json"
+	SIMULATION_CONFIG_FILE     = "config/simulation-config.json"
+	DEVICES_JSON_FILE          = "payload_en_decoder/codec-release/vendors/milesight-iot/devices.json"
 )
 
 // Start starts the simulator.
@@ -119,6 +120,15 @@ type Simulation struct {
 	payloadCodecs  []*models.APIPayloadCodecItem
 
 	euiCodecMap map[lorawan.EUI64]*models.APIPayloadCodecItem
+
+	// New fields for multi-device type support
+	deviceConfigLoader  *deviceconfig.DeviceConfigLoader
+	deviceTypeRegistry  *deviceconfig.DeviceTypeRegistry
+	deviceInstances     []*deviceconfig.DeviceInstance
+	euiDeviceTypeConfig map[lorawan.EUI64]*deviceconfig.DeviceTypeConfig
+
+	// In-memory device list (no CSV file needed)
+	generatedDevices []Device
 }
 
 func (s *Simulation) start() {
@@ -293,7 +303,8 @@ func (s *Simulation) runSimulation() error {
 			devRetMap[strings.ToLower(deviceResult[i].DevEUI)] = deviceResult[i]
 		}
 
-		d, err := device.NewDevice(ctx, &wg,
+		// Build device options
+		deviceOpts := []device.DeviceOption{
 			device.WithDevEUI(devEUI),
 			device.WithAppKey(appKey),
 			device.WithUplinkInterval(s.uplinkInterval),
@@ -314,7 +325,29 @@ func (s *Simulation) runSimulation() error {
 			}),
 			device.WithPayloadCodec(s.euiCodecMap[devEUI]),
 			device.WithDeviceStoredInfo(devRetMap[strings.ToLower(devEUI.String())]),
-		)
+		}
+
+		// Add device type config if available (for multi-device type support)
+		if s.euiDeviceTypeConfig != nil {
+			if deviceTypeConfig, ok := s.euiDeviceTypeConfig[devEUI]; ok {
+				deviceOpts = append(deviceOpts, device.WithDeviceTypeConfig(deviceTypeConfig))
+			}
+		}
+
+		// Override uplink interval from device instance (if using multi-type simulation)
+		// Uplink interval is configured in simulation-config.json, not in devices.json
+		if s.deviceInstances != nil {
+			for _, instance := range s.deviceInstances {
+				if strings.ToLower(instance.DevEUI) == strings.ToLower(devEUI.String()) {
+					if instance.UplinkInterval > 0 {
+						deviceOpts = append(deviceOpts, device.WithUplinkInterval(instance.UplinkInterval))
+					}
+					break
+				}
+			}
+		}
+
+		d, err := device.NewDevice(ctx, &wg, deviceOpts...)
 		if err != nil {
 			return errors.Wrap(err, "new device error")
 		}
@@ -492,123 +525,162 @@ func generateRandomString() string {
 	return hex.EncodeToString(randomBytes)
 }
 
+// Device represents a device configuration (used in memory, no CSV needed)
 type Device struct {
-	DevEUI        string `csv:"deveui"`
-	Name          string `csv:"name"`
-	Description   string `csv:"description"`
-	Application   string `csv:"application"`
-	DeviceProfile string `csv:"deviceprofile"`
-	PayloadCodec  string `csv:"payloadcodec"`
-	FPort         string `csv:"fport"`
-	AppKey        string `csv:"appkey"`
-	DevAddr       string `csv:"devaddr"`
-	NwkSKey       string `csv:"nwkskey"`
-	AppSKey       string `csv:"appskey"`
+	DevEUI        string
+	Name          string
+	Description   string
+	Application   string
+	DeviceProfile string
+	PayloadCodec  string
+	FPort         string
+	AppKey        string
+	DevAddr       string
+	NwkSKey       string
+	AppSKey       string
 }
 
-func generateDevices(num int) error {
-	srcFile, err := os.Open("config/base_devices_export.csv")
+// generateMultiTypeDevices generates devices from simulation-config.json supporting multiple device types
+// All device configuration is derived from devices.json - no CSV file needed
+func (s *Simulation) generateMultiTypeDevices() error {
+	// Check if simulation config file exists
+	if _, err := os.Stat(SIMULATION_CONFIG_FILE); os.IsNotExist(err) {
+		return fmt.Errorf("simulation-config.json not found")
+	}
+
+	// Load device config - baseDir is the project root directory (current working directory)
+	loader := deviceconfig.NewDeviceConfigLoader(".")
+	if err := loader.Load(); err != nil {
+		return fmt.Errorf("failed to load device config: %w", err)
+	}
+
+	s.deviceConfigLoader = loader
+	s.deviceTypeRegistry = loader.GetRegistry()
+	s.euiDeviceTypeConfig = make(map[lorawan.EUI64]*deviceconfig.DeviceTypeConfig)
+
+	// Generate device instances
+	instances, err := loader.GenerateDeviceInstances()
 	if err != nil {
-		return fmt.Errorf("打开源文件失败: %w", err)
+		return fmt.Errorf("failed to generate device instances: %w", err)
 	}
-	defer srcFile.Close()
+	s.deviceInstances = instances
 
-	var baseDevices []Device
-	if err := gocsv.UnmarshalFile(srcFile, &baseDevices); err != nil {
-		return fmt.Errorf("解析源CSV文件失败: %w", err)
-	}
-	if len(baseDevices) == 0 {
-		return fmt.Errorf("基础设备模板为空")
-	}
+	log.Infof("Generated %d device instances from simulation config", len(instances))
 
-	baseDevice := baseDevices[0]
-	baseEUI, err := strconv.ParseUint(baseDevice.DevEUI, 16, 64)
-	if err != nil {
-		return fmt.Errorf("解析基础DevEUI失败: %w", err)
+	// Determine default application name
+	defaultAppName := as.APPLICATION_NAME
+	if len(s.applications) > 0 {
+		defaultAppName = s.applications[0].Name
 	}
 
-	devices := make([]Device, num)
-	for i := 0; i < num; i++ {
-		newEUI := baseEUI + uint64(i+1)
-		newEUIStr := fmt.Sprintf("%016x", newEUI)
-		newName := fmt.Sprintf("%s-%d", baseDevice.PayloadCodec, i+1)
-
-		devices[i] = Device{
-			DevEUI:        newEUIStr,
-			Name:          newName,
-			Description:   newEUIStr,
-			Application:   baseDevice.Application,
-			DeviceProfile: baseDevice.DeviceProfile,
-			PayloadCodec:  baseDevice.PayloadCodec,
-			FPort:         baseDevice.FPort,
-			AppKey:        generateRandomString(),
-			DevAddr:       baseDevice.DevAddr,
-			NwkSKey:       baseDevice.NwkSKey,
-			AppSKey:       baseDevice.AppSKey,
+	// Generate devices from instances using devices.json info directly (stored in memory)
+	s.generatedDevices = nil
+	for _, instance := range instances {
+		// Get device type config from the instance itself
+		deviceTypeConfig := instance.DeviceType
+		if deviceTypeConfig == nil {
+			log.Warnf("device type config not found for %s, skipping", instance.Name)
+			continue
 		}
+
+		// Determine device profile from devices.json
+		deviceProfile := "ClassA-OTAA"
+		if len(deviceTypeConfig.DeviceProfile) > 0 {
+			deviceProfile = deviceTypeConfig.DeviceProfile[0]
+		}
+
+		// Determine fPort from devices.json
+		fPort := "85"
+		if deviceTypeConfig.DefaultFPort > 0 {
+			fPort = strconv.Itoa(deviceTypeConfig.DefaultFPort)
+		}
+
+		newDevice := Device{
+			DevEUI:        instance.DevEUI,
+			Name:          instance.Name,
+			Description:   instance.DevEUI,
+			Application:   defaultAppName,
+			DeviceProfile: deviceProfile,
+			PayloadCodec:  deviceTypeConfig.Name,
+			FPort:         fPort,
+			AppKey:        instance.AppKey,
+			DevAddr:       "", // Empty for OTAA devices
+			NwkSKey:       "", // Empty for OTAA devices
+			AppSKey:       "", // Empty for OTAA devices
+		}
+
+		s.generatedDevices = append(s.generatedDevices, newDevice)
+
+		// Store device type config mapping
+		var devEUI lorawan.EUI64
+		devEUI.UnmarshalText([]byte(instance.DevEUI))
+		s.euiDeviceTypeConfig[devEUI] = deviceTypeConfig
 	}
 
-	dstFile, err := os.Create(DEVICES_IMPORT_FILE)
-	if err != nil {
-		return fmt.Errorf("创建目标文件失败: %w", err)
-	}
-	defer dstFile.Close()
+	// Update device count
+	s.deviceCount = len(s.generatedDevices)
 
-	if err := gocsv.MarshalFile(&devices, dstFile); err != nil {
-		return fmt.Errorf("写入CSV文件失败: %w", err)
-	}
+	log.Infof("Generated %d devices for multi-type simulation", len(s.generatedDevices))
 
 	return nil
 }
 
+// hasSimulationConfig checks if simulation-config.json exists
+func hasSimulationConfig() bool {
+	_, err := os.Stat(SIMULATION_CONFIG_FILE)
+	return err == nil
+}
+
 func (s *Simulation) createDevices() error {
-	if err := generateDevices(s.deviceCount); err != nil {
-		panic(err)
+	// Use simulation-config.json for device generation
+	// All device info is derived from devices.json - no CSV file needed
+	if !hasSimulationConfig() {
+		return fmt.Errorf("simulation-config.json is required for device generation")
 	}
 
-	ret, records := as.LoadLoRaWANDevCfg(DEVICES_IMPORT_FILE, 1)
-	if !ret {
-		return errors.Errorf("failed to setupDevices")
+	if err := s.generateMultiTypeDevices(); err != nil {
+		return fmt.Errorf("failed to generate devices: %w", err)
 	}
 
-	for _, ldcfg := range records {
+	// Use in-memory device list directly (no CSV file needed)
+	for _, dev := range s.generatedDevices {
 		profileID := ""
 		for _, p := range s.deviceProfiles {
-			if p.Name == ldcfg.DeviceProfile {
+			if p.Name == dev.DeviceProfile {
 				profileID = p.Profile.ProfileID
 				break
 			}
 		}
 
 		if profileID == "" {
-			return errors.Errorf("can not find device profile: %s", ldcfg.DeviceProfile)
+			return errors.Errorf("can not find device profile: %s", dev.DeviceProfile)
 		}
 
 		applicationID := ""
 		for _, a := range s.applications {
-			if a.Name == ldcfg.Application {
+			if a.Name == dev.Application {
 				applicationID = a.ID
 				break
 			}
 		}
 
 		if applicationID == "" {
-			return errors.Errorf("can not find application: %s", ldcfg.Application)
+			return errors.Errorf("can not find application: %s", dev.Application)
 		}
 
 		payloadCodecID := ""
 		for _, c := range s.payloadCodecs {
-			if c.Name == ldcfg.PayloadCodec {
+			if c.Name == dev.PayloadCodec {
 				payloadCodecID = c.ID
 				break
 			}
 		}
 
 		if payloadCodecID == "" {
-			return errors.Errorf("can not find payload codec: %s", ldcfg.PayloadCodec)
+			return errors.Errorf("can not find payload codec: %s", dev.PayloadCodec)
 		}
 
-		err := as.CreateDevices(ldcfg.DevEUI, ldcfg.Name, profileID, ldcfg.AppKey, payloadCodecID, applicationID)
+		err := as.CreateDevices(dev.DevEUI, dev.Name, profileID, dev.AppKey, payloadCodecID, applicationID)
 
 		if err != nil {
 			log.Error(err)
@@ -621,29 +693,21 @@ func (s *Simulation) createDevices() error {
 func (s *Simulation) setupDevices() error {
 	log.Info("simulator: init devices")
 
-	ret, records := as.LoadLoRaWANDevCfg(DEVICES_IMPORT_FILE, 1)
-	if !ret {
-		return errors.Errorf("failed to setupDevices")
-	}
-
-	for _, ldcfg := range records {
-
-		eui := ldcfg.DevEUI
-		appKey := ldcfg.AppKey
-
+	// Use in-memory device list directly (no CSV file needed)
+	for _, dev := range s.generatedDevices {
 		var devEUI lorawan.EUI64
 		var appKeyAES lorawan.AES128Key
 
 		var codec *models.APIPayloadCodecItem
 		for _, c := range s.payloadCodecs {
-			if c.Name == ldcfg.PayloadCodec {
+			if c.Name == dev.PayloadCodec {
 				codec = c
 				break
 			}
 		}
 
-		devEUI.UnmarshalText([]byte(eui))
-		appKeyAES.UnmarshalText([]byte(appKey))
+		devEUI.UnmarshalText([]byte(dev.DevEUI))
+		appKeyAES.UnmarshalText([]byte(dev.AppKey))
 
 		s.deviceAppKeys[devEUI] = appKeyAES
 		s.euiCodecMap[devEUI] = codec
@@ -709,7 +773,7 @@ func (s *Simulation) setupBACnet() error {
 			return err
 		}
 
-		testDataFile, err := os.Open(device.TEST_DATA_PATH)
+		testDataFile, err := os.Open(device.DEFAULT_TEST_DATA_PATH)
 		if err != nil {
 			return err
 		}
@@ -922,7 +986,7 @@ func (s *Simulation) setupModbus() error {
 			return err
 		}
 
-		testDataFile, err := os.Open(device.TEST_DATA_PATH)
+		testDataFile, err := os.Open(device.DEFAULT_TEST_DATA_PATH)
 		if err != nil {
 			return err
 		}
