@@ -61,11 +61,9 @@ wait_device_stable_time = "0s"
 # 是否只进行api的测试
 api_test = false
 
-# 是否使用TLS
-# Insecure.
-#
-# Set this to true when the endpoint is not using TLS.
-# Set this to false to use HTTPS but skip certificate verification.
+# TLS 配置选项
+# insecure = true:  使用 HTTP (不使用 TLS)，适用于不支持 HTTPS 的服务器
+# insecure = false: 使用 HTTPS 但跳过证书验证，适用于使用自签名证书或证书不包含 IP SAN 的服务器
 insecure = false
 
 # MQTT integration configuration.

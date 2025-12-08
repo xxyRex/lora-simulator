@@ -2,6 +2,7 @@ package as
 
 import (
 	"crypto/sha256"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -192,16 +193,33 @@ type CGILoginValue struct {
 }
 
 func CGILogin(host string, username, password string) error {
+	insecure := config.C.LoraSimulator.API.Insecure
+
 	// 创建一个支持Cookie管理的CookieJar
 	jar, err := cookiejar.New(&cookiejar.Options{})
 	if err != nil {
 		return err
 	}
 
+	// 根据 insecure 配置选择协议和 TLS 配置
+	// insecure = true: 使用 HTTP (不使用 TLS)
+	// insecure = false: 使用 HTTPS 但跳过证书验证
+	var scheme string
+	if insecure {
+		scheme = "http"
+	} else {
+		scheme = "https"
+	}
+
 	cgiClient = &http.Client{
 		Jar: jar,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: !insecure, // 当使用 HTTPS 时跳过证书验证
+			},
+		},
 	}
-	url := "http://" + config.C.LoraSimulator.API.Server + "/cgi"
+	cgiURL := scheme + "://" + config.C.LoraSimulator.API.Server + "/cgi"
 
 	data := CGILoginReq{
 		ID:       "1",
@@ -221,7 +239,7 @@ func CGILogin(host string, username, password string) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", url, strings.NewReader(string(requestJSON)))
+	req, err := http.NewRequest("POST", cgiURL, strings.NewReader(string(requestJSON)))
 	if err != nil {
 		return err
 	}
@@ -262,9 +280,30 @@ func CGILogin(host string, username, password string) error {
 }
 
 func ASLogin(host string, username string, password string) error {
+	insecure := config.C.LoraSimulator.API.Insecure
 	cfg := as_api.DefaultTransportConfig().WithHost(host)
-	cfg.Schemes = []string{"http"} // 强制使用 HTTP
-	asClient = as_api.NewHTTPClientWithConfig(strfmt.Default, cfg)
+
+	// 根据 insecure 配置选择协议
+	// insecure = true: 使用 HTTP (不使用 TLS)
+	// insecure = false: 使用 HTTPS 但跳过证书验证
+	if insecure {
+		cfg.Schemes = []string{"http"}
+	} else {
+		cfg.Schemes = []string{"https"}
+	}
+
+	// 创建自定义 HTTP 客户端，支持跳过 TLS 证书验证
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: !insecure, // 当使用 HTTPS 时跳过证书验证
+			},
+		},
+	}
+
+	// 创建 transport 并设置自定义 HTTP 客户端
+	transport := httptransport.NewWithClient(cfg.Host, cfg.BasePath, cfg.Schemes, httpClient)
+	asClient = as_api.New(transport, strfmt.Default)
 
 	params := internal_swagger.NewPostAPIInternalLoginParams()
 	params.Body = &models.APILoginRequest{
@@ -277,7 +316,8 @@ func ASLogin(host string, username string, password string) error {
 		return err
 	}
 
-	transport := httptransport.New(cfg.Host, cfg.BasePath, cfg.Schemes)
+	// 使用相同的 HTTP 客户端创建带认证的 transport
+	transport = httptransport.NewWithClient(cfg.Host, cfg.BasePath, cfg.Schemes, httpClient)
 	transport.DefaultAuthentication = httptransport.BearerToken(resp.Payload.Jwt)
 	asClient.SetTransport(transport)
 
@@ -754,7 +794,16 @@ func CheckSavedCookies() {
 		return
 	}
 
-	serverURL, err := url.Parse("http://" + config.C.LoraSimulator.API.Server)
+	// 根据 insecure 配置选择协议
+	insecure := config.C.LoraSimulator.API.Insecure
+	var scheme string
+	if insecure {
+		scheme = "http"
+	} else {
+		scheme = "https"
+	}
+
+	serverURL, err := url.Parse(scheme + "://" + config.C.LoraSimulator.API.Server)
 	if err != nil {
 		log.Errorf("解析服务器URL失败: %v", err)
 		return
