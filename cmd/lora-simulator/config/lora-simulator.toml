@@ -40,8 +40,6 @@ is_lns = false
 use_new_gateway = false
 # 暂时无用
 use_new_profile = false
-# 是否每次创建新的application
-use_new_app = true
 # 是否使用旧版校验方式(60.0.0.42-r5前的网关)
 use_old_auth = false
 # 是否每次创建新的application
@@ -130,7 +128,7 @@ activation_time = "100s"
 [simulator.device]
 
 # Number of devices to simulate.
-count = 1
+count = 20
 
 # Uplink interval.
 uplink_interval = "300s"

@@ -10,8 +10,8 @@
             "deveui": "24e124136",
             "device_profile": ["ClassA-OTAA"],
             "decoder_script": "",
-            "encoder_script": "vendors/milesight-iot/em300-th/em300-th-node-encoder.js",
-            "test_data": "vendors/milesight-iot/em300-th/em300-th-test-data.json",
+            "encoder_script": "payload_en_decoder/codec-release/vendors/milesight-iot/em300-th/em300-th-node-encoder.js",
+            "test_data": "payload_en_decoder/codec-release/vendors/milesight-iot/em300-th/em300-th-test-data.json",
             "default_fport": 85
         },
         {
@@ -23,8 +23,8 @@
             "deveui": "24e124617",
             "device_profile": ["ClassA-OTAA"],
             "decoder_script": "",
-            "encoder_script": "vendors/milesight-iot/vs330/vs330-node-encoder.js",
-            "test_data": "vendors/milesight-iot/vs330/vs330-test-data.json",
+            "encoder_script": "payload_en_decoder/codec-release/vendors/milesight-iot/vs330/vs330-node-encoder.js",
+            "test_data": "payload_en_decoder/codec-release/vendors/milesight-iot/vs330/vs330-test-data.json",
             "default_fport": 85
         },
         {
@@ -36,8 +36,8 @@
             "deveui": "24e124715",
             "device_profile": ["ClassC-OTAA"],
             "decoder_script": "",
-            "encoder_script": "vendors/milesight-iot/wt201/wt201-node-encoder.js",
-            "test_data": "vendors/milesight-iot/wt201/wt201-test-data.json",
+            "encoder_script": "payload_en_decoder/codec-release/vendors/milesight-iot/wt201/wt201-node-encoder.js",
+            "test_data": "payload_en_decoder/codec-release/vendors/milesight-iot/wt201/wt201-test-data.json",
             "default_fport": 85
         },
         {
@@ -49,8 +49,8 @@
             "deveui": "24e124468",
             "device_profile": ["ClassC-OTAA"],
             "decoder_script": "",
-            "encoder_script": "vendors/milesight-iot/uc100/uc100-node-encoder.js",
-            "test_data": "vendors/milesight-iot/uc100/uc100-test-data.json",
+            "encoder_script": "payload_en_decoder/codec-release/vendors/milesight-iot/uc100/uc100-node-encoder.js",
+            "test_data": "payload_en_decoder/codec-release/vendors/milesight-iot/uc100/uc100-test-data.json",
             "default_fport": 85
         }
     ]

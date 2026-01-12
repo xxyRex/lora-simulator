@@ -1,25 +1,11 @@
 {
     "device_types": [
         {
-            "device_id": "vs330",
-            "count": 1,
-            "uplink_paused": false,
-            "uplink_confirm": false,
-            "uplink_interval": 10000
-        },
-        {
             "device_id": "wt201",
             "count": 1,
             "uplink_paused": false,
             "uplink_confirm": false,
-            "uplink_interval": 15000
-        },
-        {
-            "device_id": "uc100",
-            "count": 1,
-            "uplink_paused": false,
-            "uplink_confirm": false,
-            "uplink_interval": 20000
+            "uplink_interval": 10000
         }
     ]
 }

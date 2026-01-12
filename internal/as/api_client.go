@@ -433,22 +433,17 @@ func DeleteDeviceProfile(profileID string) error {
 	return nil
 }
 
-func CreateDevices(eui, name, profileId, appKey, payloadCodecID, applicationID string) error {
+func CreateDevices(eui lorawan.EUI64, name string, profileId string, appKey lorawan.AES128Key, payloadCodecID string, applicationID string) error {
 	params := ursalink_device.NewPostAPIUrdevicesParams()
 	params.Body = &models.APIUrCreateDeviceRequest{
-		DevEUI:         eui,
+		DevEUI:         eui.String(),
 		Name:           name,
-		Description:    eui,
+		Description:    eui.String(),
 		ProfileID:      profileId,
 		PayloadCodecID: payloadCodecID,
 		FPort:          1,
-		AppKey:         appKey,
+		AppKey:         appKey.String(),
 		SkipFCntCheck:  true,
-		DevAddr:        "",
-		AppSKey:        "",
-		NwkSKey:        "",
-		FCntUp:         0,
-		FCntDown:       0,
 		ApplicationID:  applicationID,
 		Timeout:        DEVICE_TIME_OUT,
 	}

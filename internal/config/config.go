@@ -23,7 +23,6 @@ type Config struct {
 			IsLNS                bool          `mapstructure:"is_lns"`
 			UseNewGateway        bool          `mapstructure:"use_new_gateway"`
 			UseNewProfile        bool          `mapstructure:"use_new_profile"`
-			UseNewApp            bool          `mapstructure:"use_new_app"`
 			UseOldAuth           bool          `mapstructure:"use_old_auth"`
 			CleanBeforeTest      bool          `mapstructure:"clean_before_test"`
 			TeardownAfterTest    bool          `mapstructure:"teardown_after_test"`

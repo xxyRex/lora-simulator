@@ -16,7 +16,6 @@ import (
 const (
 	DefaultDevicesJSONPath = "payload_en_decoder/codec-release/vendors/milesight-iot/devices.json"
 	DefaultSimConfigPath   = "config/simulation-config.json"
-	CodecBaseDir           = "payload_en_decoder/codec-release/"
 	DefaultTestDataPath    = "payload_en_decoder/test-data.json"
 )
 
@@ -206,16 +205,16 @@ func (l *DeviceConfigLoader) loadTestData(path string, deviceName string) (map[s
 
 	if path != "" {
 		// Try device-specific test data path
-		fullPath = filepath.Join(l.baseDir, CodecBaseDir, path)
+		fullPath = filepath.Join(l.baseDir, path)
 		if _, err := os.Stat(fullPath); err != nil {
 			// Try path relative to device directory
 			deviceDir := strings.ToLower(deviceName)
-			fullPath = filepath.Join(l.baseDir, CodecBaseDir, "vendors/milesight-iot", deviceDir, deviceDir+"-test-data.json")
+			fullPath = filepath.Join(l.baseDir, "vendors/milesight-iot", deviceDir, deviceDir+"-test-data.json")
 		}
 	} else {
 		// Try device-specific test data with naming convention
 		deviceDir := strings.ToLower(deviceName)
-		fullPath = filepath.Join(l.baseDir, CodecBaseDir, "vendors/milesight-iot", deviceDir, deviceDir+"-test-data.json")
+		fullPath = filepath.Join(l.baseDir, "vendors/milesight-iot", deviceDir, deviceDir+"-test-data.json")
 	}
 
 	// Try to read the file
@@ -242,7 +241,7 @@ func (l *DeviceConfigLoader) loadTestData(path string, deviceName string) (map[s
 
 // loadEncoderScript loads the encoder script for a device type
 func (l *DeviceConfigLoader) loadEncoderScript(path string) (string, error) {
-	fullPath := filepath.Join(l.baseDir, CodecBaseDir, path)
+	fullPath := filepath.Join(l.baseDir, path)
 
 	data, err := os.ReadFile(fullPath)
 	if err != nil {

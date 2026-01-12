@@ -42,8 +42,6 @@ const (
 	DEVICE_STORED_INFO_FILE    = "temp/device_stored_info.json"
 	SIMULATION_CONFIG_FILE     = "config/simulation-config.json"
 	DEVICES_JSON_FILE          = "payload_en_decoder/codec-release/vendors/milesight-iot/devices.json"
-	// Test data path for BACnet/Modbus filtering (optional, not required for basic simulation)
-	PROTOCOL_TEST_DATA_PATH = "payload_en_decoder/test-data.json"
 )
 
 // Start starts the simulator.
@@ -64,7 +62,6 @@ func Start(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 			ctx:                  ctx,
 			wg:                   wg,
 			tenantID:             c.TenantID,
-			deviceCount:          c.Device.Count,
 			activationTime:       c.ActivationTime,
 			sequenceJoin:         c.SequenceJoin,
 			sequenceJoinInterval: c.SequenceJoinInterval,
@@ -78,10 +75,8 @@ func Start(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 			duration:             c.Duration,
 			gatewayMinCount:      c.Gateway.MinCount,
 			gatewayMaxCount:      c.Gateway.MaxCount,
-			deviceAppKeys:        make(map[lorawan.EUI64]lorawan.AES128Key),
 			eventTopicTemplate:   c.Gateway.EventTopicTemplate,
 			commandTopicTemplate: c.Gateway.CommandTopicTemplate,
-			euiCodecMap:          make(map[lorawan.EUI64]*models.APIPayloadCodecItem),
 		}
 
 		go sim.start()
@@ -94,7 +89,6 @@ type Simulation struct {
 	ctx             context.Context
 	wg              *sync.WaitGroup
 	tenantID        string
-	deviceCount     int
 	gatewayMinCount int
 	gatewayMaxCount int
 	duration        time.Duration
@@ -113,7 +107,6 @@ type Simulation struct {
 	deviceProfileID      uuid.UUID
 	applicationID        string
 	gatewayIDs           []lorawan.EUI64
-	deviceAppKeys        map[lorawan.EUI64]lorawan.AES128Key
 	eventTopicTemplate   string
 	commandTopicTemplate string
 
@@ -121,13 +114,10 @@ type Simulation struct {
 	applications   []*models.APIAppListItem
 	payloadCodecs  []*models.APIPayloadCodecItem
 
-	euiCodecMap map[lorawan.EUI64]*models.APIPayloadCodecItem
-
 	// New fields for multi-device type support
-	deviceConfigLoader  *deviceconfig.DeviceConfigLoader
-	deviceTypeRegistry  *deviceconfig.DeviceTypeRegistry
-	deviceInstances     []*deviceconfig.DeviceInstance
-	euiDeviceTypeConfig map[lorawan.EUI64]*deviceconfig.DeviceTypeConfig
+	deviceConfigLoader *deviceconfig.DeviceConfigLoader
+	deviceTypeRegistry *deviceconfig.DeviceTypeRegistry
+	deviceInstances    []*deviceconfig.DeviceInstance
 
 	// In-memory device list (no CSV file needed)
 	generatedDevices []Device
@@ -201,10 +191,6 @@ func (s *Simulation) init() error {
 		go s.setupFuota()
 	}
 
-	if err := s.setupDevices(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -261,7 +247,7 @@ func (s *Simulation) runSimulation() error {
 
 	count := 0
 	batchCount := 0
-	for devEUI, appKey := range s.deviceAppKeys {
+	for _, dev := range s.generatedDevices {
 		var gws []*gateway.Gateway
 		if config.C.LoraSimulator.API.UseNewGateway {
 			devGateways := make(map[int]*gateway.Gateway)
@@ -285,30 +271,15 @@ func (s *Simulation) runSimulation() error {
 			otaaDuration = time.Duration(int64(s.sequenceJoinInterval/time.Second)*int64(batchCount)) * time.Second
 			count++
 			batchCount = count / s.sequenceDeviceNumber
-			log.Infof("deveui: %v otaaDuration: %v", devEUI, otaaDuration)
+			log.Infof("deveui: %v otaaDuration: %v", dev.DevEUI, otaaDuration)
 		} else {
 			otaaDuration = time.Duration(mrand.Int63n(int64(s.activationTime)))
 		}
 
-		deviceResult := []*models.APIDeviceItem{}
-		if !config.C.LoraSimulator.API.UseNewDevice {
-			for i := 0; i < s.deviceCount; i += 25 {
-				ret, err := as.GetDevices(i, 25)
-				if err != nil {
-					return errors.Wrap(err, "get devices error")
-				}
-				deviceResult = append(deviceResult, ret...)
-			}
-		}
-		devRetMap := make(map[string]*models.APIDeviceItem)
-		for i := range deviceResult {
-			devRetMap[strings.ToLower(deviceResult[i].DevEUI)] = deviceResult[i]
-		}
-
 		// Build device options
 		deviceOpts := []device.DeviceOption{
-			device.WithDevEUI(devEUI),
-			device.WithAppKey(appKey),
+			device.WithDevEUI(dev.DevEUI),
+			device.WithAppKey(dev.AppKey),
 			device.WithUplinkInterval(s.uplinkInterval),
 			device.WithOTAADelay(otaaDuration),
 			device.WithUplinkPayload(true, s.fPort, s.payload),
@@ -325,22 +296,14 @@ func (s *Simulation) runSimulation() error {
 					},
 				},
 			}),
-			device.WithPayloadCodec(s.euiCodecMap[devEUI]),
-			device.WithDeviceStoredInfo(devRetMap[strings.ToLower(devEUI.String())]),
-		}
-
-		// Add device type config if available (for multi-device type support)
-		if s.euiDeviceTypeConfig != nil {
-			if deviceTypeConfig, ok := s.euiDeviceTypeConfig[devEUI]; ok {
-				deviceOpts = append(deviceOpts, device.WithDeviceTypeConfig(deviceTypeConfig))
-			}
+			device.WithDeviceTypeConfig(dev.DeviceTypeConfig),
 		}
 
 		// Override uplink settings from device instance (if using multi-type simulation)
 		// Uplink config is now per-device-type in simulation-config.json
 		if s.deviceInstances != nil {
 			for _, instance := range s.deviceInstances {
-				if strings.ToLower(instance.DevEUI) == strings.ToLower(devEUI.String()) {
+				if strings.ToLower(instance.DevEUI) == strings.ToLower(dev.DevEUI.String()) {
 					if instance.UplinkInterval > 0 {
 						deviceOpts = append(deviceOpts, device.WithUplinkInterval(instance.UplinkInterval))
 					}
@@ -487,30 +450,24 @@ func (s *Simulation) setupApplication() error {
 		}
 	}
 
-	if config.C.LoraSimulator.API.UseNewApp {
-		id, err := as.CreateApplication()
-		if err != nil {
-			return errors.Wrap(err, "create applicaiton error")
-		}
-
-		s.applicationID = id
-
-		apps, err = as.GetApplications()
-		if err != nil {
-			return err
-		}
-		s.applications = apps
+	id, err := as.CreateApplication()
+	if err != nil {
+		return errors.Wrap(err, "create applicaiton error")
 	}
+
+	s.applicationID = id
+
+	apps, err = as.GetApplications()
+	if err != nil {
+		return err
+	}
+	s.applications = apps
 
 	return nil
 }
 
 func (s *Simulation) tearDownApplication() error {
 	log.Info("simulator: tear-down application")
-
-	if !config.C.LoraSimulator.API.UseNewApp {
-		return nil
-	}
 
 	err := as.DeleteApplication(s.applicationID)
 	if err != nil {
@@ -532,17 +489,18 @@ func generateRandomString() string {
 
 // Device represents a device configuration (used in memory, no CSV needed)
 type Device struct {
-	DevEUI        string
-	Name          string
-	Description   string
-	Application   string
-	DeviceProfile string
-	PayloadCodec  string
-	FPort         string
-	AppKey        string
-	DevAddr       string
-	NwkSKey       string
-	AppSKey       string
+	DevEUI           lorawan.EUI64
+	Name             string
+	Description      string
+	Application      string
+	DeviceProfile    string
+	PayloadCodec     string
+	FPort            string
+	AppKey           lorawan.AES128Key
+	DevAddr          lorawan.DevAddr
+	NwkSKey          lorawan.AES128Key
+	AppSKey          lorawan.AES128Key
+	DeviceTypeConfig *deviceconfig.DeviceTypeConfig
 }
 
 // generateMultiTypeDevices generates devices from simulation-config.json supporting multiple device types
@@ -561,7 +519,6 @@ func (s *Simulation) generateMultiTypeDevices() error {
 
 	s.deviceConfigLoader = loader
 	s.deviceTypeRegistry = loader.GetRegistry()
-	s.euiDeviceTypeConfig = make(map[lorawan.EUI64]*deviceconfig.DeviceTypeConfig)
 
 	// Generate device instances
 	instances, err := loader.GenerateDeviceInstances()
@@ -600,30 +557,37 @@ func (s *Simulation) generateMultiTypeDevices() error {
 			fPort = strconv.Itoa(deviceTypeConfig.DefaultFPort)
 		}
 
+		// Convert string DevEUI to lorawan.EUI64
+		var devEUI lorawan.EUI64
+		if err := devEUI.UnmarshalText([]byte(instance.DevEUI)); err != nil {
+			log.Errorf("failed to parse DevEUI %s: %v", instance.DevEUI, err)
+			continue
+		}
+
+		// Convert string AppKey to lorawan.AES128Key
+		var appKey lorawan.AES128Key
+		if err := appKey.UnmarshalText([]byte(instance.AppKey)); err != nil {
+			log.Errorf("failed to parse AppKey for device %s: %v", instance.DevEUI, err)
+			continue
+		}
+
 		newDevice := Device{
-			DevEUI:        instance.DevEUI,
-			Name:          instance.Name,
-			Description:   instance.DevEUI,
-			Application:   defaultAppName,
-			DeviceProfile: deviceProfile,
-			PayloadCodec:  deviceTypeConfig.Name,
-			FPort:         fPort,
-			AppKey:        instance.AppKey,
-			DevAddr:       "", // Empty for OTAA devices
-			NwkSKey:       "", // Empty for OTAA devices
-			AppSKey:       "", // Empty for OTAA devices
+			DevEUI:           devEUI,
+			Name:             instance.Name,
+			Description:      instance.DevEUI,
+			Application:      defaultAppName,
+			DeviceProfile:    deviceProfile,
+			PayloadCodec:     deviceTypeConfig.Name,
+			FPort:            fPort,
+			AppKey:           appKey,
+			DevAddr:          lorawan.DevAddr{},   // Empty for OTAA devices
+			NwkSKey:          lorawan.AES128Key{}, // Empty for OTAA devices
+			AppSKey:          lorawan.AES128Key{}, // Empty for OTAA devices
+			DeviceTypeConfig: deviceTypeConfig,
 		}
 
 		s.generatedDevices = append(s.generatedDevices, newDevice)
-
-		// Store device type config mapping
-		var devEUI lorawan.EUI64
-		devEUI.UnmarshalText([]byte(instance.DevEUI))
-		s.euiDeviceTypeConfig[devEUI] = deviceTypeConfig
 	}
-
-	// Update device count
-	s.deviceCount = len(s.generatedDevices)
 
 	log.Infof("Generated %d devices for multi-type simulation", len(s.generatedDevices))
 
@@ -695,37 +659,11 @@ func (s *Simulation) createDevices() error {
 	return nil
 }
 
-func (s *Simulation) setupDevices() error {
-	log.Info("simulator: init devices")
-
-	// Use in-memory device list directly (no CSV file needed)
-	for _, dev := range s.generatedDevices {
-		var devEUI lorawan.EUI64
-		var appKeyAES lorawan.AES128Key
-
-		var codec *models.APIPayloadCodecItem
-		for _, c := range s.payloadCodecs {
-			if c.Name == dev.PayloadCodec {
-				codec = c
-				break
-			}
-		}
-
-		devEUI.UnmarshalText([]byte(dev.DevEUI))
-		appKeyAES.UnmarshalText([]byte(dev.AppKey))
-
-		s.deviceAppKeys[devEUI] = appKeyAES
-		s.euiCodecMap[devEUI] = codec
-	}
-
-	return nil
-}
-
 func (s *Simulation) tearDownDevices() error {
 	log.Info("simulator: tear-down devices")
 
-	for k := range s.deviceAppKeys {
-		err := as.DeleteDevices(k.String())
+	for _, dev := range s.generatedDevices {
+		err := as.DeleteDevices(dev.DevEUI.String())
 		if err != nil {
 			log.Error(err)
 			return err
@@ -746,6 +684,35 @@ func (s *Simulation) setupPayloadCodec() error {
 	s.payloadCodecs = codecs
 
 	return nil
+}
+
+// buildDevEUIToTestDataKeysMap builds a map from DevEUI to test data keys for each device instance
+// DevEUI is normalized to lowercase for case-insensitive matching
+func (s *Simulation) buildDevEUIToTestDataKeysMap() map[string]map[string]struct{} {
+	devEUIToTestDataKeys := make(map[string]map[string]struct{})
+
+	if len(s.deviceInstances) == 0 {
+		return nil
+	}
+
+	for _, instance := range s.deviceInstances {
+		if instance.TestData != nil && len(instance.TestData) > 0 {
+			testDataKeys := make(map[string]struct{})
+			for k := range instance.TestData {
+				testDataKeys[k] = struct{}{}
+			}
+			// Normalize DevEUI to lowercase for case-insensitive matching
+			normalizedDevEUI := strings.ToLower(instance.DevEUI)
+			devEUIToTestDataKeys[normalizedDevEUI] = testDataKeys
+		}
+	}
+
+	if len(devEUIToTestDataKeys) == 0 {
+		return nil
+	}
+
+	log.Infof("Built DevEUI to test data keys map for %d device instances", len(devEUIToTestDataKeys))
+	return devEUIToTestDataKeys
 }
 
 func (s *Simulation) setupBACnet() error {
@@ -771,22 +738,10 @@ func (s *Simulation) setupBACnet() error {
 
 	const MAX_ADD_DATUM = 30
 
-	// Load test data for filtering (optional)
-	var testDataKeys map[string]struct{}
-	testDataFile, err := os.Open(PROTOCOL_TEST_DATA_PATH)
-	if err != nil {
-		log.Warnf("test data file not found at %s, adding all BACnet objects without filtering", PROTOCOL_TEST_DATA_PATH)
-	} else {
-		defer testDataFile.Close()
-		var testData map[string]interface{}
-		if err := json.NewDecoder(testDataFile).Decode(&testData); err != nil {
-			log.Warnf("failed to decode test data: %v, adding all BACnet objects without filtering", err)
-		} else {
-			testDataKeys = make(map[string]struct{})
-			for k := range testData {
-				testDataKeys[k] = struct{}{}
-			}
-		}
+	// Build DevEUI to test data keys map for filtering (optional)
+	devEUIToTestDataKeys := s.buildDevEUIToTestDataKeysMap()
+	if devEUIToTestDataKeys == nil {
+		log.Info("no test data found in device instances, adding all BACnet objects without filtering")
 	}
 
 	for i := 0; i < int(objects.Total); i += MAX_ADD_DATUM {
@@ -796,16 +751,32 @@ func (s *Simulation) setupBACnet() error {
 			return err
 		}
 
-		// Filter objects by test data keys if available
-		if testDataKeys != nil {
-			for k := range objects.Data {
+		// Filter objects by device-specific test data keys if available
+		if devEUIToTestDataKeys != nil {
+			for _, bacnetDevice := range objects.Data {
+				if bacnetDevice.DevEui == "" {
+					continue
+				}
+
+				// Normalize DevEUI to lowercase for case-insensitive matching
+				normalizedDevEUI := strings.ToLower(bacnetDevice.DevEui)
+
+				// Get test data keys for this specific device
+				testDataKeys, exists := devEUIToTestDataKeys[normalizedDevEUI]
+				if !exists || len(testDataKeys) == 0 {
+					// No test data for this device, skip filtering (keep all objects)
+					continue
+				}
+
+				// Filter objects by test data keys for this device
 				newObjs := []*models.APIPCO{}
-				for _, obj := range objects.Data[k].Objects {
+				for _, obj := range bacnetDevice.Objects {
 					if _, exists := testDataKeys[obj.LoraName]; exists {
 						newObjs = append(newObjs, obj)
 					}
 				}
-				objects.Data[k].Objects = newObjs
+				bacnetDevice.Objects = newObjs
+				log.Debugf("Filtered BACnet objects for device %s: %d objects after filtering", bacnetDevice.DevEui, len(newObjs))
 			}
 		}
 
@@ -814,7 +785,7 @@ func (s *Simulation) setupBACnet() error {
 			log.Error(err)
 			continue
 		}
-		log.Info("added ", len(objects.Data), " objects")
+		log.Info("added ", len(objects.Data), " devices with BACnet objects")
 	}
 
 	return nil
@@ -845,7 +816,7 @@ func (s *Simulation) setupFuota() error {
 
 	// 等待所有节点入网后
 	for {
-		if device.GetJoinAcceptCount() == s.deviceCount {
+		if device.GetJoinAcceptCount() == len(s.generatedDevices) {
 			break
 		}
 		log.Info("setupFuota waiting for all nodes to join")
@@ -865,8 +836,8 @@ func (s *Simulation) setupFuota() error {
 
 	taskCount := 0
 	allDeveuiList := []string{}
-	for deveui := range s.deviceAppKeys {
-		allDeveuiList = append(allDeveuiList, deveui.String())
+	for _, dev := range s.generatedDevices {
+		allDeveuiList = append(allDeveuiList, dev.DevEUI.String())
 	}
 
 	sort.Strings(allDeveuiList)
@@ -980,22 +951,10 @@ func (s *Simulation) setupModbus() error {
 
 	const MAX_ADD_DATUM = 30
 
-	// Load test data for filtering (optional)
-	var testDataKeys map[string]struct{}
-	testDataFile, err := os.Open(PROTOCOL_TEST_DATA_PATH)
-	if err != nil {
-		log.Warnf("test data file not found at %s, adding all Modbus objects without filtering", PROTOCOL_TEST_DATA_PATH)
-	} else {
-		defer testDataFile.Close()
-		var testData map[string]interface{}
-		if err := json.NewDecoder(testDataFile).Decode(&testData); err != nil {
-			log.Warnf("failed to decode test data: %v, adding all Modbus objects without filtering", err)
-		} else {
-			testDataKeys = make(map[string]struct{})
-			for k := range testData {
-				testDataKeys[k] = struct{}{}
-			}
-		}
+	// Build DevEUI to test data keys map for filtering (optional)
+	devEUIToTestDataKeys := s.buildDevEUIToTestDataKeysMap()
+	if devEUIToTestDataKeys == nil {
+		log.Info("no test data found in device instances, adding all Modbus objects without filtering")
 	}
 
 	serverIdIndex := 0
@@ -1019,17 +978,29 @@ func (s *Simulation) setupModbus() error {
 			if k > maxDevice {
 				break
 			}
-			// Filter objects by test data keys if available
-			if testDataKeys != nil {
-				newObjs := []*models.APIModbusObject{}
-				for _, o := range modbusObjects.Data[k].Objects {
-					if _, exists := testDataKeys[o.LoraName]; exists {
-						newObjs = append(newObjs, o)
+
+			modbusDevice := modbusObjects.Data[k]
+
+			// Filter objects by device-specific test data keys if available
+			if devEUIToTestDataKeys != nil && modbusDevice.DevEui != "" {
+				// Normalize DevEUI to lowercase for case-insensitive matching
+				normalizedDevEUI := strings.ToLower(modbusDevice.DevEui)
+
+				// Get test data keys for this specific device
+				testDataKeys, exists := devEUIToTestDataKeys[normalizedDevEUI]
+				if exists && len(testDataKeys) > 0 {
+					newObjs := []*models.APIModbusObject{}
+					for _, o := range modbusDevice.Objects {
+						if _, exists := testDataKeys[o.LoraName]; exists {
+							newObjs = append(newObjs, o)
+						}
 					}
+					modbusDevice.Objects = newObjs
+					log.Debugf("Filtered Modbus objects for device %s: %d objects after filtering", modbusDevice.DevEui, len(newObjs))
 				}
-				modbusObjects.Data[k].Objects = newObjs
 			}
-			newData = append(newData, modbusObjects.Data[k])
+
+			newData = append(newData, modbusDevice)
 		}
 
 		modbusObjects.Data = newData

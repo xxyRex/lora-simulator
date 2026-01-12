@@ -10,7 +10,6 @@ import (
 	"io"
 	"math/rand"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -51,8 +50,6 @@ func allowUplink(devEUI lorawan.EUI64) bool {
 type DeviceOption func(*Device) error
 
 const (
-	CODEC_PARENT_DIR   = "payload_en_decoder"
-	CODEC_DIR          = CODEC_PARENT_DIR + "/codec-release/"
 	AFTER_JOIN_DELAY   = 6 * time.Second
 	UPLINK_TYPE_UP_UNC = "UpUnc"
 	UPLINK_TYPE_UP_CON = "UpCnf"
@@ -175,8 +172,6 @@ type Device struct {
 
 	joinReqSent bool
 
-	payloadCodec *models.APIPayloadCodecItem
-
 	fuotaProperties fuotaProperties
 
 	multicastKeys multicastKeys
@@ -192,12 +187,6 @@ type Device struct {
 
 	// Device-specific test data (loaded from device-specific test data file)
 	deviceTestData map[string]interface{}
-
-	// Device-specific encoder script path
-	deviceEncoderScript string
-
-	// Device-specific test data path
-	deviceTestDataPath string
 }
 
 func WithDeviceStoredInfo(item *models.APIDeviceItem) DeviceOption {
@@ -332,26 +321,11 @@ func WithDownlinkHandlerFunc(f func(confirmed, ack bool, fCntDown uint32, fPort 
 	}
 }
 
-func WithPayloadCodec(payloadCodec *models.APIPayloadCodecItem) DeviceOption {
-	return func(d *Device) error {
-		d.payloadCodec = payloadCodec
-		return nil
-	}
-}
-
 // WithDeviceTypeConfig sets the device type configuration from devices.json
 func WithDeviceTypeConfig(cfg *deviceconfig.DeviceTypeConfig) DeviceOption {
 	return func(d *Device) error {
 		d.deviceTypeConfig = cfg
 		if cfg != nil {
-			// Set device-specific encoder script path
-			if cfg.EncoderScript != "" {
-				d.deviceEncoderScript = CODEC_DIR + cfg.EncoderScript
-			}
-			// Set device-specific test data path
-			if cfg.TestData != "" {
-				d.deviceTestDataPath = CODEC_DIR + cfg.TestData
-			}
 			// Set default fPort if specified
 			if cfg.DefaultFPort > 0 {
 				d.fPort = uint8(cfg.DefaultFPort)
@@ -365,22 +339,6 @@ func WithDeviceTypeConfig(cfg *deviceconfig.DeviceTypeConfig) DeviceOption {
 func WithDeviceTestData(testData map[string]interface{}) DeviceOption {
 	return func(d *Device) error {
 		d.deviceTestData = testData
-		return nil
-	}
-}
-
-// WithDeviceEncoderScript sets the device-specific encoder script path
-func WithDeviceEncoderScript(scriptPath string) DeviceOption {
-	return func(d *Device) error {
-		d.deviceEncoderScript = scriptPath
-		return nil
-	}
-}
-
-// WithDeviceTestDataPath sets the device-specific test data path
-func WithDeviceTestDataPath(testDataPath string) DeviceOption {
-	return func(d *Device) error {
-		d.deviceTestDataPath = testDataPath
 		return nil
 	}
 }
@@ -646,15 +604,15 @@ func (d *Device) loadTestData() (map[string]interface{}, error) {
 	}
 
 	// If no device-specific test data path is configured, return empty map
-	if d.deviceTestDataPath == "" {
+	if d.deviceTypeConfig.TestData == "" {
 		log.Debugf("no test data path configured for device %s, using empty test data", d.devEUI)
 		return make(map[string]interface{}), nil
 	}
 
 	// Try to open the device-specific test data file
-	testDataFile, err := os.Open(d.deviceTestDataPath)
+	testDataFile, err := os.Open(d.deviceTypeConfig.TestData)
 	if err != nil {
-		log.Warnf("test data not found at %s for device %s, using empty test data: %v", d.deviceTestDataPath, d.devEUI, err)
+		log.Warnf("test data not found at %s for device %s, using empty test data: %v", d.deviceTypeConfig.TestData, d.devEUI, err)
 		return make(map[string]interface{}), nil
 	}
 	defer testDataFile.Close()
@@ -667,25 +625,10 @@ func (d *Device) loadTestData() (map[string]interface{}, error) {
 	return testData, nil
 }
 
-// getEncoderScriptPath returns the encoder script path
-// Priority: device-specific encoder script > payloadCodec-based path
-func (d *Device) getEncoderScriptPath() string {
-	// Use device-specific encoder script if set
-	if d.deviceEncoderScript != "" {
-		return d.deviceEncoderScript
-	}
-
-	// Fall back to payloadCodec-based path (legacy behavior)
-	if d.payloadCodec != nil {
-		return CODEC_DIR + "vendors/milesight-iot/" + strings.ToLower(d.payloadCodec.Name) + "/" + strings.ToLower(d.payloadCodec.Name) + "-encoder.js"
-	}
-
-	return ""
-}
 
 func (d *Device) getEncoderData() {
 	// Get encoder script path (device-specific or legacy)
-	ecPath := d.getEncoderScriptPath()
+	ecPath := d.deviceTypeConfig.EncoderScript
 	if ecPath == "" {
 		log.Errorf("no encoder script path available for device %s", d.devEUI)
 		return
@@ -693,9 +636,9 @@ func (d *Device) getEncoderData() {
 
 	// Check encoder script modification time to determine if re-encoding is needed
 	var shouldReEncode bool
-	if d.deviceTestDataPath != "" {
+	if d.deviceTypeConfig.TestData != "" {
 		// If device has a specific test data path, check its modification time
-		testDataInfo, err := os.Stat(d.deviceTestDataPath)
+		testDataInfo, err := os.Stat(d.deviceTypeConfig.TestData)
 		if err != nil {
 			// Test data file doesn't exist, but we can still encode with empty data
 			log.Debugf("test data file not found for device %s: %v, will use empty test data", d.devEUI, err)
