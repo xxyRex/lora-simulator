@@ -29,11 +29,6 @@ const configTemplate = `[general]
   #   * Devices
   [chirpstack.api]
 
-    # API key.
-    #
-    # The API key can be obtained through the ChirpStack web-interface.
-    api_key="{{ .ChirpStack.API.APIKey }}"
-
     # Server.
     #
     # This must point to the ChirpStack API interface.

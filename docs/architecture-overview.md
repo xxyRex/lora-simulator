@@ -591,7 +591,7 @@ type Config struct {
     LoraSimulator struct {
         API struct {
             Server, Username, Password string
-            UseNewDevice, UseNewGateway bool
+            UseNewDevice bool
             TestFeature string  // "normal,bacnet,fuota,modbus"
         }
         Integration struct { MQTT MQTTConfig }

@@ -18,11 +18,6 @@ channel_plan = "EU868"
 #   * Devices
 [lora-simulator.api]
 
-# API key.
-#
-# The API key can be obtained through the ChirpStack web-interface.
-api_key = ""
-
 # Server.
 #
 # This must point to the ChirpStack API interface.
@@ -34,14 +29,6 @@ login_url = "/api/internal/login"
 username = "admin"
 # 网关as api登录密码
 password = "password1"
-# 是否是devicehubv2 LNS
-is_lns = false
-# devicehubv2 LNS配置
-use_new_gateway = false
-# 暂时无用
-use_new_profile = false
-# 是否使用旧版校验方式(60.0.0.42-r5前的网关)
-use_old_auth = false
 # 是否每次创建新的application
 clean_before_test = true
 # 结束后是否删除所有数据
@@ -54,8 +41,6 @@ restart_as = false
 fuota_task_device_count = 0
 # 是否每次创建新设备
 use_new_device = true
-# 添加完数据等待设备运行稳定后，再入网的等待时间
-wait_device_stable_time = "0s"
 # 是否只进行api的测试
 api_test = false
 
@@ -72,8 +57,6 @@ insecure = false
 
 # MQTT server.
 server = "tcp://192.168.40.148:1883"
-
-ssh_password = ""
 
 # Username.
 username = "lorawan"
@@ -129,6 +112,9 @@ activation_time = "100s"
 
 # Number of devices to simulate.
 count = 20
+
+# 添加完数据等待设备运行稳定后，再入网的等待时间
+wait_device_stable_time = "0s"
 
 # Uplink interval.
 uplink_interval = "300s"

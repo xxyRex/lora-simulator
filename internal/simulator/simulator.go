@@ -72,6 +72,7 @@ func Start(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 			frequency:            c.Device.Frequency,
 			bandwidth:            c.Device.Bandwidth,
 			spreadingFactor:      c.Device.SpreadingFactor,
+			waitDeviceStableTime: c.Device.WaitDeviceStableTime,
 			duration:             c.Duration,
 			gatewayMinCount:      c.Gateway.MinCount,
 			gatewayMaxCount:      c.Gateway.MaxCount,
@@ -103,6 +104,7 @@ type Simulation struct {
 	frequency            int
 	bandwidth            int
 	spreadingFactor      int
+	waitDeviceStableTime time.Duration
 
 	deviceProfileID      uuid.UUID
 	applicationID        string
@@ -217,9 +219,9 @@ func (s *Simulation) tearDown() error {
 }
 
 func (s *Simulation) runSimulation() error {
-	if config.C.LoraSimulator.API.WaitDeviceStableTime != 0 {
-		log.Infof("wait device stable time: %v", config.C.LoraSimulator.API.WaitDeviceStableTime)
-		time.Sleep(config.C.LoraSimulator.API.WaitDeviceStableTime)
+	if s.waitDeviceStableTime != 0 {
+		log.Infof("wait device stable time: %v", s.waitDeviceStableTime)
+		time.Sleep(s.waitDeviceStableTime)
 	}
 
 	var gateways []*gateway.Gateway
@@ -249,22 +251,7 @@ func (s *Simulation) runSimulation() error {
 	batchCount := 0
 	for _, dev := range s.generatedDevices {
 		var gws []*gateway.Gateway
-		if config.C.LoraSimulator.API.UseNewGateway {
-			devGateways := make(map[int]*gateway.Gateway)
-			devNumGateways := s.gatewayMinCount + mrand.Intn(s.gatewayMaxCount-s.gatewayMinCount+1)
-
-			for len(devGateways) < devNumGateways {
-				// pick random gateway index
-				n := mrand.Intn(len(gateways))
-				devGateways[n] = gateways[n]
-			}
-
-			for k := range devGateways {
-				gws = append(gws, devGateways[k])
-			}
-		} else {
-			gws = gateways
-		}
+		gws = gateways
 
 		var otaaDuration time.Duration
 		if s.sequenceJoin {
@@ -345,25 +332,6 @@ func (s *Simulation) runSimulation() error {
 func (s *Simulation) setupGateways() error {
 	log.Info("simulator: creating gateways")
 
-	if config.C.LoraSimulator.API.UseNewGateway {
-		for i := 0; i < s.gatewayMaxCount; i++ {
-			var gatewayID lorawan.EUI64
-			if _, err := rand.Read(gatewayID[:]); err != nil {
-				return errors.Wrap(err, "read random bytes error")
-			}
-
-			err := as.CreateGateway(gatewayID.String(), gatewayID.String())
-
-			if err != nil {
-				return errors.Wrap(err, "create gateway error")
-			}
-
-			s.gatewayIDs = append(s.gatewayIDs, gatewayID)
-		}
-
-		return nil
-	}
-
 	macs, err := as.GetGateway()
 	if err != nil {
 		return errors.Wrap(err, "get gateway error")
@@ -376,36 +344,12 @@ func (s *Simulation) setupGateways() error {
 
 func (s *Simulation) tearDownGateways() error {
 	log.Info("simulator: tear-down gateways")
-	if !config.C.LoraSimulator.API.UseNewGateway {
-		return nil
-	}
-
-	for _, gatewayID := range s.gatewayIDs {
-		err := as.DeleteGateway(gatewayID.String())
-		if err != nil {
-			return errors.Wrap(err, "delete gateway error")
-		}
-	}
+	// 使用现有网关，不需要删除
 	return nil
 }
 
 func (s *Simulation) setupDeviceProfile() error {
 	log.Info("simulator: creating device-profile")
-
-	if config.C.LoraSimulator.API.UseNewProfile {
-		profileId, err := as.CreateDeviceProfile()
-		if err != nil {
-			return errors.Wrap(err, "create device-profile error")
-		}
-
-		dpID, err := uuid.FromString(profileId)
-		if err != nil {
-			return err
-		}
-		s.deviceProfileID = dpID
-
-		return nil
-	}
 
 	profiles, err := as.GetProfiles()
 	if err != nil {
@@ -419,17 +363,7 @@ func (s *Simulation) setupDeviceProfile() error {
 
 func (s *Simulation) tearDownDeviceProfile() error {
 	log.Info("simulator: tear-down device-profile")
-
-	if !config.C.LoraSimulator.API.UseNewProfile {
-		return nil
-	}
-
-	err := as.DeleteDeviceProfile(s.deviceProfileID.String())
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-
+	// 使用现有配置文件，不需要删除
 	return nil
 }
 

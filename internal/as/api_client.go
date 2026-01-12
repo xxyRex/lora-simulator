@@ -100,12 +100,7 @@ func SimpleSetup(host string, username string, password string) error {
 		return err
 	}
 
-	asPassword := aesPassword
-	if config.C.LoraSimulator.API.UseOldAuth {
-		asPassword = "NicJjG18XOV3U1efQyo8AQ=="
-	}
-
-	err = ASLogin(host, username, asPassword)
+	err = ASLogin(host, username, aesPassword)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -140,14 +135,7 @@ func Setup(c config.Config) error {
 		return err
 	}
 
-	asPassword := aesPassword
-	if config.C.LoraSimulator.API.IsLNS {
-		asPassword = sha256Hash(password)
-	}
-	if config.C.LoraSimulator.API.UseOldAuth {
-		asPassword = "NicJjG18XOV3U1efQyo8AQ=="
-	}
-	err = ASLogin(conf.API.Server, username, asPassword)
+	err = ASLogin(conf.API.Server, username, aesPassword)
 	if err != nil {
 		log.Error(err)
 		return err

@@ -20,10 +20,6 @@ type Config struct {
 			LoginUrl             string        `mapstructure:"login_url"`
 			Username             string        `mapstructure:"username"`
 			Password             string        `mapstructure:"password"`
-			IsLNS                bool          `mapstructure:"is_lns"`
-			UseNewGateway        bool          `mapstructure:"use_new_gateway"`
-			UseNewProfile        bool          `mapstructure:"use_new_profile"`
-			UseOldAuth           bool          `mapstructure:"use_old_auth"`
 			CleanBeforeTest      bool          `mapstructure:"clean_before_test"`
 			TeardownAfterTest    bool          `mapstructure:"teardown_after_test"`
 			TestFeature          string        `mapstructure:"test_feature"`
@@ -32,17 +28,14 @@ type Config struct {
 			RestartAs            bool          `mapstructure:"restart_as"`
 			FuotaTaskDeviceCount int           `mapstructure:"fuota_task_device_count"`
 			UseNewDevice         bool          `mapstructure:"use_new_device"`
-			WaitDeviceStableTime time.Duration `mapstructure:"wait_device_stable_time"`
 			ApiTest              bool          `mapstructure:"api_test"`
-			APIKey               string        `mapstructure:"api_key"`
 		} `mapstructure:"api"`
 
 		Integration struct {
 			MQTT struct {
-				Server      string `mapstructure:"server"`
-				Username    string `mapstructure:"username"`
-				Password    string `mapstructure:"password"`
-				SshPassword string `mapstructure:"ssh_password"`
+				Server   string `mapstructure:"server"`
+				Username string `mapstructure:"username"`
+				Password string `mapstructure:"password"`
 			} `mapstructure:"mqtt"`
 		} `mapstructure:"integration"`
 
@@ -81,13 +74,14 @@ type Config struct {
 		ActivationTime       time.Duration `mapstructure:"activation_time"`
 
 		Device struct {
-			Count           int           `mapstructure:"count"`
-			UplinkInterval  time.Duration `mapstructure:"uplink_interval"`
-			FPort           uint8         `mapstructure:"f_port"`
-			Payload         string        `mapstructure:"payload"`
-			Frequency       int           `mapstructure:"frequency"`
-			Bandwidth       int           `mapstructure:"bandwidth"`
-			SpreadingFactor int           `mapstructure:"spreading_factor"`
+			Count                int           `mapstructure:"count"`
+			WaitDeviceStableTime time.Duration `mapstructure:"wait_device_stable_time"`
+			UplinkInterval       time.Duration `mapstructure:"uplink_interval"`
+			FPort                uint8         `mapstructure:"f_port"`
+			Payload              string        `mapstructure:"payload"`
+			Frequency            int           `mapstructure:"frequency"`
+			Bandwidth            int           `mapstructure:"bandwidth"`
+			SpreadingFactor      int           `mapstructure:"spreading_factor"`
 		} `mapstructure:"device"`
 
 		Gateway struct {
