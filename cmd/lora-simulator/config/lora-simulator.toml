@@ -21,7 +21,7 @@ channel_plan = "EU868"
 # Server.
 #
 # This must point to the ChirpStack API interface.
-server = "192.168.40.148"
+server = "192.168.40.147"
 
 # 网关as api登录url
 login_url = "/api/internal/login"
@@ -56,7 +56,7 @@ insecure = false
 [lora-simulator.integration.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.148:1883"
+server = "tcp://192.168.40.147:1883"
 
 # Username.
 username = "lorawan"
@@ -69,7 +69,7 @@ password = "Urs@L1nk#Ms2020"
 [lora-simulator.gateway.backend.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.148:1883"
+server = "tcp://192.168.40.147:1883"
 
 # Username.
 username = "lorawan"
@@ -170,9 +170,9 @@ bind = "0.0.0.0:9000"
 # 是否开启测试
 enable = false
 # 旧版网关host
-old_host = "192.168.40.148"
+old_host = "192.168.40.147"
 # 新版网关host
-new_host = "192.168.40.148"
+new_host = "192.168.40.147"
 
 # 测试用例文件路径
 test_case_file = "/mnt/data/work_code/gateway/lora-simulator/codec.xlsx"
