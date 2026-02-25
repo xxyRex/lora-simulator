@@ -2,6 +2,11 @@
     "devices": {
         "deveui_range":"all",
         "fuota_debug": {
+            "package_version_ans": {
+                "skip_package_version_ans": false,
+                "package_identifier": 2,
+                "package_version": 1
+            },
             "mg_group_setup_ans": {
                 "skip_mg_group_setup_ans": false,
                 "id_error": false,

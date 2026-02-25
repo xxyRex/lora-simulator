@@ -845,6 +845,11 @@ func (d *Device) downlinkHandler(confirmed bool, ack bool, fCntDown uint32, fPor
 			"dev_eui": d.devEUI,
 		}).Info("simulator: multicast")
 		d.handleMulticastSetupCommand(data)
+	case 202: // clocksync.DefaultFPort
+		log.WithFields(log.Fields{
+			"dev_eui": d.devEUI,
+		}).Info("simulator: clock sync")
+		d.handleClockSyncCommand(data)
 	}
 
 	return nil

@@ -180,6 +180,15 @@ var ru864TxInfo = TXInfo{
 	},
 }
 
+var us915TxInfo = TXInfo{
+	Frequency: 902300000,
+	DataRate: band.DataRate{
+		Modulation:   "LORA",
+		SpreadFactor: 10,
+		Bandwidth:    125,
+	},
+}
+
 var txInfoMap = map[string]TXInfo{
 	"AS923-1": as923_1TxInfo,
 	"AS923-2": as923_2TxInfo,
@@ -192,6 +201,7 @@ var txInfoMap = map[string]TXInfo{
 	"IN865":   in865TxInfo,
 	"RU864":   ru864TxInfo,
 	"AS915":   as915TxInfo,
+	"US915":   us915TxInfo,
 }
 
 type TXPacketBytes struct {

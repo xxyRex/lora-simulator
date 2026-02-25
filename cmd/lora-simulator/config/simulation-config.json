@@ -6,13 +6,6 @@
             "uplink_paused": false,
             "uplink_confirm": false,
             "uplink_interval": 10000
-        },
-        {
-            "device_id": "vs330",
-            "count": 10,
-            "uplink_paused": false,
-            "uplink_confirm": false,
-            "uplink_interval": 10000
         }
     ]
 }

@@ -151,6 +151,155 @@ Runs `fix_mixin_operation_id.py` → `convert_swagger_to_camel_case.py` → `go-
 - `log_level`: 5=debug, 4=info, 3=warning, 2=error
 - Library: logrus
 
+## FUOTA Implementation
+
+### Overview
+
+Complete implementation of LoRaWAN FUOTA (Firmware Update Over The Air) protocol including:
+- Remote Multicast Setup (fPort=200)
+- Fragmented Data Block Transport (fPort=201)
+- Application Layer Clock Synchronization (fPort=202)
+
+### FUOTA Flow Sequence
+
+```
+1. Multicast Package Version Check (fPort=200)
+   Server → PackageVersionReq (CID=0x00)
+   Device → PackageVersionAns (PackageID=2, Version=1)
+
+2. Fragmentation Package Version Check (fPort=201)
+   Server → PackageVersionReq (CID=0x00)
+   Device → PackageVersionAns (PackageID=3, Version=1)
+
+3. Clock Synchronization (fPort=202)
+   Server → ForceDeviceResyncReq (CID=0x03, NbTransmissions)
+   Device → DeviceAppTimeReq (CID=0x01, DeviceTime=UnixTimestamp)
+   Server → DeviceAppTimeAns (CID=0x01, TimeCorrection)
+
+4. Multicast Group Setup (fPort=200)
+   Server → McGroupSetupReq (CID=0x02, McAddr, McKey, ...)
+   Device → McGroupSetupAns (CID=0x02, McGroupID)
+
+5. Class C Session Setup (fPort=200)
+   Server → McClassCSessionReq (CID=0x04, SessionTime, Frequency, DR)
+   Device → McClassCSessionAns (CID=0x04, TimeToStart)
+
+6. Fragmentation Session Setup (fPort=201)
+   Server → FragSessionSetupReq (CID=0x02, NbFrag, FragSize, ...)
+   Device → FragSessionSetupAns (CID=0x02, StatusBitMask)
+
+7. Fragment Transmission (Multicast)
+   Server → DataFragment packets (fPort=201)
+   Device → Receives and assembles fragments
+
+8. Session Status Query (fPort=201)
+   Server → FragSessionStatusReq (CID=0x03)
+   Device → FragSessionStatusAns (CID=0x03, NbFragReceived, MissingFrag)
+```
+
+### Protocol Packages
+
+**`internal/clocksync/`** - Application Layer Clock Synchronization v1.0.0
+- `clocksync.go` - Protocol definitions and command structures
+- Commands: PackageVersionReq/Ans, DeviceAppTimeReq/Ans, ForceDeviceResyncReq/Ans
+- DefaultFPort: 202
+
+**`internal/multicastsetup/`** - Remote Multicast Setup (existing)
+- Commands: PackageVersionReq/Ans, McGroupSetupReq/Ans, McClassCSessionReq/Ans
+- DefaultFPort: 200
+
+**`internal/fragmentation/`** - Fragmented Data Block Transport (existing)
+- Commands: PackageVersionReq/Ans, FragSessionSetupReq/Ans, FragSessionStatusReq/Ans
+- DefaultFPort: 201
+
+### Device-Side Handlers
+
+**`internal/device/device_fuota_handler.go`** - FUOTA command processing
+
+Key functions:
+```go
+// Multicast Setup (fPort=200)
+handleMulticastSetupCommand()
+handlePackageVersionReq()           // PackageID=2, Version=1
+handleMcGroupSetupReq()
+handleMcClassCSessionReq()
+
+// Fragmentation (fPort=201)
+handleFragmentationSessionSetupCommand()
+handleFragmentationPackageVersionReq()  // PackageID=3, Version=1
+handleFragSessionSetupReq()
+handleFragSessionStatusReq()
+
+// Clock Sync (fPort=202)
+handleClockSyncCommand()
+handleClockSyncPackageVersionReq()      // PackageID=3, Version=1
+sendDeviceAppTimeReq()                  // Send Unix timestamp
+handleDeviceAppTimeAns()                // Receive time correction
+handleForceDeviceResyncReq()            // Trigger time sync
+```
+
+**`internal/device/device.go`** - Downlink routing
+
+fPort routing in `downlinkHandler()`:
+```go
+case 200: // multicastsetup.DefaultFPort
+    d.handleMulticastSetupCommand(data)
+case 201: // fragmentation.DefaultFPort
+    d.handleFragmentationSessionSetupCommand(data)
+case 202: // clocksync.DefaultFPort
+    d.handleClockSyncCommand(data)
+```
+
+### PackageID Reference
+
+| Protocol | fPort | PackageID | Version |
+|---|---|---|---|
+| Remote Multicast Setup | 200 | 2 | 1 |
+| Fragmented Data Block Transport | 201 | 3 | 1 |
+| Clock Synchronization | 202 | 3 | 1 |
+
+**Note**: Fragmentation uses PackageID=3 (vendor-specific) instead of standard LoRaWAN PackageID=1.
+
+### Key Crypto Functions
+
+**`device_fuota_handler.go`** - Multicast key derivation
+```go
+GetMcRootKeyForGenAppKey()  // Derive McRootKey from GenAppKey (LoRaWAN 1.0.x)
+GetMcKEKey()                // Derive McKEKey from McRootKey
+GetMcAppSKey()              // Derive McAppSKey from McKey + McAddr
+GetMcNetSKey()              // Derive McNetSKey from McKey + McAddr
+```
+
+### Testing FUOTA
+
+1. Enable FUOTA in config:
+```toml
+[lora-simulator.api]
+test_feature = "fuota"
+```
+
+2. Create FUOTA task via API or let simulator auto-create (see `simulator.setupFuota()`)
+
+3. Monitor logs for flow progression:
+```bash
+cd cmd/lora-simulator
+tail -f simulator.log | grep -i "fuota\|clock"
+```
+
+4. Expected log sequence:
+```
+fuota: package-version-req received (fPort=200)
+fuota: sending package-version-ans (identifier=2, version=1)
+fuota: fragmentation PackageVersionReq received (fPort=201)
+fuota: sending fragmentation package-version-ans (identifier=3, version=1)
+fuota: received force-device-resync-req (fPort=202)
+fuota: sending device-app-time-req (device_time=...)
+fuota: received device-app-time-ans (time_correction=...)
+fuota: multicast-setup command received (McGroupSetup)
+fuota: multicast-class-c-session command received
+fuota: fragmentation-session-setup command received
+```
+
 ## Troubleshooting
 
 | Symptom | Check |
@@ -159,3 +308,6 @@ Runs `fix_mixin_operation_id.py` → `convert_swagger_to_camel_case.py` → `go-
 | No uplinks after join | JoinAccept MIC in logs, `uplink_paused=false`, `deviceStateActivated` |
 | Codec errors | JS syntax, test data JSON format, `default_fport` matches codec |
 | Auth failures | `username`/`password`, `server` reachable, `insecure` TLS setting |
+| FUOTA not starting | Verify `test_feature="fuota"`, devices joined, check server-side task creation |
+| Clock sync skipped | Normal if Fragmentation PackageVersionCheck fails; server decides sync necessity |
+| Fragment timeout | Check multicast keys derived correctly, Class C session active, frequency/DR match |

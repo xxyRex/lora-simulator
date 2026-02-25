@@ -2,9 +2,9 @@
 # Log level
 #
 # debug=5, info=4, warning=3, error=2, fatal=1, panic=0
-log_level = 4
+log_level = 5
 
-channel_plan = "EU868"
+channel_plan = "US915"
 
 # ChirpStack configuration.
 [lora-simulator]
@@ -21,7 +21,7 @@ channel_plan = "EU868"
 # Server.
 #
 # This must point to the ChirpStack API interface.
-server = "192.168.40.147"
+server = "192.168.40.195"
 
 # 网关as api登录url
 login_url = "/api/internal/login"
@@ -34,11 +34,11 @@ clean_before_test = true
 # 结束后是否删除所有数据
 teardown_after_test = false
 # 测试的功能，目前支持bacnet，fuota，normal,modbus
-test_feature = "normal,bacnet"
+test_feature = "normal,fuota"
 # 是否需要重启as
 restart_as = false
 # 每个fuota任务的设备数量
-fuota_task_device_count = 0
+fuota_task_device_count = 1
 # 是否每次创建新设备
 use_new_device = true
 # 是否只进行api的测试
@@ -56,7 +56,7 @@ insecure = false
 [lora-simulator.integration.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.147:1883"
+server = "tcp://192.168.40.195:1883"
 
 # Username.
 username = "lorawan"
@@ -69,7 +69,7 @@ password = "Urs@L1nk#Ms2020"
 [lora-simulator.gateway.backend.mqtt]
 
 # MQTT server.
-server = "tcp://192.168.40.147:1883"
+server = "tcp://192.168.40.195:1883"
 
 # Username.
 username = "lorawan"
@@ -126,13 +126,13 @@ f_port = 1
 payload = "010203"
 
 # Frequency (Hz).
-frequency = 868100000
+frequency = 902300000
 
 # Bandwidth (Hz).
 bandwidth = 125000
 
 # Spreading-factor.
-spreading_factor = 7
+spreading_factor = 10
 
 # Gateway configuration.
 [simulator.gateway]

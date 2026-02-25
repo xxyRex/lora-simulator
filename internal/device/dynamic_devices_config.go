@@ -27,6 +27,7 @@ type Devices struct {
 }
 
 type FuotaDebug struct {
+	PackageVersionAns    *PackageVersionAns    `json:"package_version_ans"`
 	MgGroupSetupAns      *MgGroupSetupAns      `json:"mg_group_setup_ans"`
 	McClassCSessionAns   *McClassCSessionAns   `json:"mc_class_c_session_ans"`
 	FragSessionSetupAns  *FragSessionSetupAns  `json:"frag_session_setup_ans"`
@@ -80,6 +81,12 @@ type StatusAndMcGroupID struct {
 	FreqError        bool  `json:"freq_error"`
 	DRError          bool  `json:"dr_error"`
 	McGroupID        int64 `json:"mc_group_id"`
+}
+
+type PackageVersionAns struct {
+	SkipPackageVersionAns bool  `json:"skip_package_version_ans"`
+	PackageIdentifier     uint8 `json:"package_identifier"`
+	PackageVersion        uint8 `json:"package_version"`
 }
 
 type MgGroupSetupAns struct {
