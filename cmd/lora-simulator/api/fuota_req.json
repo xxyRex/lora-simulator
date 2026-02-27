@@ -1,6 +1,6 @@
 {
     "name": "test",
-    "startedAt": "2026-02-13T09:38:00.000Z",
+    "startedAt": "2026-02-26T03:55:00.000Z",
     "description": "test",
     "deveui": [
         "24e1247150000001"
@@ -12,7 +12,7 @@
     "isOfficialFirmware": false,
     "fragmentInfo": {
         "fragmentSize": 88,
-        "fragmentInterval": 5000,
+        "fragmentInterval": 1000,
         "fragmentRedundancy": 30
     },
     "tmpMcInfo": {

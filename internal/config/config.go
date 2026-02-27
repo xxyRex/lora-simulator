@@ -26,7 +26,8 @@ type Config struct {
 			Insecure             bool          `mapstructure:"insecure"`
 			SshPassword          string        `mapstructure:"ssh_password"`
 			RestartAs            bool          `mapstructure:"restart_as"`
-			FuotaTaskDeviceCount int           `mapstructure:"fuota_task_device_count"`
+			FuotaTaskDeviceCount    int           `mapstructure:"fuota_task_device_count"`
+			FuotaTaskCreateInterval time.Duration `mapstructure:"fuota_task_create_interval"`
 			UseNewDevice         bool          `mapstructure:"use_new_device"`
 			ApiTest              bool          `mapstructure:"api_test"`
 		} `mapstructure:"api"`

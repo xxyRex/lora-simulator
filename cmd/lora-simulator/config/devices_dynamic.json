@@ -1,11 +1,21 @@
 {
+    "use_groups": false,
     "devices": {
-        "deveui_range":"all",
+        "deveui_range": "all",
         "fuota_debug": {
             "package_version_ans": {
                 "skip_package_version_ans": false,
                 "package_identifier": 2,
                 "package_version": 1
+            },
+            "frag_package_version_ans": {
+                "skip_frag_package_version_ans": false,
+                "package_identifier": 3,
+                "package_version": 1
+            },
+            "clock_sync_package_version_ans": {
+                "skip_clock_sync_package_version_ans": false,
+                "random_delay_max_sec": 0
             },
             "mg_group_setup_ans": {
                 "skip_mg_group_setup_ans": false,
@@ -49,5 +59,35 @@
                 }
             }
         }
-    }
+    },
+    "device_groups": [
+        {
+            "deveui_range": "24e1247150000003-24e1247150000004",
+            "fuota_debug": {
+                "package_version_ans": {
+                    "skip_package_version_ans": true
+                }
+            }
+        },
+        {
+            "deveui_range": "24e1247150000005-24e1247150000005",
+            "fuota_debug": {
+                "package_version_ans": {
+                    "skip_package_version_ans": false,
+                    "package_identifier": 99,
+                    "package_version": 1
+                }
+            }
+        },
+        {
+            "deveui_range": "24e1247150000006-24e1247150000006",
+            "fuota_debug": {
+                "package_version_ans": {
+                    "skip_package_version_ans": false,
+                    "package_identifier": 2,
+                    "package_version": 99
+                }
+            }
+        }
+    ]
 }

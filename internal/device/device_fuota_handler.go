@@ -3,6 +3,7 @@ package device
 import (
 	"crypto/aes"
 	"fmt"
+	"math/rand"
 	"strconv"
 	"time"
 
@@ -87,6 +88,16 @@ func (d *Device) handlePackageVersionReq() error {
 
 		packageIdentifier = packageVersionDebug.PackageIdentifier
 		packageVersion = packageVersionDebug.PackageVersion
+
+		// 随机延迟，模拟乱序
+		if packageVersionDebug.RandomDelayMaxSec > 0 {
+			delay := time.Duration(rand.Int63n(packageVersionDebug.RandomDelayMaxSec+1)) * time.Second
+			log.WithFields(log.Fields{
+				"dev_eui": d.devEUI,
+				"delay":   delay,
+			}).Info("fuota: package-version-ans random delay")
+			time.Sleep(delay)
+		}
 	}
 
 	// 构造应答消息
@@ -110,7 +121,31 @@ func (d *Device) handlePackageVersionReq() error {
 		"payload":            fmt.Sprintf("% X", b),
 	}).Info("fuota: sending package-version-ans")
 
-	// 设置payload并发送上行
+	// 如果开启双包模式，先发一条正确的 Ans（PackageIdentifier=2, PackageVersion=1），再发配置的错误 Ans
+	if packageVersionDebug != nil && packageVersionDebug.SendDoubleAns {
+		correctCmd := multicastsetup.Command{
+			CID: multicastsetup.PackageVersionAns,
+			Payload: &multicastsetup.PackageVersionAnsPayload{
+				PackageIdentifier: 2,
+				PackageVersion:    1,
+			},
+		}
+		correctB, err := correctCmd.MarshalBinary()
+		if err != nil {
+			return fmt.Errorf("marshal correct command error: %w", err)
+		}
+		log.WithFields(log.Fields{
+			"dev_eui":            d.devEUI,
+			"package_identifier": 2,
+			"package_version":    1,
+			"payload":            fmt.Sprintf("% X", correctB),
+		}).Info("fuota: sending double package-version-ans (correct, first)")
+		d.payload = correctB
+		d.fPort = multicastsetup.DefaultFPort
+		d.dataUp(lorawan.UnconfirmedDataUp, false)
+	}
+
+	// 发送配置的 Ans（错误或正常）
 	d.payload = b
 	d.fPort = multicastsetup.DefaultFPort
 	d.dataUp(lorawan.UnconfirmedDataUp, false)
@@ -121,8 +156,42 @@ func (d *Device) handlePackageVersionReq() error {
 // handleFragmentationPackageVersionReq 响应分片软件包版本请求（fPort=201, CID=0x00）
 // 根据文档：PackageIdentifier=3，PackageVersion=1
 func (d *Device) handleFragmentationPackageVersionReq() error {
+	log.WithFields(log.Fields{
+		"dev_eui": d.devEUI,
+		"cid":     fragmentation.PackageVersionReq,
+	}).Info("fuota: fragmentation package-version-req received")
+
+	// 读取动态配置（用于调试/测试）
+	cfg := GetDynamicDevicesConfig(d.devEUI)
+	var fragPkgVerDebug *FragPackageVersionAns
+
+	if cfg != nil {
+		fragPkgVerDebug = cfg.Devices.FuotaDebug.FragPackageVersionAns
+	}
+
+	// 默认值：PackageIdentifier=3（分片软件包标识），PackageVersion=1（v1.0）
 	packageIdentifier := uint8(3)
 	packageVersion := uint8(1)
+
+	if fragPkgVerDebug != nil {
+		if fragPkgVerDebug.SkipFragPackageVersionAns {
+			log.Info("fuota: fragmentation package-version-req received, skipping response")
+			return nil
+		}
+
+		packageIdentifier = fragPkgVerDebug.PackageIdentifier
+		packageVersion = fragPkgVerDebug.PackageVersion
+
+		// 随机延迟，模拟乱序
+		if fragPkgVerDebug.RandomDelayMaxSec > 0 {
+			delay := time.Duration(rand.Int63n(fragPkgVerDebug.RandomDelayMaxSec+1)) * time.Second
+			log.WithFields(log.Fields{
+				"dev_eui": d.devEUI,
+				"delay":   delay,
+			}).Info("fuota: fragmentation package-version-ans random delay")
+			time.Sleep(delay)
+		}
+	}
 
 	cmd := fragmentation.Command{
 		CID: fragmentation.PackageVersionAns,
@@ -260,7 +329,19 @@ func (d *Device) handleMcClassCSessionReq(pl *multicastsetup.McClassCSessionReqP
 	freqError := false
 	drError := false
 	mcGroupID := pl.McGroupIDHeader.McGroupID
-	timeToStartPtr := &pl.SessionTime
+
+	// 计算 TimeToStart：SessionTime 是 GPS 纪元（1980-01-06 00:00:00 UTC）以来的秒数，
+	// TimeToStart 是设备距 ClassC session 开始的剩余秒数。
+	// GPS epoch offset from Unix epoch = 315964800 seconds
+	const gpsEpochOffset = int64(315964800)
+	currentGPSTime := time.Now().Unix() - gpsEpochOffset
+	var calculatedTimeToStart uint32
+	if int64(pl.SessionTime) > currentGPSTime {
+		calculatedTimeToStart = uint32(int64(pl.SessionTime) - currentGPSTime)
+	} else {
+		calculatedTimeToStart = 0
+	}
+	timeToStartPtr := &calculatedTimeToStart
 
 	if mcClassCSessionDebug != nil {
 		if mcClassCSessionDebug.SkipMcClassCSessionAns {
@@ -566,7 +647,7 @@ func (d *Device) handleClockSyncCommand(b []byte) error {
 
 	// 其他命令的正常解析流程
 	var cmd clocksync.Command
-	if err := cmd.UnmarshalBinary(true, b); err != nil {
+	if err := cmd.UnmarshalBinary(false, b); err != nil {
 		return fmt.Errorf("unmarshal clock sync command error: %w", err)
 	}
 
@@ -577,14 +658,24 @@ func (d *Device) handleClockSyncCommand(b []byte) error {
 
 	switch cmd.CID {
 	case clocksync.DeviceAppTimeAns:
+		log.WithFields(log.Fields{
+			"dev_eui": d.devEUI,
+		}).Info("fuota: entering DeviceAppTimeAns case")
 		pl, ok := cmd.Payload.(*clocksync.DeviceAppTimeAnsPayload)
 		if !ok {
 			return fmt.Errorf("expected *DeviceAppTimeAnsPayload, got: %T", cmd.Payload)
 		}
 		return d.handleDeviceAppTimeAns(pl)
 	case clocksync.ForceDeviceResyncReq:
+		log.WithFields(log.Fields{
+			"dev_eui": d.devEUI,
+		}).Info("fuota: entering ForceDeviceResyncReq case")
 		pl, ok := cmd.Payload.(*clocksync.ForceDeviceResyncReqPayload)
 		if !ok {
+			log.WithFields(log.Fields{
+				"dev_eui":      d.devEUI,
+				"payload_type": fmt.Sprintf("%T", cmd.Payload),
+			}).Error("fuota: ForceDeviceResyncReq type assertion failed")
 			return fmt.Errorf("expected *ForceDeviceResyncReqPayload, got: %T", cmd.Payload)
 		}
 		return d.handleForceDeviceResyncReq(pl)
@@ -604,9 +695,34 @@ func (d *Device) handleClockSyncPackageVersionReq() error {
 		"cid":     clocksync.PackageVersionReq,
 	}).Info("fuota: clock-sync package-version-req received")
 
+	// 读取动态配置（用于调试/测试）
+	cfg := GetDynamicDevicesConfig(d.devEUI)
+	var clockSyncPkgVerDebug *ClockSyncPackageVersionAns
+
+	if cfg != nil {
+		clockSyncPkgVerDebug = cfg.Devices.FuotaDebug.ClockSyncPackageVersionAns
+	}
+
 	// 默认值：PackageIdentifier=3（Clock Synchronization软件包标识），PackageVersion=1（v1.0）
 	packageIdentifier := uint8(3)
 	packageVersion := uint8(1)
+
+	if clockSyncPkgVerDebug != nil {
+		if clockSyncPkgVerDebug.SkipClockSyncPackageVersionAns {
+			log.Info("fuota: clock-sync package-version-req received, skipping response")
+			return nil
+		}
+
+		// 随机延迟，模拟乱序
+		if clockSyncPkgVerDebug.RandomDelayMaxSec > 0 {
+			delay := time.Duration(rand.Int63n(clockSyncPkgVerDebug.RandomDelayMaxSec+1)) * time.Second
+			log.WithFields(log.Fields{
+				"dev_eui": d.devEUI,
+				"delay":   delay,
+			}).Info("fuota: clock-sync package-version-ans random delay")
+			time.Sleep(delay)
+		}
+	}
 
 	// 构造应答消息
 	cmd := clocksync.Command{
@@ -626,7 +742,7 @@ func (d *Device) handleClockSyncPackageVersionReq() error {
 		"dev_eui":            d.devEUI,
 		"package_identifier": packageIdentifier,
 		"package_version":    packageVersion,
-		"payload":            fmt.Sprintf("%02x %02x %02x", b[0], b[1], b[2]),
+		"payload":            fmt.Sprintf("% X", b),
 	}).Info("fuota: sending clock-sync package-version-ans")
 
 	// 设置payload并发送上行

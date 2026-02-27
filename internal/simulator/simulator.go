@@ -175,7 +175,7 @@ func (s *Simulation) init() error {
 
 	if config.C.LoraSimulator.API.UseNewDevice {
 		if err := as.DeleteAllDevices(); err != nil {
-			return err
+			log.WithError(err).Warn("simulator: failed to delete all devices, continuing anyway")
 		}
 
 		if err := s.createDevices(); err != nil {
@@ -190,7 +190,11 @@ func (s *Simulation) init() error {
 			return err
 		}
 
-		go s.setupFuota()
+		go func() {
+			if err := s.setupFuota(); err != nil {
+				log.WithError(err).Error("setupFuota failed")
+			}
+		}()
 	}
 
 	return nil
@@ -745,6 +749,7 @@ func (s *Simulation) setupFuota() error {
 
 	err = as.DeleteFuotaTask(deleteIDs)
 	if err != nil {
+		log.WithError(err).Error("setupFuota: delete existing fuota tasks failed, please wait for the previous task to finish")
 		return err
 	}
 
@@ -791,6 +796,10 @@ func (s *Simulation) setupFuota() error {
 			taskCount++
 			log.Infof("setupFuota created fuota task: %s, deveuis: %v", fuotaTaskReq.Name, deveuiList)
 			deveuiList = []string{}
+			if config.C.LoraSimulator.API.FuotaTaskCreateInterval > 0 {
+				log.Infof("setupFuota waiting %v before creating next task", config.C.LoraSimulator.API.FuotaTaskCreateInterval)
+				time.Sleep(config.C.LoraSimulator.API.FuotaTaskCreateInterval)
+			}
 		}
 	}
 

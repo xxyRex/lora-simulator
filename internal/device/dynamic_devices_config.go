@@ -27,11 +27,25 @@ type Devices struct {
 }
 
 type FuotaDebug struct {
-	PackageVersionAns    *PackageVersionAns    `json:"package_version_ans"`
-	MgGroupSetupAns      *MgGroupSetupAns      `json:"mg_group_setup_ans"`
-	McClassCSessionAns   *McClassCSessionAns   `json:"mc_class_c_session_ans"`
-	FragSessionSetupAns  *FragSessionSetupAns  `json:"frag_session_setup_ans"`
-	FragSessionStatusAns *FragSessionStatusAns `json:"frag_session_status_ans"`
+	PackageVersionAns          *PackageVersionAns          `json:"package_version_ans"`
+	FragPackageVersionAns      *FragPackageVersionAns      `json:"frag_package_version_ans"`
+	ClockSyncPackageVersionAns *ClockSyncPackageVersionAns `json:"clock_sync_package_version_ans"`
+	MgGroupSetupAns            *MgGroupSetupAns            `json:"mg_group_setup_ans"`
+	McClassCSessionAns         *McClassCSessionAns         `json:"mc_class_c_session_ans"`
+	FragSessionSetupAns        *FragSessionSetupAns        `json:"frag_session_setup_ans"`
+	FragSessionStatusAns       *FragSessionStatusAns       `json:"frag_session_status_ans"`
+}
+
+type FragPackageVersionAns struct {
+	SkipFragPackageVersionAns bool  `json:"skip_frag_package_version_ans"`
+	PackageIdentifier         uint8 `json:"package_identifier"`
+	PackageVersion            uint8 `json:"package_version"`
+	RandomDelayMaxSec         int64 `json:"random_delay_max_sec"`
+}
+
+type ClockSyncPackageVersionAns struct {
+	SkipClockSyncPackageVersionAns bool  `json:"skip_clock_sync_package_version_ans"`
+	RandomDelayMaxSec              int64 `json:"random_delay_max_sec"`
 }
 
 type FragSessionSetupAns struct {
@@ -87,6 +101,8 @@ type PackageVersionAns struct {
 	SkipPackageVersionAns bool  `json:"skip_package_version_ans"`
 	PackageIdentifier     uint8 `json:"package_identifier"`
 	PackageVersion        uint8 `json:"package_version"`
+	SendDoubleAns         bool  `json:"send_double_ans"`
+	RandomDelayMaxSec     int64 `json:"random_delay_max_sec"`
 }
 
 type MgGroupSetupAns struct {
@@ -100,11 +116,27 @@ type TemperatureControl struct {
 	Temperature float64 `json:"temperature"`
 }
 
-type DynamicDevicesConfigManager struct {
-	mu        sync.RWMutex
-	config    DevicesDynamicConfig
-	filePath  string
+// devicesDynamicConfigFile is the top-level JSON structure.
+// use_groups=true  → 使用 device_groups 多组配置
+// use_groups=false → 使用 devices 单组配置（默认）
+// 两份配置可以同时保留在文件中，通过 use_groups 切换，无需删除任何内容。
+type devicesDynamicConfigFile struct {
+	UseGroups    bool      `json:"use_groups"`    // true=使用 device_groups，false=使用 devices
+	Devices      *Devices  `json:"devices"`       // 单组配置（适用于所有设备或指定范围）
+	DeviceGroups []Devices `json:"device_groups"` // 多组配置（每组独立规则）
+}
+
+// resolvedGroup holds a parsed device group with its EUI set and config.
+type resolvedGroup struct {
 	allDeveui bool
+	euiMap    map[lorawan.EUI64]interface{}
+	devices   Devices
+}
+
+type DynamicDevicesConfigManager struct {
+	mu       sync.RWMutex
+	groups   []resolvedGroup
+	filePath string
 }
 
 var instance *DynamicDevicesConfigManager
@@ -116,51 +148,64 @@ func (m *DynamicDevicesConfigManager) LoadFromFile() error {
 		return errors.Wrap(err, "read config file error")
 	}
 
-	var config DevicesDynamicConfig
-	if err := json.Unmarshal(data, &config); err != nil {
+	var fileConfig devicesDynamicConfigFile
+	if err := json.Unmarshal(data, &fileConfig); err != nil {
 		return errors.Wrap(err, "unmarshal config error")
 	}
 
-	config.Devices.GlobalUplinkIntervalTime = time.Duration(config.Devices.GlobalUplinkInterval) * time.Millisecond
-
-	// 处理DeveuiRange逻辑
-	if config.Devices.DeveuiRange == "all" {
-		m.allDeveui = true
-	} else {
-		m.allDeveui = false
-		deveuiList := strings.Split(config.Devices.DeveuiRange, "-")
-		if len(deveuiList) != 2 {
-			return errors.New("invalid deveui range")
-		}
-
-		beginEuiInt, err := strconv.ParseUint(deveuiList[0], 16, 64)
-		if err != nil {
-			return errors.Wrap(err, "parse begin eui error")
-		}
-		endEuiInt, err := strconv.ParseUint(deveuiList[1], 16, 64)
-		if err != nil {
-			return errors.Wrap(err, "parse end eui error")
-		}
-
-		if endEuiInt < beginEuiInt {
-			return errors.New("end eui is less than begin eui")
-		}
-
-		config.Devices.DeveuiMap = make(map[lorawan.EUI64]interface{})
-		for i := beginEuiInt; i <= endEuiInt; i++ {
-			euiStr := fmt.Sprintf("%016x", i)
-			var eui lorawan.EUI64
-			if err := eui.UnmarshalText([]byte(euiStr)); err != nil {
-				return errors.Wrap(err, "unmarshal eui error")
-			}
-			config.Devices.DeveuiMap[eui] = struct{}{}
-		}
+	// 根据 use_groups 选择激活的配置段
+	var devicesList []Devices
+	if fileConfig.UseGroups {
+		devicesList = fileConfig.DeviceGroups
+	} else if fileConfig.Devices != nil {
+		devicesList = []Devices{*fileConfig.Devices}
 	}
 
-	// 所有校验通过后，原子性更新配置
+	var groups []resolvedGroup
+	for _, dev := range devicesList {
+		dev.GlobalUplinkIntervalTime = time.Duration(dev.GlobalUplinkInterval) * time.Millisecond
+
+		var group resolvedGroup
+		group.devices = dev
+
+		if dev.DeveuiRange == "all" {
+			group.allDeveui = true
+		} else if dev.DeveuiRange != "" {
+			deveuiList := strings.Split(dev.DeveuiRange, "-")
+			if len(deveuiList) != 2 {
+				return errors.New("invalid deveui range: " + dev.DeveuiRange)
+			}
+
+			beginEuiInt, err := strconv.ParseUint(deveuiList[0], 16, 64)
+			if err != nil {
+				return errors.Wrap(err, "parse begin eui error")
+			}
+			endEuiInt, err := strconv.ParseUint(deveuiList[1], 16, 64)
+			if err != nil {
+				return errors.Wrap(err, "parse end eui error")
+			}
+
+			if endEuiInt < beginEuiInt {
+				return errors.New("end eui is less than begin eui")
+			}
+
+			group.euiMap = make(map[lorawan.EUI64]interface{})
+			for i := beginEuiInt; i <= endEuiInt; i++ {
+				euiStr := fmt.Sprintf("%016x", i)
+				var eui lorawan.EUI64
+				if err := eui.UnmarshalText([]byte(euiStr)); err != nil {
+					return errors.Wrap(err, "unmarshal eui error")
+				}
+				group.euiMap[eui] = struct{}{}
+			}
+		}
+
+		groups = append(groups, group)
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.config = config
+	m.groups = groups
 
 	return nil
 }
@@ -188,9 +233,15 @@ func GetDynamicDevicesConfig(eui lorawan.EUI64) *DevicesDynamicConfig {
 	instance.mu.RLock()
 	defer instance.mu.RUnlock()
 
-	if _, ok := instance.config.Devices.DeveuiMap[eui]; !ok && !instance.allDeveui {
-		log.Infof("ok: %v, instance.allDeveui: %v", ok, instance.allDeveui)
-		return nil
+	for _, group := range instance.groups {
+		if group.allDeveui {
+			return &DevicesDynamicConfig{Devices: group.devices}
+		}
+		if _, ok := group.euiMap[eui]; ok {
+			return &DevicesDynamicConfig{Devices: group.devices}
+		}
 	}
-	return &instance.config
+
+	log.Debugf("no matching device group for eui: %v", eui)
+	return nil
 }

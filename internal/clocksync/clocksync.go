@@ -46,18 +46,22 @@ var (
 )
 
 // map[uplink]...
+// uplink=false: 下行命令（服务器→设备）
+// uplink=true: 上行命令（设备→服务器）
 var commandPayloadRegistry = map[bool]map[CID]func() CommandPayload{
 	false: {
-		PackageVersionAns:    func() CommandPayload { return &PackageVersionAnsPayload{} },
-		DeviceAppTimeAns:     func() CommandPayload { return &DeviceAppTimeAnsPayload{} },
-		DeviceTimeStampAns:   func() CommandPayload { return &DeviceTimeStampAnsPayload{} },
-		ForceDeviceResyncAns: func() CommandPayload { return &ForceDeviceResyncAnsPayload{} },
-	},
-	true: {
+		// 服务器发给设备的命令
 		PackageVersionReq:    func() CommandPayload { return &PackageVersionReqPayload{} },
-		DeviceAppTimeReq:     func() CommandPayload { return &DeviceAppTimeReqPayload{} },
+		DeviceAppTimeAns:     func() CommandPayload { return &DeviceAppTimeAnsPayload{} },
 		DeviceTimeStampReq:   func() CommandPayload { return &DeviceTimeStampReqPayload{} },
 		ForceDeviceResyncReq: func() CommandPayload { return &ForceDeviceResyncReqPayload{} },
+	},
+	true: {
+		// 设备发给服务器的命令
+		PackageVersionAns:    func() CommandPayload { return &PackageVersionAnsPayload{} },
+		DeviceAppTimeReq:     func() CommandPayload { return &DeviceAppTimeReqPayload{} },
+		DeviceTimeStampAns:   func() CommandPayload { return &DeviceTimeStampAnsPayload{} },
+		ForceDeviceResyncAns: func() CommandPayload { return &ForceDeviceResyncAnsPayload{} },
 	},
 }
 

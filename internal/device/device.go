@@ -36,6 +36,9 @@ var (
 
 func allowUplink(devEUI lorawan.EUI64) bool {
 	config := GetDynamicDevicesConfig(devEUI)
+	if config == nil || config.Devices.GlobalUplinkIntervalTime == 0 {
+		return true
+	}
 	globalLastUplinkTimeMutex.Lock()
 	allow := false
 	if time.Since(globalLastUplinkTime) > config.Devices.GlobalUplinkIntervalTime {
@@ -503,10 +506,6 @@ func (d *Device) joinRequest() {
 
 	if time.Since(d.lastJoinRequestTime) < d.minJoinRequestInterval {
 		time.Sleep(time.Second * 5)
-		return
-	}
-
-	if d.joinRequestCount >= 3 {
 		return
 	}
 
