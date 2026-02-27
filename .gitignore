@@ -8,6 +8,10 @@
 # builds
 /build/
 cmd/lora-simulator/simulator.log
+cmd/lora-simulator/run.log
+cmd/lora-simulator/lora-simulator.exe
+cmd/lora-simulator/lora-app-server.log
+cmd/lora-simulator/switch_monitor.log
 __debug_bin*
 cmd/lora-simulator/main
 cmd/lora-simulator/config/devices_import.csv

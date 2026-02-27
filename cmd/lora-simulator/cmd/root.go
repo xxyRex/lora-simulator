@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
+	"os"
 
 	"github.com/brocaar/lora-simulator/internal/config"
 	log "github.com/sirupsen/logrus"
@@ -11,6 +13,7 @@ import (
 )
 
 var cfgFile string
+var workdir string
 var version string
 
 // Execute executes the root command.
@@ -25,13 +28,31 @@ var rootCmd = &cobra.Command{
 	Use:   "lora-simulator",
 	Short: "Lora Simulator",
 	Long:  `Lora Simulator simulates device uplinks`,
-	RunE:  run,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		// 切换工作目录（所有相对路径均基于此目录）
+		if workdir != "" {
+			if err := os.Chdir(workdir); err != nil {
+				return fmt.Errorf("failed to change working directory to %q: %w", workdir, err)
+			}
+			log.Infof("working directory changed to: %s", workdir)
+		}
+
+		// 在工作目录下打开日志文件
+		file, err := os.OpenFile("simulator.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+		if err != nil {
+			return fmt.Errorf("failed to open simulator.log: %w", err)
+		}
+		log.SetOutput(file)
+		return nil
+	},
+	RunE: run,
 }
 
 func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "path to configuration file (optional)")
+	rootCmd.PersistentFlags().StringVar(&workdir, "workdir", "", "working directory for this instance (configs, logs, temp all relative to this path)")
 	rootCmd.PersistentFlags().Int("log-level", 4, "debug=5, info=4, error=2, fatal=1, panic=0")
 
 	viper.BindPFlag("general.log_level", rootCmd.PersistentFlags().Lookup("log-level"))
@@ -75,3 +96,4 @@ func initConfig() {
 		log.WithError(err).Fatal("unmarshal config error")
 	}
 }
+

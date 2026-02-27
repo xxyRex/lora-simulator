@@ -1,0 +1,150 @@
+[general]
+# Log level
+#
+# debug=5, info=4, warning=3, error=2, fatal=1, panic=0
+log_level = 5
+
+channel_plan = "US915"
+
+# ChirpStack configuration.
+[lora-simulator]
+
+# API configuration.
+[lora-simulator.api]
+
+# Server.
+# ↓ 修改为服务器2的IP地址
+server = "192.168.40.XXX"
+
+# 网关as api登录url
+login_url = "/api/internal/login"
+# 网关as api登录用户名
+username = "admin"
+# 网关as api登录密码
+password = "password1"
+# 是否每次创建新的application
+clean_before_test = true
+# 结束后是否删除所有数据
+teardown_after_test = false
+# 测试的功能，目前支持bacnet，fuota，normal,modbus
+test_feature = "normal,fuota"
+# 是否需要重启as
+restart_as = false
+# 每个fuota任务的设备数量
+fuota_task_device_count = 1
+# 每个fuota任务创建后的间隔时间，避免NS下行队列拥塞导致status:16超时（0表示不等待）
+fuota_task_create_interval = "0s"
+# 是否每次创建新设备
+use_new_device = true
+# 是否只进行api的测试
+api_test = false
+
+# TLS 配置选项
+insecure = false
+
+# MQTT integration configuration.
+[lora-simulator.integration.mqtt]
+
+# MQTT server.
+# ↓ 修改为服务器2的IP地址
+server = "tcp://192.168.40.XXX:1883"
+
+# Username.
+username = "lorawan"
+
+# Password.
+password = "Urs@L1nk#Ms2020"
+
+
+# MQTT gateway backend.
+[lora-simulator.gateway.backend.mqtt]
+
+# MQTT server.
+# ↓ 修改为服务器2的IP地址
+server = "tcp://192.168.40.XXX:1883"
+
+# Username.
+username = "lorawan"
+
+# Password.
+password = "Urs@L1nk#Ms2020"
+
+
+# Simulator configuration.
+[[simulator]]
+
+# Tenant ID.
+# ↓ 修改为服务器2上对应的 Tenant ID
+tenant_id = "f6f7d81d-647f-4c7f-8409-3e5218c0c523"
+
+# Duration.
+duration = "0s"
+
+# 是否开启设备批量串行join
+sequence_join = true
+# 串行join间隔
+sequence_join_interval = "2s"
+# 每批激活的设备数量
+sequence_device_number = 1
+
+# Activation time.
+activation_time = "100s"
+
+# Device configuration.
+[simulator.device]
+
+# Number of devices to simulate.
+count = 20
+
+# 添加完数据等待设备运行稳定后，再入网的等待时间
+wait_device_stable_time = "0s"
+
+# Uplink interval.
+uplink_interval = "300s"
+
+# FPort.
+f_port = 1
+
+# Payload (HEX encoded).
+payload = "010203"
+
+# Frequency (Hz).
+frequency = 902300000
+
+# Bandwidth (Hz).
+bandwidth = 125000
+
+# Spreading-factor.
+spreading_factor = 10
+
+# Gateway configuration.
+[simulator.gateway]
+
+# Event topic template.
+event_topic_template = "gateway/{{ .GatewayID }}/rx"
+
+# Command topic template.
+command_topic_template = "gateway/{{ .GatewayID }}/tx"
+
+# Min number of receiving gateways.
+min_count = 3
+
+# Max number of receiving gateways.
+max_count = 5
+
+
+# Prometheus metrics configuration.
+[prometheus]
+
+# 每个实例使用不同端口，避免冲突
+bind = "0.0.0.0:9002"
+
+[lora-simulator.test_payload_codec]
+enable = false
+old_host = "192.168.40.147"
+new_host = "192.168.40.147"
+test_case_file = "/mnt/data/work_code/gateway/lora-simulator/codec.xlsx"
+
+[[lora-simulator.test_payload_codec.test_device_sheet]]
+sheet = "WT201"
+device = "wt201"

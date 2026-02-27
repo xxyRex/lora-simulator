@@ -17,6 +17,9 @@ make build
 cd cmd/lora-simulator
 ./lora-simulator -c config/lora-simulator.toml
 
+# Run with --workdir (多实例场景，指定工作目录，所有相对路径基于该目录)
+./lora-simulator --workdir instances/server1 -c config/lora-simulator.toml
+
 make clean
 ```
 
@@ -32,13 +35,12 @@ go test ./internal/test_payload_codec/... -v -run TestParseExcelSheet
 
 Main config: `cmd/lora-simulator/config/lora-simulator.toml`
 
-**Config file hierarchy** (all relative to `cmd/lora-simulator/`):
+**Config file hierarchy** (all relative to working directory):
 1. `config/lora-simulator.toml` - Server URLs, credentials, test features
 2. `config/simulation-config.json` - Multi-device type simulation (device types + counts)
 3. `payload_en_decoder/codec-release/vendors/milesight-iot/devices.json` - Device type catalog
-4. `devices_dynamic.json` - FUOTA-specific device config (optional)
+4. `config/devices_dynamic.json` - FUOTA per-device debug config (hot-reloaded every 5s)
 5. `api/fuota_req.json`, `api/modbus_server_create.json` - API request templates
-6. `temp/device_stored_info.json` - Runtime device state persistence
 
 **Key TOML sections:**
 - `[general]` - `log_level` (5=debug..1=fatal), `channel_plan` (EU868/CN470/etc.)
@@ -59,6 +61,39 @@ sequence_join = true
 sequence_join_interval = "2s"
 sequence_device_number = 1
 ```
+
+**FUOTA task options:**
+```toml
+fuota_task_device_count = 1       # 每个 FUOTA 任务包含的设备数量
+fuota_task_create_interval = "10s" # 多任务时的创建间隔，防止 NS 队列拥塞（status:16）
+```
+
+## Multi-Instance (Multiple Servers)
+
+使用 `--workdir` 参数同时测试多台服务器，各实例完全隔离：
+
+```
+cmd/lora-simulator/
+  lora-simulator.exe        ← 唯一二进制
+  payload_en_decoder/       ← 唯一 codec（共享只读）
+  instances/
+    server1/
+      config/lora-simulator.toml   # server=IP1, prometheus bind=":9001"
+      config/devices_dynamic.json
+      config/simulation-config.json
+      api/fuota_req.json
+    server2/
+      config/lora-simulator.toml   # server=IP2, prometheus bind=":9002"
+      ...
+```
+
+启动：
+```powershell
+.\lora-simulator.exe --workdir instances\server1 -c config\lora-simulator.toml
+.\lora-simulator.exe --workdir instances\server2 -c config\lora-simulator.toml
+```
+
+各实例的 `simulator.log`、`config/devices_dynamic.json` 完全独立，互不干扰。
 
 ## Architecture
 
@@ -147,7 +182,7 @@ Runs `fix_mixin_operation_id.py` → `convert_swagger_to_camel_case.py` → `go-
 
 ## Logging
 
-- File: `simulator.log` (in working directory `cmd/lora-simulator/`)
+- File: `simulator.log` (in working directory, i.e. `cmd/lora-simulator/` or `--workdir` path)
 - `log_level`: 5=debug, 4=info, 3=warning, 2=error
 - Library: logrus
 
@@ -232,7 +267,7 @@ handleFragSessionStatusReq()
 
 // Clock Sync (fPort=202)
 handleClockSyncCommand()
-handleClockSyncPackageVersionReq()      // PackageID=3, Version=1
+handleClockSyncPackageVersionReq()      // PackageID=3, Version=1（固定，无版本校验）
 sendDeviceAppTimeReq()                  // Send Unix timestamp
 handleDeviceAppTimeAns()                // Receive time correction
 handleForceDeviceResyncReq()            // Trigger time sync
@@ -259,6 +294,59 @@ case 202: // clocksync.DefaultFPort
 | Clock Synchronization | 202 | 3 | 1 |
 
 **Note**: Fragmentation uses PackageID=3 (vendor-specific) instead of standard LoRaWAN PackageID=1.
+
+### FUOTA Debug Configuration (`config/devices_dynamic.json`)
+
+支持按设备 EUI 范围配置调试行为，热重载（每 5 秒），无需重启模拟器。
+
+**单组模式**（`use_groups: false`）：所有设备使用 `devices` 段配置。
+**多组模式**（`use_groups: true`）：按 `device_groups` 中的 `deveui_range` 分别匹配。
+两段配置可同时保留，通过 `use_groups` 切换，无需删除任何内容。
+
+```json
+{
+  "use_groups": false,
+  "devices": {
+    "deveui_range": "all",
+    "fuota_debug": {
+      "package_version_ans": {
+        "skip_package_version_ans": false,
+        "package_identifier": 2,
+        "package_version": 1,
+        "random_delay_max_sec": 0,
+        "send_double_ans": false
+      },
+      "frag_package_version_ans": {
+        "skip_frag_package_version_ans": false,
+        "package_identifier": 3,
+        "package_version": 1,
+        "random_delay_max_sec": 0
+      },
+      "clock_sync_package_version_ans": {
+        "skip_clock_sync_package_version_ans": false,
+        "random_delay_max_sec": 0
+      },
+      "mg_group_setup_ans": { "skip_mg_group_setup_ans": false },
+      "mc_class_c_session_ans": { "skip_mc_class_c_session_ans": false, "time_to_start": 10 },
+      "frag_session_setup_ans": { "skip_frag_session_setup_ans": false },
+      "frag_session_status_ans": { "skip_frag_session_status_ans": true }
+    }
+  },
+  "device_groups": []
+}
+```
+
+**各阶段可模拟的失败场景：**
+
+| 阶段 | 配置字段 | 失败场景 |
+|---|---|---|
+| 组播包版本确认 (fPort=200) | `package_version_ans` | `skip=true`(超时) / `package_identifier≠2`(ID错误) / `package_version<1`(版本不兼容) |
+| 分片包版本确认 (fPort=201) | `frag_package_version_ans` | `skip=true`(超时) / `package_identifier≠3`(ID错误) / `package_version<1`(版本不兼容) |
+| 时钟同步 (fPort=202) | `clock_sync_package_version_ans` | `skip=true`(超时)，无版本校验 |
+| 组播组建立 (fPort=200) | `mg_group_setup_ans` | `skip=true`(超时) / `id_error=true` |
+| Class C 会话建立 (fPort=200) | `mc_class_c_session_ans` | `skip=true`(超时) / `mc_group_undefined/freq_error/dr_error` |
+| 分片会话建立 (fPort=201) | `frag_session_setup_ans` | `skip=true`(超时) / 各 status_bit_mask 错误标志 |
+| 分片状态上报 (fPort=201) | `frag_session_status_ans` | `skip=true`(跳过) / 自定义 nb_frag_received / CRC 上报 |
 
 ### Key Crypto Functions
 
@@ -290,7 +378,7 @@ tail -f simulator.log | grep -i "fuota\|clock"
 ```
 fuota: package-version-req received (fPort=200)
 fuota: sending package-version-ans (identifier=2, version=1)
-fuota: fragmentation PackageVersionReq received (fPort=201)
+fuota: fragmentation package-version-req received (fPort=201)
 fuota: sending fragmentation package-version-ans (identifier=3, version=1)
 fuota: received force-device-resync-req (fPort=202)
 fuota: sending device-app-time-req (device_time=...)
@@ -309,5 +397,7 @@ fuota: fragmentation-session-setup command received
 | Codec errors | JS syntax, test data JSON format, `default_fport` matches codec |
 | Auth failures | `username`/`password`, `server` reachable, `insecure` TLS setting |
 | FUOTA not starting | Verify `test_feature="fuota"`, devices joined, check server-side task creation |
+| status:16 timeout | NS 下行队列拥塞，设置 `fuota_task_create_interval = "10s"` 错开任务创建 |
 | Clock sync skipped | Normal if Fragmentation PackageVersionCheck fails; server decides sync necessity |
 | Fragment timeout | Check multicast keys derived correctly, Class C session active, frequency/DR match |
+| 多实例端口冲突 | 每个实例设置不同的 `prometheus.bind` 端口（9001, 9002...） |
