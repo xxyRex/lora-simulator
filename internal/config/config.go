@@ -4,6 +4,10 @@ import (
 	"time"
 )
 
+// BaseDir is the directory where the binary resides (before any --workdir chdir).
+// Used to locate shared read-only resources like payload_en_decoder/.
+var BaseDir = "."
+
 // Version defines the version.
 var Version string
 

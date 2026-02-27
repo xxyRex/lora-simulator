@@ -449,8 +449,8 @@ func (s *Simulation) generateMultiTypeDevices() error {
 		return fmt.Errorf("simulation-config.json not found")
 	}
 
-	// Load device config - baseDir is the project root directory (current working directory)
-	loader := deviceconfig.NewDeviceConfigLoader(".")
+	// Load device config - use BaseDir (original CWD before any --workdir chdir) to locate shared resources
+	loader := deviceconfig.NewDeviceConfigLoader(config.BaseDir)
 	if err := loader.Load(); err != nil {
 		return fmt.Errorf("failed to load device config: %w", err)
 	}

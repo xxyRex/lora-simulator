@@ -87,13 +87,14 @@ cmd/lora-simulator/
       ...
 ```
 
-启动：
+启动（必须用 `-c` 指定各实例的配置文件完整路径，因为配置加载早于 `--workdir` 切换目录）：
 ```powershell
-.\lora-simulator.exe --workdir instances\server1 -c config\lora-simulator.toml
-.\lora-simulator.exe --workdir instances\server2 -c config\lora-simulator.toml
+.\lora-simulator.exe --workdir instances\server1 -c instances\server1\config\lora-simulator.toml
+.\lora-simulator.exe --workdir instances\server2 -c instances\server2\config\lora-simulator.toml
 ```
 
 各实例的 `simulator.log`、`config/devices_dynamic.json` 完全独立，互不干扰。
+`payload_en_decoder/` 通过 `config.BaseDir`（原始工作目录）定位，所有实例共享同一份 codec。
 
 ## Architecture
 

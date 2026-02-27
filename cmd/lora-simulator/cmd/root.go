@@ -31,10 +31,17 @@ var rootCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// 切换工作目录（所有相对路径均基于此目录）
 		if workdir != "" {
+			// 保存原始目录作为共享只读资源（payload_en_decoder 等）的基准路径
+			originalDir, err := os.Getwd()
+			if err != nil {
+				return fmt.Errorf("failed to get working directory: %w", err)
+			}
+			config.BaseDir = originalDir
+
 			if err := os.Chdir(workdir); err != nil {
 				return fmt.Errorf("failed to change working directory to %q: %w", workdir, err)
 			}
-			log.Infof("working directory changed to: %s", workdir)
+			log.Infof("working directory changed to: %s (base dir: %s)", workdir, originalDir)
 		}
 
 		// 在工作目录下打开日志文件
