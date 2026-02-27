@@ -5,7 +5,8 @@
             "count": 1,
             "uplink_paused": false,
             "uplink_confirm": false,
-            "uplink_interval": 300000
+            "uplink_interval": 300000,
+            "test_data_override": "config/wt201-test-data.json"
         }
     ]
 }

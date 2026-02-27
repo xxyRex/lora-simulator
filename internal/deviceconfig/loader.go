@@ -49,8 +49,8 @@ func (l *DeviceConfigLoader) Load() error {
 
 	log.Infof("Registered %d device types from devices.json", l.registry.Count())
 
-	// 3. Load simulation config (if exists)
-	simConfigPath := filepath.Join(l.baseDir, DefaultSimConfigPath)
+	// 3. Load simulation config from CWD (per-instance config, relative to workdir)
+	simConfigPath := DefaultSimConfigPath
 	if _, err := os.Stat(simConfigPath); err == nil {
 		if err := l.loadSimulationConfig(simConfigPath); err != nil {
 			return fmt.Errorf("load simulation config failed: %w", err)
@@ -204,8 +204,13 @@ func (l *DeviceConfigLoader) loadTestData(path string, deviceName string) (map[s
 	var fullPath string
 
 	if path != "" {
-		// Try device-specific test data path
-		fullPath = filepath.Join(l.baseDir, path)
+		// Try path relative to CWD (workdir) first — for per-instance test_data_override
+		if _, err := os.Stat(path); err == nil {
+			fullPath = path
+		} else {
+			// Fall back to baseDir for shared resources (payload_en_decoder/)
+			fullPath = filepath.Join(l.baseDir, path)
+		}
 		if _, err := os.Stat(fullPath); err != nil {
 			// Try path relative to device directory
 			deviceDir := strings.ToLower(deviceName)
