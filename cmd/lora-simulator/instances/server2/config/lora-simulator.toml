@@ -13,8 +13,7 @@ channel_plan = "US915"
 [lora-simulator.api]
 
 # Server.
-# ↓ 修改为服务器2的IP地址
-server = "192.168.40.XXX"
+server = "192.168.40.83"
 
 # 网关as api登录url
 login_url = "/api/internal/login"
@@ -46,8 +45,7 @@ insecure = false
 [lora-simulator.integration.mqtt]
 
 # MQTT server.
-# ↓ 修改为服务器2的IP地址
-server = "tcp://192.168.40.XXX:1883"
+server = "tcp://192.168.40.83:1883"
 
 # Username.
 username = "lorawan"
@@ -60,8 +58,7 @@ password = "Urs@L1nk#Ms2020"
 [lora-simulator.gateway.backend.mqtt]
 
 # MQTT server.
-# ↓ 修改为服务器2的IP地址
-server = "tcp://192.168.40.XXX:1883"
+server = "tcp://192.168.40.83:1883"
 
 # Username.
 username = "lorawan"
@@ -74,7 +71,6 @@ password = "Urs@L1nk#Ms2020"
 [[simulator]]
 
 # Tenant ID.
-# ↓ 修改为服务器2上对应的 Tenant ID
 tenant_id = "f6f7d81d-647f-4c7f-8409-3e5218c0c523"
 
 # Duration.

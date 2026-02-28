@@ -10,6 +10,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -609,7 +610,7 @@ func (d *Device) loadTestData() (map[string]interface{}, error) {
 	}
 
 	// Try to open the device-specific test data file
-	testDataFile, err := os.Open(d.deviceTypeConfig.TestData)
+	testDataFile, err := os.Open(filepath.Join(config.BaseDir, d.deviceTypeConfig.TestData))
 	if err != nil {
 		log.Warnf("test data not found at %s for device %s, using empty test data: %v", d.deviceTypeConfig.TestData, d.devEUI, err)
 		return make(map[string]interface{}), nil
@@ -626,9 +627,9 @@ func (d *Device) loadTestData() (map[string]interface{}, error) {
 
 
 func (d *Device) getEncoderData() {
-	// Get encoder script path (device-specific or legacy)
-	ecPath := d.deviceTypeConfig.EncoderScript
-	if ecPath == "" {
+	// Get encoder script path (device-specific or legacy), resolved from BaseDir
+	ecPath := filepath.Join(config.BaseDir, d.deviceTypeConfig.EncoderScript)
+	if d.deviceTypeConfig.EncoderScript == "" {
 		log.Errorf("no encoder script path available for device %s", d.devEUI)
 		return
 	}
@@ -637,7 +638,7 @@ func (d *Device) getEncoderData() {
 	var shouldReEncode bool
 	if d.deviceTypeConfig.TestData != "" {
 		// If device has a specific test data path, check its modification time
-		testDataInfo, err := os.Stat(d.deviceTypeConfig.TestData)
+		testDataInfo, err := os.Stat(filepath.Join(config.BaseDir, d.deviceTypeConfig.TestData))
 		if err != nil {
 			// Test data file doesn't exist, but we can still encode with empty data
 			log.Debugf("test data file not found for device %s: %v, will use empty test data", d.devEUI, err)
