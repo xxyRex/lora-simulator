@@ -170,15 +170,18 @@ func (l *DeviceConfigLoader) GenerateDeviceInstances() ([]*DeviceInstance, error
 		if len(deviceType.DeviceProfile) > 0 {
 			deviceProfile = deviceType.DeviceProfile[0]
 		}
+		if typeInstance.DeviceProfileOverride != "" {
+			deviceProfile = typeInstance.DeviceProfileOverride
+		}
 
 		// Generate device instances
 		for i := 0; i < count; i++ {
-			devEUI := l.generateDevEUI(deviceType.DevEUIPrefix, i)
+			devEUI := l.generateDevEUI(deviceType.DevEUIPrefix, typeInstance.DevEUIIndexStart+i)
 			appKey := generateRandomHexString(32) // 16 bytes = 32 hex chars
 
 			instance := &DeviceInstance{
 				DevEUI:         devEUI,
-				Name:           fmt.Sprintf("%s-%d", deviceType.Name, i+1),
+				Name:           fmt.Sprintf("%s-%d", deviceType.Name, typeInstance.DevEUIIndexStart+i+1),
 				AppKey:         appKey,
 				DeviceType:     deviceType,
 				TestData:       testData,

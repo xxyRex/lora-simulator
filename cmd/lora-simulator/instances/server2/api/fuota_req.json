@@ -16,7 +16,7 @@
         "fragmentRedundancy": 30
     },
     "tmpMcInfo": {
-        "dr": 9,
-        "frequency": 923300000
+        "dr": 3,
+        "frequency": 505300000
     }
 }

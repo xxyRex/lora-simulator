@@ -52,6 +52,19 @@
             "encoder_script": "payload_en_decoder/codec-release/vendors/milesight-iot/uc100/uc100-node-encoder.js",
             "test_data": "payload_en_decoder/codec-release/vendors/milesight-iot/uc100/uc100-test-data.json",
             "default_fport": 85
+        },
+        {
+            "id": "ws503",
+            "name": "WS503",
+            "description": "Controller",
+            "catalog": "ws",
+            "sn": "6782",
+            "deveui": "24e124782",
+            "device_profile": ["ClassB-OTAA"],
+            "decoder_script": "",
+            "encoder_script": "payload_en_decoder/codec-release/vendors/milesight-iot/ws503/ws503-node-encoder.js",
+            "test_data": "payload_en_decoder/codec-release/vendors/milesight-iot/uc100/uc100-test-data.json",
+            "default_fport": 85
         }
     ]
 }

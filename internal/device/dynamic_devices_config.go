@@ -21,6 +21,7 @@ type DevicesDynamicConfig struct {
 type Devices struct {
 	DeveuiRange              string                        `json:"deveui_range"`
 	FuotaDebug               FuotaDebug                    `json:"fuota_debug"`
+	TestData                 map[string]interface{}        `json:"test_data"`
 	DeveuiMap                map[lorawan.EUI64]interface{} `json:"-"`
 	GlobalUplinkInterval     int64                         `json:"global_uplink_interval"`
 	GlobalUplinkIntervalTime time.Duration                 `json:"-"`
@@ -29,23 +30,31 @@ type Devices struct {
 type FuotaDebug struct {
 	PackageVersionAns          *PackageVersionAns          `json:"package_version_ans"`
 	FragPackageVersionAns      *FragPackageVersionAns      `json:"frag_package_version_ans"`
-	ClockSyncPackageVersionAns *ClockSyncPackageVersionAns `json:"clock_sync_package_version_ans"`
+	ClockSyncDebug             *ClockSyncDebug             `json:"clock_sync_debug"`
 	MgGroupSetupAns            *MgGroupSetupAns            `json:"mg_group_setup_ans"`
 	McClassCSessionAns         *McClassCSessionAns         `json:"mc_class_c_session_ans"`
 	FragSessionSetupAns        *FragSessionSetupAns        `json:"frag_session_setup_ans"`
 	FragSessionStatusAns       *FragSessionStatusAns       `json:"frag_session_status_ans"`
+	UpgradeDebug               *UpgradeDebug               `json:"upgrade_debug"`
 }
 
 type FragPackageVersionAns struct {
 	SkipFragPackageVersionAns bool  `json:"skip_frag_package_version_ans"`
 	PackageIdentifier         uint8 `json:"package_identifier"`
 	PackageVersion            uint8 `json:"package_version"`
+	OmitPackageVersion        bool  `json:"omit_package_version"`
 	RandomDelayMaxSec         int64 `json:"random_delay_max_sec"`
 }
 
-type ClockSyncPackageVersionAns struct {
-	SkipClockSyncPackageVersionAns bool  `json:"skip_clock_sync_package_version_ans"`
-	RandomDelayMaxSec              int64 `json:"random_delay_max_sec"`
+type ClockSyncDebug struct {
+	SkipDeviceAppTimeReq bool   `json:"skip_device_app_time_req"`
+	DeviceTimeOverride   *int64 `json:"device_time_override"`   // 覆盖 DeviceTime，单位秒（GPS epoch），nil 表示使用当前时间
+	MalformedPayload     string `json:"malformed_payload"`      // 发送原始错误字节（hex），非空时绕过正常编码直接发送
+}
+
+type UpgradeDebug struct {
+	VersionReportDelaySec int64  `json:"version_report_delay_sec"` // 分片完成后延迟多少秒上报新版本（0=不延迟）
+	NewFirmwareVersion    string `json:"new_firmware_version"`     // 新固件版本号，如 "v1.3"
 }
 
 type FragSessionSetupAns struct {

@@ -598,31 +598,40 @@ func (d *Device) encodePayload(encoderScript string, testData map[string]interfa
 // Priority: device-specific test data > device type test data
 // Returns empty map if no test data is available (no longer requires default test data file)
 func (d *Device) loadTestData() (map[string]interface{}, error) {
-	// If device already has pre-loaded test data, use it
+	var baseData map[string]interface{}
+
+	// If device already has pre-loaded test data, copy it
 	if d.deviceTestData != nil {
-		return d.deviceTestData, nil
-	}
-
-	// If no device-specific test data path is configured, return empty map
-	if d.deviceTypeConfig.TestData == "" {
+		baseData = make(map[string]interface{}, len(d.deviceTestData))
+		for k, v := range d.deviceTestData {
+			baseData[k] = v
+		}
+	} else if d.deviceTypeConfig.TestData != "" {
+		// Try to open the device-specific test data file
+		testDataFile, err := os.Open(filepath.Join(config.BaseDir, d.deviceTypeConfig.TestData))
+		if err != nil {
+			log.Warnf("test data not found at %s for device %s, using empty test data: %v", d.deviceTypeConfig.TestData, d.devEUI, err)
+			baseData = make(map[string]interface{})
+		} else {
+			defer testDataFile.Close()
+			if err := json.NewDecoder(testDataFile).Decode(&baseData); err != nil {
+				return nil, fmt.Errorf("decode test data error: %v", err)
+			}
+		}
+	} else {
 		log.Debugf("no test data path configured for device %s, using empty test data", d.devEUI)
-		return make(map[string]interface{}), nil
+		baseData = make(map[string]interface{})
 	}
 
-	// Try to open the device-specific test data file
-	testDataFile, err := os.Open(filepath.Join(config.BaseDir, d.deviceTypeConfig.TestData))
-	if err != nil {
-		log.Warnf("test data not found at %s for device %s, using empty test data: %v", d.deviceTypeConfig.TestData, d.devEUI, err)
-		return make(map[string]interface{}), nil
-	}
-	defer testDataFile.Close()
-
-	var testData map[string]interface{}
-	if err := json.NewDecoder(testDataFile).Decode(&testData); err != nil {
-		return nil, fmt.Errorf("decode test data error: %v", err)
+	// Merge dynamic config test_data on top (device_groups per-device override)
+	dynConfig := GetDynamicDevicesConfig(d.devEUI)
+	if dynConfig != nil && len(dynConfig.Devices.TestData) > 0 {
+		for k, v := range dynConfig.Devices.TestData {
+			baseData[k] = v
+		}
 	}
 
-	return testData, nil
+	return baseData, nil
 }
 
 

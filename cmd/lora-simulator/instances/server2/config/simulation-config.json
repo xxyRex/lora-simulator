@@ -2,7 +2,7 @@
     "device_types": [
         {
             "device_id": "wt201",
-            "count": 1,
+            "count": 2,
             "uplink_paused": false,
             "uplink_confirm": false,
             "uplink_interval": 300000,

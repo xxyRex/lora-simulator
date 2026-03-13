@@ -4,7 +4,7 @@
 # debug=5, info=4, warning=3, error=2, fatal=1, panic=0
 log_level = 5
 
-channel_plan = "US915"
+channel_plan = "CN470"
 
 # ChirpStack configuration.
 [lora-simulator]
@@ -26,11 +26,11 @@ clean_before_test = true
 # 结束后是否删除所有数据
 teardown_after_test = false
 # 测试的功能，目前支持bacnet，fuota，normal,modbus
-test_feature = "normal,fuota"
+test_feature = "normal"
 # 是否需要重启as
 restart_as = false
 # 每个fuota任务的设备数量
-fuota_task_device_count = 1
+fuota_task_device_count = 2
 # 每个fuota任务创建后的间隔时间，避免NS下行队列拥塞导致status:16超时（0表示不等待）
 fuota_task_create_interval = "0s"
 # 是否每次创建新设备
@@ -105,13 +105,13 @@ f_port = 1
 payload = "010203"
 
 # Frequency (Hz).
-frequency = 902300000
+frequency = 470300000
 
 # Bandwidth (Hz).
 bandwidth = 125000
 
 # Spreading-factor.
-spreading_factor = 10
+spreading_factor = 12
 
 # Gateway configuration.
 [simulator.gateway]

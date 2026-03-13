@@ -35,9 +35,11 @@ type SimulationConfig struct {
 // DeviceTypeInstance represents a device type instance in simulation config
 // Each device type can have its own independent uplink configuration
 type DeviceTypeInstance struct {
-	DeviceID         string  `json:"device_id"`
-	Count            int     `json:"count"`
-	TestDataOverride *string `json:"test_data_override,omitempty"`
+	DeviceID              string  `json:"device_id"`
+	Count                 int     `json:"count"`
+	DevEUIIndexStart      int     `json:"deveui_index_start"` // DevEUI 起始序号偏移（0=从1开始，2=从3开始）
+	TestDataOverride      *string `json:"test_data_override,omitempty"`
+	DeviceProfileOverride string  `json:"device_profile_override,omitempty"` // 覆盖 devices.json 中的 device_profile
 	// Per-device-type uplink configuration
 	UplinkPaused   bool  `json:"uplink_paused"`
 	UplinkConfirm  bool  `json:"uplink_confirm"`

@@ -1,5 +1,5 @@
 {
-    "use_groups": false,
+    "use_groups": true,
     "devices": {
         "deveui_range": "all",
         "fuota_debug": {
@@ -11,11 +11,11 @@
             "frag_package_version_ans": {
                 "skip_frag_package_version_ans": false,
                 "package_identifier": 3,
-                "package_version": 1
-            },
-            "clock_sync_package_version_ans": {
-                "skip_clock_sync_package_version_ans": false,
+                "package_version": 1,
                 "random_delay_max_sec": 0
+            },
+            "clock_sync_debug": {
+                "skip_device_app_time_req": false
             },
             "mg_group_setup_ans": {
                 "skip_mg_group_setup_ans": false,
@@ -43,10 +43,10 @@
                 }
             },
             "frag_session_status_ans": {
-                "skip_frag_session_status_ans": true,
+                "skip_frag_session_status_ans": false,
                 "received_and_index": {
                     "frag_index": 0,
-                    "nb_frag_received": 3
+                    "nb_frag_received": 0
                 },
                 "missing_frag": 0,
                 "status": {
@@ -55,37 +55,213 @@
                 "crc_check": {
                     "use_crc_check": false,
                     "delay": 10,
-                    "value": "C2A8FA9D"
+                    "value": "9F03080C"
                 }
+            },
+            "upgrade_debug": {
+                "version_report_delay_sec": 720,
+                "new_firmware_version": ""
             }
         }
     },
     "device_groups": [
         {
-            "deveui_range": "24e1247150000003-24e1247150000004",
+            "deveui_range": "24e1247150000004-24e1247150000004",
+            "test_data": {
+                "firmware_version": "v1.1",
+                "hardware_version": "v2.0"
+            },
             "fuota_debug": {
                 "package_version_ans": {
-                    "skip_package_version_ans": true
+                    "skip_package_version_ans": false,
+                    "package_identifier": 2,
+                    "package_version": 1
+                },
+                "frag_package_version_ans": {
+                    "skip_frag_package_version_ans": false,
+                    "package_identifier": 3,
+                    "package_version": 1,
+                    "random_delay_max_sec": 0
+                },
+                "clock_sync_debug": {
+                    "skip_device_app_time_req": false
+                },
+                "mg_group_setup_ans": {
+                    "skip_mg_group_setup_ans": false,
+                    "id_error": false,
+                    "mc_group_id": 0
+                },
+                "mc_class_c_session_ans": {
+                    "skip_mc_class_c_session_ans": false,
+                    "status_and_mc_group_id": {
+                        "mc_group_undefined": false,
+                        "freq_error": false,
+                        "dr_error": false,
+                        "mc_group_id": 0
+                    },
+                    "time_to_start": 10
+                },
+                "frag_session_setup_ans": {
+                    "skip_frag_session_setup_ans": false,
+                    "status_bit_mask": {
+                        "frag_index": 0,
+                        "wrong_descriptor": false,
+                        "frag_session_index_not_supported": false,
+                        "not_enough_memory": false,
+                        "encoding_unsupported": false
+                    }
+                },
+                "frag_session_status_ans": {
+                    "skip_frag_session_status_ans": false,
+                    "received_and_index": {
+                        "frag_index": 0,
+                        "nb_frag_received": 0
+                    },
+                    "missing_frag": 0,
+                    "status": {
+                        "not_enough_matrix_memory": false
+                    },
+                    "crc_check": {
+                        "use_crc_check": false,
+                        "delay": 10,
+                        "value": "9F03080C"
+                    }
+                },
+                "upgrade_debug": {
+                    "version_report_delay_sec": 0,
+                    "new_firmware_version": ""
                 }
             }
         },
         {
             "deveui_range": "24e1247150000005-24e1247150000005",
-            "fuota_debug": {
-                "package_version_ans": {
-                    "skip_package_version_ans": false,
-                    "package_identifier": 99,
-                    "package_version": 1
-                }
-            }
-        },
-        {
-            "deveui_range": "24e1247150000006-24e1247150000006",
+            "test_data": {
+                "firmware_version": "v1.2",
+                "hardware_version": "v2.1"
+            },
             "fuota_debug": {
                 "package_version_ans": {
                     "skip_package_version_ans": false,
                     "package_identifier": 2,
-                    "package_version": 99
+                    "package_version": 1
+                },
+                "frag_package_version_ans": {
+                    "skip_frag_package_version_ans": false,
+                    "package_identifier": 3,
+                    "package_version": 1,
+                    "random_delay_max_sec": 0
+                },
+                "clock_sync_debug": {
+                    "skip_device_app_time_req": false
+                },
+                "mg_group_setup_ans": {
+                    "skip_mg_group_setup_ans": false,
+                    "id_error": false,
+                    "mc_group_id": 0
+                },
+                "mc_class_c_session_ans": {
+                    "skip_mc_class_c_session_ans": false,
+                    "status_and_mc_group_id": {
+                        "mc_group_undefined": false,
+                        "freq_error": false,
+                        "dr_error": false,
+                        "mc_group_id": 0
+                    },
+                    "time_to_start": 10
+                },
+                "frag_session_setup_ans": {
+                    "skip_frag_session_setup_ans": false,
+                    "status_bit_mask": {
+                        "frag_index": 0,
+                        "wrong_descriptor": false,
+                        "frag_session_index_not_supported": false,
+                        "not_enough_memory": false,
+                        "encoding_unsupported": false
+                    }
+                },
+                "frag_session_status_ans": {
+                    "skip_frag_session_status_ans": false,
+                    "received_and_index": {
+                        "frag_index": 0,
+                        "nb_frag_received": 0
+                    },
+                    "missing_frag": 0,
+                    "status": {
+                        "not_enough_matrix_memory": false
+                    },
+                    "crc_check": {
+                        "use_crc_check": false,
+                        "delay": 10,
+                        "value": "9F03080C"
+                    }
+                },
+                "upgrade_debug": {
+                    "version_report_delay_sec": 0,
+                    "new_firmware_version": ""
+                }
+            }
+        },
+        {
+            "deveui_range": "24e1241360000002-24e1241360000002",
+            "fuota_debug": {
+                "package_version_ans": {
+                    "skip_package_version_ans": false,
+                    "package_identifier": 2,
+                    "package_version": 1
+                },
+                "frag_package_version_ans": {
+                    "skip_frag_package_version_ans": true,
+                    "package_identifier": 3,
+                    "package_version": 1,
+                    "random_delay_max_sec": 0
+                },
+                "clock_sync_debug": {
+                    "skip_device_app_time_req": false
+                },
+                "mg_group_setup_ans": {
+                    "skip_mg_group_setup_ans": false,
+                    "id_error": false,
+                    "mc_group_id": 0
+                },
+                "mc_class_c_session_ans": {
+                    "skip_mc_class_c_session_ans": false,
+                    "status_and_mc_group_id": {
+                        "mc_group_undefined": false,
+                        "freq_error": false,
+                        "dr_error": false,
+                        "mc_group_id": 0
+                    },
+                    "time_to_start": 10
+                },
+                "frag_session_setup_ans": {
+                    "skip_frag_session_setup_ans": false,
+                    "status_bit_mask": {
+                        "frag_index": 0,
+                        "wrong_descriptor": false,
+                        "frag_session_index_not_supported": false,
+                        "not_enough_memory": false,
+                        "encoding_unsupported": false
+                    }
+                },
+                "frag_session_status_ans": {
+                    "skip_frag_session_status_ans": false,
+                    "received_and_index": {
+                        "frag_index": 0,
+                        "nb_frag_received": 0
+                    },
+                    "missing_frag": 0,
+                    "status": {
+                        "not_enough_matrix_memory": false
+                    },
+                    "crc_check": {
+                        "use_crc_check": false,
+                        "delay": 10,
+                        "value": "9F03080C"
+                    }
+                },
+                "upgrade_debug": {
+                    "version_report_delay_sec": 0,
+                    "new_firmware_version": ""
                 }
             }
         }

@@ -2,11 +2,21 @@
     "device_types": [
         {
             "device_id": "wt201",
-            "count": 1,
+            "count": 2,
+            "deveui_index_start": 9,
             "uplink_paused": false,
             "uplink_confirm": false,
             "uplink_interval": 300000,
             "test_data_override": "config/wt201-test-data.json"
+        },
+        {
+            "device_id": "em300_th",
+            "count": 1,
+            "deveui_index_start": 1,
+            "uplink_paused": false,
+            "uplink_confirm": false,
+            "uplink_interval": 300000,
+            "test_data_override": "config/em300-th-test-data.json"
         }
     ]
 }

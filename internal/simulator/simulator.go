@@ -301,6 +301,10 @@ func (s *Simulation) runSimulation() error {
 					// Pass per-device-type uplink configuration
 					deviceOpts = append(deviceOpts, device.WithUplinkPaused(instance.UplinkPaused))
 					deviceOpts = append(deviceOpts, device.WithUplinkConfirm(instance.UplinkConfirm))
+					// Pass overridden test data (from test_data_override in simulation-config.json)
+					if len(instance.TestData) > 0 {
+						deviceOpts = append(deviceOpts, device.WithDeviceTestData(instance.TestData))
+					}
 					break
 				}
 			}
