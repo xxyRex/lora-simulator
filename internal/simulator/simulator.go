@@ -253,7 +253,7 @@ func (s *Simulation) runSimulation() error {
 
 	count := 0
 	batchCount := 0
-	for _, dev := range s.generatedDevices {
+	for i, dev := range s.generatedDevices {
 		var gws []*gateway.Gateway
 		gws = gateways
 
@@ -275,6 +275,7 @@ func (s *Simulation) runSimulation() error {
 			device.WithOTAADelay(otaaDuration),
 			device.WithUplinkPayload(true, s.fPort, s.payload),
 			device.WithGateways(gws),
+			device.WithDeviceIndex(i),
 			device.WithUplinkTXInfo(&gw.UplinkTxInfo{
 				Frequency: uint32(s.frequency),
 				Modulation: &gw.Modulation{
@@ -596,6 +597,7 @@ func (s *Simulation) createDevices() error {
 		if err != nil {
 			log.Error(err)
 		}
+		time.Sleep(200 * time.Millisecond)
 	}
 
 	return nil

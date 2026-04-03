@@ -17,6 +17,11 @@ import (
 )
 
 func (d *Device) handleMulticastSetupCommand(b []byte) error {
+	log.WithFields(log.Fields{
+		"dev_eui": d.devEUI,
+		"b_len":   len(b),
+		"b_hex":   fmt.Sprintf("%X", b),
+	}).Info("fuota: handleMulticastSetupCommand raw bytes")
 	// 特判：PackageVersionReq 命令没有 payload，只有 CID 字节
 	if len(b) > 0 && b[0] == byte(multicastsetup.PackageVersionReq) {
 		log.WithFields(log.Fields{
@@ -588,6 +593,17 @@ func (d *Device) handleFragSessionStatusReq(pl *fragmentation.FragSessionStatusR
 
 	d.payload = b
 	d.fPort = fragmentation.DefaultFPort
+
+	// 使用设备索引计算固定延迟，每台设备间隔 2 秒
+	// 设备索引 0 → 0 秒，设备索引 1 → 2 秒，设备索引 1999 → 3998 秒
+	delay := time.Duration(d.deviceIndex*2) * time.Second
+	log.WithFields(log.Fields{
+		"dev_eui":      d.devEUI,
+		"device_index": d.deviceIndex,
+		"delay":        delay,
+	}).Info("fuota: frag-session-status-ans fixed delay")
+	time.Sleep(delay)
+
 	d.dataUp(lorawan.UnconfirmedDataUp, false)
 	d.fuotaProperties.FragSessionStatusReqPayload = pl
 

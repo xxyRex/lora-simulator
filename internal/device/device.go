@@ -191,6 +191,9 @@ type Device struct {
 
 	// Device-specific test data (loaded from device-specific test data file)
 	deviceTestData map[string]interface{}
+
+	// Device index in simulation (for staggered responses)
+	deviceIndex int
 }
 
 func WithDeviceStoredInfo(item *models.APIDeviceItem) DeviceOption {
@@ -359,6 +362,13 @@ func WithUplinkPaused(paused bool) DeviceOption {
 func WithUplinkConfirm(confirm bool) DeviceOption {
 	return func(d *Device) error {
 		d.uplinkConfirm = confirm
+		return nil
+	}
+}
+
+func WithDeviceIndex(index int) DeviceOption {
+	return func(d *Device) error {
+		d.deviceIndex = index
 		return nil
 	}
 }
